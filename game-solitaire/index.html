@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FreeCell Solitaire Pro</title>
+    <style>
+        :root {
+            --card-width: 10.5vw;
+            --card-height: 14.7vw;
+            --card-gap: 1vw;
+            --bg-color: #006400;
+            --accent-color: #4caf50;
+            --card-radius: 4px;
+        }
+
+        @media (min-width: 600px) {
+            :root {
+                --card-width: 70px;
+                --card-height: 98px;
+                --card-gap: 10px;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at center, #007000 0%, #004d00 100%);
+            margin: 0;
+            padding: 0;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- Screen Management --- */
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0; left: 0;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .screen.active { display: flex; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Home Screen & Leaderboard UI --- */
+        .title-display {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
+            background: linear-gradient(to bottom, #fff, #a5d6a7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card-menu {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #004d00;
+            background: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            background: #e8f5e9;
+        }
+
+        .menu-btn.secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .menu-btn.secondary:hover { background: rgba(255,255,255,0.3); }
+
+        /* Leaderboard Table */
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 1rem;
+        }
+        
+        .leaderboard-item:first-child { color: gold; font-weight: bold; font-size: 1.1rem; }
+        .leaderboard-item:nth-child(2) { color: silver; }
+        .leaderboard-item:nth-child(3) { color: #cd7f32; }
+
+        .rank { width: 30px; }
+        .moves { flex-grow: 1; text-align: right; margin-right: 15px; }
+        .date { font-size: 0.8rem; opacity: 0.7; width: 80px; text-align: right; }
+
+        /* --- Game Screen Specifics --- */
+        #game-screen {
+            justify-content: flex-start;
+            display: none;
+        }
+        #game-screen.active { display: block; }
+
+        #top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; background: rgba(0, 0, 0, 0.4); height: 60px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3); backdrop-filter: blur(5px);
+        }
+        .left-section, .right-section { display: flex; align-items: center; gap: 10px; }
+        h1 { font-size: 1.2rem; margin: 0; font-weight: 700; }
+        #score-badge { background: rgba(255, 255, 255, 0.2); padding: 4px 12px; border-radius: 15px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .btn-icon {
+            display: flex; align-items: center; gap: 6px; background: white; border: none;
+            padding: 8px 14px; border-radius: 8px; color: var(--bg-color); font-weight: 600; cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.9rem;
+        }
+        .btn-icon:hover { transform: translateY(-2px); }
+        .btn-icon:active { transform: scale(0.96); }
+        .btn-undo { background-color: #ffeb3b; color: #333; }
+        .btn-exit { background-color: #ff5252; color: white; }
+
+        @media (max-width: 480px) {
+            .btn-text { display: none; }
+            .btn-icon { padding: 8px 10px; font-size: 1.1rem; }
+            .title-display { font-size: 2.5rem; }
+        }
+
+        #game-board { padding: 10px; max-width: 900px; margin: 0 auto; margin-top: 10px; }
+        .top-row { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 10px; }
+        .group-area { display: flex; gap: var(--card-gap); }
+        .slot {
+            width: var(--card-width); height: var(--card-height);
+            border: 2px solid rgba(255,255,255,0.3); border-radius: var(--card-radius);
+            position: relative; box-sizing: border-box; background: rgba(0,0,0,0.15);
+        }
+        .slot.foundation::before { content: attr(data-symbol); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; color: rgba(255,255,255,0.2); pointer-events: none; }
+        .slot.freecell::before { content: 'F'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; color: rgba(255,255,255,0.1); pointer-events: none; }
+
+        .card {
+            width: var(--card-width); height: var(--card-height); background-color: white;
+            border-radius: var(--card-radius); position: absolute; box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+            cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;
+            padding: 3px; box-sizing: border-box; font-weight: bold; font-size: calc(var(--card-width) * 0.35); z-index: 10;
+        }
+        .card.red { color: #d32f2f; } .card.black { color: #212121; }
+        .card-top, .card-bottom { display: flex; flex-direction: column; align-items: center; line-height: 0.8; }
+        .card-bottom { transform: rotate(180deg); }
+        .card-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: calc(var(--card-width) * 0.5); }
+
+        #tableau { display: flex; justify-content: space-between; }
+        .pile { width: var(--card-width); min-height: calc(var(--card-height) + 200px); position: relative; padding-bottom: 20px; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 2000;
+            flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            padding: 20px; box-sizing: border-box;
+        }
+        .modal-content {
+            background: white; color: #333; padding: 25px; border-radius: 12px;
+            max-width: 500px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
+            text-align: center; border-radius: 25px; padding: 12px;
+            position: fixed; z-index: 3000; left: 50%; bottom: 30px;
+            transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 80px; }
+    </style>
+</head>
+<body>
+
+<div id="home-screen" class="screen active">
+    <div class="title-display">FreeCell</div>
+    <div class="card-menu">
+        <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">Tantang dirimu dengan langkah tersedikit!</p>
+        <button class="menu-btn" onclick="startGame()">Mulai Main ♠</button>
+        <button class="menu-btn secondary" onclick="showLeaderboard()">Rekor Terbaik 🏆</button>
+    </div>
+</div>
+
+<div id="leaderboard-screen" class="screen">
+    <div class="title-display" style="font-size: 2.5rem;">10 Terbaik</div>
+    <div class="card-menu" style="width: 90%; max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); font-weight: bold; color: white;">
+            <span>#</span>
+            <span>Langkah</span>
+            <span>Tanggal</span>
+        </div>
+        <ul id="leaderboard-list" class="leaderboard-list">
+            <li class="leaderboard-item" style="justify-content: center; color: rgba(255,255,255,0.5);">Belum ada data</li>
+        </ul>
+        <button class="menu-btn secondary" onclick="showHome()">Kembali</button>
+    </div>
+</div>
+
+<div id="game-screen" class="screen">
+    <div id="top-bar">
+        <div class="left-section">
+            <button class="btn-icon btn-exit" onclick="showHome()" title="Keluar">
+                <span>✕</span>
+            </button>
+            <div id="score-badge">
+                <span id="score">0</span> Langkah
+            </div>
+        </div>
+        <div class="right-section">
+            <button class="btn-icon btn-undo" onclick="undo()" title="Kembali 1 Langkah">
+                <span>↩</span> <span class="btn-text">Undo</span>
+            </button>
+            <button class="btn-icon" onclick="showHelp()" title="Aturan Main">
+                <span>?</span> <span class="btn-text">Aturan</span>
+            </button>
+            <button class="btn-icon" onclick="initGame()" title="Ulang">
+                <span>↻</span> <span class="btn-text">Ulang</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="game-board">
+        <div class="top-row">
+            <div class="group-area">
+                <div id="freecell-0" class="slot freecell" data-index="0"></div>
+                <div id="freecell-1" class="slot freecell" data-index="1"></div>
+                <div id="freecell-2" class="slot freecell" data-index="2"></div>
+                <div id="freecell-3" class="slot freecell" data-index="3"></div>
+            </div>
+            
+            <div class="group-area">
+                <div id="foundation-0" class="slot foundation" data-index="0" data-symbol="♥"></div>
+                <div id="foundation-1" class="slot foundation" data-index="1" data-symbol="♠"></div>
+                <div id="foundation-2" class="slot foundation" data-index="2" data-symbol="♦"></div>
+                <div id="foundation-3" class="slot foundation" data-index="3" data-symbol="♣"></div>
+            </div>
+        </div>
+
+        <div id="tableau">
+            <div id="tableau-0" class="pile"></div>
+            <div id="tableau-1" class="pile"></div>
+            <div id="tableau-2" class="pile"></div>
+            <div id="tableau-3" class="pile"></div>
+            <div id="tableau-4" class="pile"></div>
+            <div id="tableau-5" class="pile"></div>
+            <div id="tableau-6" class="pile"></div>
+            <div id="tableau-7" class="pile"></div>
+        </div>
+    </div>
+</div>
+
+<div id="win-modal" class="modal">
+    <div style="background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 400px; box-shadow: 0 0 50px rgba(255,215,0,0.5);">
+        <h2 style="color: gold; text-shadow: 0 0 5px orange; font-size: 3rem; margin: 0;">Menang!</h2>
+        <p style="font-size: 1.2rem; color: #555;">Total Langkah: <strong id="win-score">0</strong></p>
+        <div id="new-record-msg" style="display:none; color: #4caf50; font-weight: bold; margin-bottom: 15px;">🎉 Rekor Baru Masuk 10 Besar! 🎉</div>
+        
+        <button onclick="initGame()" class="menu-btn" style="background: #4caf50; color: white;">Main Lagi ↻</button>
+        
+        <button onclick="document.getElementById('win-modal').style.display='none'; showLeaderboard()" class="menu-btn secondary" style="background: #eee; color: #333;">Lihat Peringkat</button>
+        <button onclick="document.getElementById('win-modal').style.display='none'; showHome()" class="menu-btn secondary" style="background: transparent; color: #888; border: 1px solid #ddd;">Ke Menu Utama</button>
+    </div>
+</div>
+
+<div id="help-modal" class="modal" onclick="closeHelp()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h2 style="margin-top:0;">Aturan FreeCell</h2>
+        <ul style="padding-left: 20px; line-height: 1.6;">
+            <li>Pindahkan semua kartu ke <strong>Foundation</strong> (kanan atas) urut A ke K.</li>
+            <li>Gunakan <strong>Free Cells</strong> (kiri atas) untuk parkir kartu sementara.</li>
+            <li>Di Tableau (bawah), susun kartu <strong>Selang-seling Warna</strong> (Merah-Hitam) dan menurun.</li>
+        </ul>
+        <button class="menu-btn" onclick="closeHelp()">Tutup</button>
+    </div>
+</div>
+
+<div id="toast">Pesan</div>
+
+<script>
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function showHome() { showScreen('home-screen'); }
+    function startGame() { 
+        showScreen('game-screen'); 
+        initGame(); 
+    }
+    
+    const STORAGE_KEY = 'freecell_best_scores';
+
+    function getScores() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    function saveScore(moves) {
+        let scores = getScores();
+        const date = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        scores.push({ moves, date });
+        scores.sort((a, b) => a.moves - b.moves);
+        scores = scores.slice(0, 10);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+        return scores.some(s => s.moves === moves && s.date === date);
+    }
+
+    function showLeaderboard() {
+        showScreen('leaderboard-screen');
+        const listEl = document.getElementById('leaderboard-list');
+        const scores = getScores();
+
+        if (scores.length === 0) {
+            listEl.innerHTML = '<li class="leaderboard-item" style="justify-content: center; color: rgba(255,255,255,0.5);">Belum ada rekor</li>';
+            return;
+        }
+
+        listEl.innerHTML = scores.map((s, i) => `
+            <li class="leaderboard-item">
+                <span class="rank">${i + 1}</span>
+                <span class="moves">${s.moves}</span>
+                <span class="date">${s.date}</span>
+            </li>
+        `).join('');
+    }
+
+    const SUITS = ['hearts', 'spades', 'diamonds', 'clubs'];
+    const SYMBOLS = { 'hearts': '♥', 'spades': '♠', 'diamonds': '♦', 'clubs': '♣' };
+    const COLORS = { 'hearts': 'red', 'spades': 'black', 'diamonds': 'red', 'clubs': 'black' };
+    const VALUES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+    let freeCells = [null, null, null, null];
+    let foundations = [[], [], [], []];
+    let tableau = [[], [], [], [], [], [], [], []];
+    let history = [];
+    let moveCount = 0;
+    let dragData = null;
+
+    function initGame() {
+        let deck = createDeck();
+        shuffle(deck);
+        
+        freeCells = [null, null, null, null];
+        foundations = [[], [], [], []];
+        tableau = [[], [], [], [], [], [], [], []];
+        history = [];
+        moveCount = 0;
+
+        let col = 0;
+        while(deck.length > 0) {
+            tableau[col].push(deck.pop());
+            col = (col + 1) % 8;
+        }
+
+        document.getElementById('win-modal').style.display = 'none';
+        renderGame();
+    }
+
+    function createDeck() {
+        let newDeck = [];
+        for (let s of SUITS) {
+            for (let i = 0; i < VALUES.length; i++) {
+                newDeck.push({
+                    suit: s, value: i + 1, displayValue: VALUES[i],
+                    color: COLORS[s], id: Math.random().toString(36).substr(2, 9)
+                });
+            }
+        }
+        return newDeck;
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function saveState() {
+        history.push(JSON.parse(JSON.stringify({ freeCells, foundations, tableau, moveCount })));
+        if (history.length > 50) history.shift();
+    }
+
+    function undo() {
+        if (history.length === 0) { showToast("Belum ada langkah"); return; }
+        const state = history.pop();
+        freeCells = state.freeCells;
+        foundations = state.foundations;
+        tableau = state.tableau;
+        moveCount = state.moveCount;
+        renderGame();
+    }
+
+    function renderGame() {
+        document.getElementById('score').innerText = moveCount;
+
+        for(let i=0; i<4; i++) {
+            const el = document.getElementById(`freecell-${i}`);
+            el.innerHTML = '';
+            if (freeCells[i]) {
+                let c = createCardElement(freeCells[i], true);
+                c.style.top = '0'; c.style.left = '0'; el.appendChild(c);
+            }
+        }
+
+        for(let i=0; i<4; i++) {
+            const el = document.getElementById(`foundation-${i}`);
+            el.innerHTML = '';
+            if (foundations[i].length > 0) {
+                let c = createCardElement(foundations[i][foundations[i].length-1], false);
+                c.style.top = '0'; c.style.left = '0'; el.appendChild(c);
+            }
+        }
+
+        for(let i=0; i<8; i++) {
+            const el = document.getElementById(`tableau-${i}`);
+            el.innerHTML = '<div style="width:100%;height:100%;position:absolute;top:0;left:0;"></div>';
+            let offset = 0;
+            tableau[i].forEach(card => {
+                let c = createCardElement(card, true);
+                c.style.top = offset + 'px';
+                offset += 28; el.appendChild(c);
+            });
+            el.style.height = `calc(var(--card-height) + ${offset}px)`;
+        }
+        checkWin();
+    }
+
+    function createCardElement(card, draggable) {
+        const div = document.createElement('div');
+        div.className = `card ${card.color}`;
+        div.dataset.cid = card.id;
+        const s = SYMBOLS[card.suit];
+        div.innerHTML = `<div class="card-top"><span>${card.displayValue}</span><span>${s}</span></div>
+                         <div class="card-center">${s}</div>
+                         <div class="card-bottom"><span>${card.displayValue}</span><span>${s}</span></div>`;
+        
+        div.ondblclick = (e) => { e.stopPropagation(); tryAutoMove(card); };
+
+        if (draggable) {
+            div.addEventListener('mousedown', startDrag);
+            div.addEventListener('touchstart', startDrag, {passive: false});
+        }
+        return div;
+    }
+
+    function findCardLocation(id) {
+        for(let i=0; i<4; i++) if (freeCells[i] && freeCells[i].id === id) return { type: 'freecell', index: i, card: freeCells[
