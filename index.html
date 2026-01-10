@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cari Kata Indonesia - Hard Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #f3f4f6;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+
+        .game-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: transform 0.1s, background-color 0.2s;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+        }
+
+        .game-cell.selected {
+            background-color: #fbbf24;
+            color: #fff;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .game-cell.found {
+            background-color: #34d399;
+            color: #fff;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .word-item.found {
+            text-decoration: line-through;
+            color: #9ca3af;
+            opacity: 0.6;
+        }
+
+        #game-board {
+            touch-action: none;
+        }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center bg-slate-100 text-slate-800">
+
+    <!-- MENU SCREEN -->
+    <div id="menu-screen" class="absolute inset-0 flex flex-col items-center justify-center z-50 bg-slate-100">
+        <h1 class="text-5xl font-bold text-indigo-600 mb-2 drop-shadow-sm text-center">CARI KATA<br><span class="text-2xl text-orange-500">TANTANGAN WAKTU</span></h1>
+        <p class="text-xl text-slate-500 mb-8">Edisi Bahasa Indonesia</p>
+        
+        <div class="space-y-4 w-64">
+            <button onclick="startGame(1)" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(67,56,202)] active:shadow-[0_0px_0_rgb(67,56,202)] active:translate-y-1 transition-all">
+                MULAI MAIN
+            </button>
+            <button onclick="showHighScores()" class="w-full bg-orange-400 hover:bg-orange-500 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(194,65,12)] active:shadow-[0_0px_0_rgb(194,65,12)] active:translate-y-1 transition-all">
+                REKOR NILAI
+            </button>
+            <button onclick="toggleSound()" id="sound-btn" class="w-full bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(71,85,105)] active:shadow-[0_0px_0_rgb(71,85,105)] active:translate-y-1 transition-all">
+                SUARA: ON
+            </button>
+        </div>
+        
+        <div class="mt-8 text-sm text-slate-400">Total 50 Level • Waktu Terbatas</div>
+    </div>
+
+    <!-- GAME UI -->
+    <div id="game-ui" class="hidden w-full h-full max-w-md md:max-w-2xl flex flex-col p-4">
+        <div class="flex justify-between items-center mb-2 bg-white p-3 rounded-xl shadow-sm">
+            <div>
+                <div class="text-xs text-slate-500 font-bold uppercase">Level <span id="level-display">1</span></div>
+                <div class="text-sm font-bold text-indigo-600 truncate max-w-[120px]" id="theme-display">Tema: Hewan</div>
+            </div>
+            <div class="text-center">
+                <div class="text-xs text-slate-500 font-bold uppercase">Waktu</div>
+                <div id="timer-display" class="text-xl font-bold text-red-500 font-mono">00:00</div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs text-slate-500 font-bold uppercase">Skor</div>
+                <div id="score-display" class="text-xl font-bold text-green-600">0</div>
+            </div>
+        </div>
+
+        <div class="mb-4 bg-white p-3 rounded-xl shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
+             <div id="word-list" class="flex flex-wrap justify-center gap-2 md:gap-4"></div>
+        </div>
+
+        <div class="flex-grow flex items-center justify-center relative">
+            <div id="game-board" class="grid gap-1 bg-white p-2 rounded-xl shadow-lg select-none touch-none mx-auto"></div>
+        </div>
+
+        <div class="mt-4 flex justify-between">
+            <button onclick="quitGame()" class="bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg text-sm">Keluar</button>
+            <div id="found-count" class="text-slate-500 font-bold py-2 text-sm">0/0 Ditemukan</div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="result-modal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center transform transition-all scale-100">
+            <h2 id="modal-title" class="text-3xl font-bold mb-2">Level Selesai!</h2>
+            <div id="modal-message" class="text-slate-600 mb-6">Skor Level: 1000</div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="goToMenu()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl">Menu</button>
+                <button id="next-level-btn" onclick="nextLevel()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-[0_4px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none">Lanjut</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="highscore-modal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
+            <h2 class="text-2xl font-bold mb-4 text-orange-500">10 Besar Rekor</h2>
+            <ul id="highscore-list" class="text-left text-sm space-y-2 mb-6 max-h-60 overflow-y-auto"></ul>
+            <button onclick="closeModal('highscore-modal')" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATABASE KATA YANG DIPERLUAS ---
+        const wordCategories = {
+            "Hewan": ["KUCING", "ANJING", "GAJAH", "HARIMAU", "SINGA", "ZEBRA", "JERAPAH", "BUAYA", "MONYET", "ULAR", "KELINCI", "KUDA", "SAPI", "KAMBING", "AYAM", "BEBEK"],
+            "Buah": ["APEL", "JERUK", "ANGGUR", "PISANG", "NANAS", "MANGGA", "DURIAN", "PEPAYA", "JAMBU", "RAMBUTAN", "SALAK", "MELON", "SEMANGKA", "ALPUKAT", "CERI", "LEMON"],
+            "Warna": ["MERAH", "KUNING", "HIJAU", "BIRU", "UNGU", "HITAM", "PUTIH", "ABU", "COKLAT", "JINGGA", "MERAHMUDA", "EMAS", "PERAK", "NILA", "TURKIS", "KREM"],
+            "Negara": ["INDONESIA", "JEPANG", "KOREA", "CHINA", "INDIA", "INGGRIS", "JERMAN", "PRANCIS", "ITALIA", "SPANYOL", "RUSIA", "AMERIKA", "KANADA", "BRAZIL", "ARGENTINA"],
+            "Kota Indonesia": ["JAKARTA", "BANDUNG", "SURABAYA", "MEDAN", "MAKASSAR", "SEMARANG", "YOGYA", "BALI", "SOLO", "MALANG", "BOGOR", "DEPOK", "BEKASI", "PALEMBANG", "PADANG"],
+            "Perabotan": ["MEJA", "KURSI", "LEMARI", "KASUR", "BANTAL", "GULING", "LAMPU", "PINTU", "JENDELA", "KACA", "JAM", "SOFA", "KARPET", "CERMIN", "RAK"],
+            "Anggota Tubuh": ["KEPALA", "RAMBUT", "MATA", "HIDUNG", "TELINGA", "MULUT", "GIGI", "LIDAH", "LEHER", "BAHU", "TANGAN", "JARI", "KUKU", "PERUT", "PUNGGUNG", "KAKI"],
+            "Profesi Umum": ["DOKTER", "GURU", "POLISI", "TENTARA", "PILOT", "SUPIR", "KOKI", "PETANI", "NELAYAN", "HAKIM", "JAKSA", "PERAWAT", "ARSITEK", "SENIMAN"],
+            "Alam": ["GUNUNG", "LAUT", "SUNGAI", "DANAU", "PANTAI", "HUTAN", "GURUN", "LEMBAH", "BUKIT", "TEBING", "GUA", "AIR", "API", "TANAH", "UDARA", "LANGIT"],
+            "Sekolah": ["BUKU", "PENA", "PENSIL", "PENGHAPUS", "PENGGARIS", "TAS", "SERAGAM", "KELAS", "PAPAN", "KAPUR", "SPIDOL", "MEJA", "KURSI", "MURID", "GURU"],
+            "Rasa": ["MANIS", "ASAM", "PAHIT", "ASIN", "PEDAS", "TAWAR", "GURIH", "SEGAR", "HAMBAR", "LEZAT", "ENAK", "NIKMAT", "BASI"],
+            "Olahraga": ["SEPAK", "BOLA", "BASKET", "VOLI", "RENANG", "LARI", "SENAM", "TENNIS", "BADMINTON", "TINJU", "GULAT", "BALAP", "PANAHAN", "CATUR"],
+            "Kendaraan": ["MOBIL", "MOTOR", "SEPEDA", "BIS", "TRUK", "KERETA", "PESAWAT", "KAPAL", "PERAHU", "BECAK", "BAJAJ", "DELMAN", "HELIKOPTER"],
+            
+            // --- TEMA BARU ---
+            "Bunga": ["MAWAR", "MELATI", "ANGGREK", "TULIP", "TERATAI", "KAMBOJA", "SAKURA", "MATAHARI", "LILY", "DAHLIA", "KENANGA", "SEPATU", "BOUGENVILLE"],
+            "Dapur": ["WAJAN", "PANCI", "PISAU", "SENDOK", "GARPU", "OVEN", "KOMPOR", "BLENDER", "PIRING", "MANGKUK", "GELAS", "SUTIL", "PARUTAN"],
+            "Angkasa": ["MERKURIUS", "VENUS", "BUMI", "MARS", "JUPITER", "SATURNUS", "URANUS", "NEPTUNUS", "MATAHARI", "BULAN", "BINTANG", "KOMET", "METEOR", "GALAKSI"],
+            "Alat Musik": ["GITAR", "PIANO", "DRUM", "BIOLA", "SULING", "TEROMPET", "HARPA", "GENDANG", "ANGKLUNG", "GAMELAN", "HARMONIKA", "SAKSOFON"],
+            "Pakaian": ["KEMEJA", "CELANA", "ROK", "JAKET", "TOPI", "DASI", "SEPATU", "KAOS", "GAUN", "JAS", "KAOSKAKI", "SYAL", "SANDAL", "KEBAYA"],
+            "Cuaca": ["HUJAN", "PANAS", "MENDUNG", "CERAH", "BERAWAN", "BADAI", "SALJU", "KABUT", "ANGIN", "PETIR", "KILAT", "GERIMIS", "BANJIR"],
+            "Elektronik": ["LAPTOP", "HP", "TABLET", "RADIO", "KIPAS", "SETRIKA", "KAMERA", "PRINTER", "SPEAKER", "MOUSE", "KEYBOARD", "HEADSET", "MODEM"],
+            "Bumbu": ["GARAM", "GULA", "MERICA", "KETUMBAR", "KUNYIT", "JAHE", "LENGKUAS", "CABAI", "BAWANG", "KEMIRI", "PALA", "CENGKEH", "KAYUMANIS"],
+            "Serangga": ["NYAMUK", "LALAT", "LEBAH", "SEMUT", "KECOA", "BELALANG", "CAPUNG", "KUPU", "RAYAP", "LABA", "KUMBANG", "JANGKRIK", "ULAT"],
+            "Burung": ["MERPATI", "ELANG", "KAKAKTUA", "BEO", "GEREJA", "HANTU", "PELIKAN", "MERAK", "CENDRAWASIH", "KASUARI", "RAJAWALI", "BEO", "WALET"],
+            "Sayuran": ["BAYAM", "KANGKUNG", "WORTEL", "KENTANG", "TOMAT", "SAWI", "KOL", "BROKOLI", "TERONG", "TIMUN", "BUNCIS", "JAGUNG", "LOBAK"],
+            "Minuman": ["KOPI", "TEH", "SUSU", "JUS", "SODA", "AIR", "SIRUP", "BIR", "JAMU", "ES", "CENDOL", "BAJIGUR", "BANDREK"],
+            "Perhiasan": ["EMAS", "PERAK", "INTAN", "BERLIAN", "MUTIARA", "CINCIN", "KALUNG", "GELANG", "ANTING", "LIONTIN", "JAMRUD", "RUBI", "SAFIR"],
+            "Profesi IT": ["PROGRAMMER", "DESAINER", "TEKNISI", "ADMIN", "HACKER", "ANALIS", "EDITOR", "KODER", "DEVELOPER", "TESTER", "DATA", "JARINGAN"]
+        };
+
+        const themeKeys = Object.keys(wordCategories);
+
+        let currentLevel = 1;
+        let score = 0;
+        let timeLeft = 0;
+        let timerInterval = null;
+        let gridData = [];
+        let wordList = [];
+        let foundWords = [];
+        let gridSize = 8;
+        let isSelecting = false;
+        let selectedCells = []; 
+        let selectionStart = null; 
+        let isSoundOn = true;
+        let hasSavedScore = false; 
+
+        function getLevelConfig(level) {
+            let baseSize = 8; 
+            let wordsCount = 5;
+            
+            // LOGIKA WAKTU LEBIH KETAT (Detik per kata)
+            // Awal: 15 detik/kata (Cukup santai)
+            // Tengah: 10 detik/kata (Mulai buru-buru)
+            // Akhir: 6 detik/kata (Sangat cepat)
+            let timePerWord = 15; 
+
+            if (level > 10) { baseSize = 9; wordsCount = 7; timePerWord = 12; }
+            if (level > 20) { baseSize = 10; wordsCount = 9; timePerWord = 10; }
+            if (level > 30) { baseSize = 11; wordsCount = 11; timePerWord = 8; }
+            if (level > 40) { baseSize = 12; wordsCount = 12; timePerWord = 6; }
+
+            // Pilih tema berdasarkan level agar variasi maksimal
+            const themeIndex = (level - 1) % themeKeys.length;
+            const theme = themeKeys[themeIndex];
+            
+            let pool = [...wordCategories[theme]];
+            
+            // Isi kekosongan jika kata di kategori kurang dari target wordsCount
+            while(pool.length < wordsCount) {
+                const randomTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+                // Hindari duplikat kategori yang sama
+                if (randomTheme !== theme) {
+                    pool = pool.concat(wordCategories[randomTheme]);
+                }
+            }
+
+            pool.sort(() => 0.5 - Math.random());
+            const selectedWords = pool.slice(0, wordsCount);
+
+            // UKURAN GRID DINAMIS (Anti error kata panjang)
+            const longestWordLength = Math.max(...selectedWords.map(w => w.length));
+            // Tambahkan padding minimal 1 atau 2 kotak agar tidak terlalu sempit
+            const size = Math.max(baseSize, longestWordLength + 1);
+
+            return {
+                level: level,
+                theme: theme,
+                words: selectedWords,
+                size: size,
+                time: Math.floor(wordsCount * timePerWord) // Pastikan bulat
+            };
+        }
+
+        function startGame(level) {
+            currentLevel = level;
+            if (level === 1) score = 0; 
+            
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('hidden');
+
+            initLevel();
+        }
+
+        function initLevel() {
+            hasSavedScore = false; 
+            const config = getLevelConfig(currentLevel);
+            gridSize = config.size;
+            wordList = config.words;
+            timeLeft = config.time;
+            foundWords = [];
+
+            document.getElementById('level-display').innerText = config.level;
+            document.getElementById('theme-display').innerText = `Tema: ${config.theme}`;
+            document.getElementById('timer-display').innerText = formatTime(timeLeft);
+            document.getElementById('score-display').innerText = score;
+            
+            renderWordList();
+            
+            let success = false;
+            let attempts = 0;
+            // Coba generate grid, jika gagal, ulangi. Jika gagal terus, perbesar grid.
+            while (!success && attempts < 20) {
+                success = generateGrid(); 
+                attempts++;
+            }
+            if (!success) {
+                gridSize++;
+                generateGrid();
+            }
+
+            renderGridDOM();
+            startTimer();
+            updateFoundCount();
+        }
+
+        function generateGrid() {
+            gridData = Array(gridSize).fill(null).map(() => Array(gridSize).fill(''));
+            
+            // Level 1-5: Vertikal & Horizontal saja (Mudah)
+            // Level 6+: Tambah Diagonal
+            let directions = [[0, 1], [1, 0]]; 
+            if (currentLevel > 5) directions.push([1, 1], [1, -1]);
+
+            const wordsToPlace = [...wordList].sort((a, b) => b.length - a.length);
+            
+            let allPlaced = true;
+
+            for (let word of wordsToPlace) {
+                let placed = false;
+                let attempts = 0;
+                while (!placed && attempts < 100) {
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    const row = Math.floor(Math.random() * gridSize);
+                    const col = Math.floor(Math.random() * gridSize);
+
+                    if (canPlaceWord(word, row, col, dir)) {
+                        placeWord(word, row, col, dir);
+                        placed = true;
+                    }
+                    attempts++;
+                }
+                
+                if (!placed) {
+                    allPlaced = false;
+                    break; 
+                }
+            }
+
+            if (!allPlaced) return false; 
+
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for(let r=0; r<gridSize; r++) {
+                for(let c=0; c<gridSize; c++) {
+                    if (gridData[r][c] === '') {
+                        gridData[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+                    }
+                }
+            }
+            return true;
+        }
+
+        function canPlaceWord(word, r, c, dir) {
+            if (r + dir[0] * (word.length - 1) < 0 || r + dir[0] * (word.length - 1) >= gridSize) return false;
+            if (c + dir[1] * (word.length - 1) < 0 || c + dir[1] * (word.length - 1) >= gridSize) return false;
+
+            for (let i = 0; i < word.length; i++) {
+                const char = gridData[r + dir[0] * i][c + dir[1] * i];
+                if (char !== '' && char !== word[i]) return false;
+            }
+            return true;
+        }
+
+        function placeWord(word, r, c, dir) {
+            for (let i = 0; i < word.length; i++) {
+                gridData[r + dir[0] * i][c + dir[1] * i] = word[i];
+            }
+        }
+
+        function renderWordList() {
+            const container = document.getElementById('word-list');
+            container.innerHTML = '';
+            wordList.forEach(word => {
+                const div = document.createElement('div');
+                div.className = 'word-item px-3 py-1 bg-slate-100 rounded-lg text-sm font-semibold border border-slate-200';
+                div.innerText = word;
+                div.id = `word-${word}`;
+                container.appendChild(div);
+            });
+        }
+
+        function renderGridDOM() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            
+            // Penyesuaian font agar responsif terhadap ukuran grid
+            let fontSize = 'text-2xl';
+            if (gridSize > 12) fontSize = 'text-sm';
+            else if (gridSize > 10) fontSize = 'text-base';
+            else if (gridSize > 8) fontSize = 'text-lg';
+
+            for(let r=0; r<gridSize; r++) {
+                for(let c=0; c<gridSize; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = `game-cell bg-white border border-slate-200 ${fontSize} select-none`;
+                    cell.innerText = gridData[r][c];
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.addEventListener('mousedown', handleStart);
+                    cell.addEventListener('mouseover', handleMove);
+                    cell.addEventListener('touchstart', handleStart, {passive: false});
+                    board.appendChild(cell);
+                }
+            }
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('touchend', handleEnd);
+            board.addEventListener('touchmove', handleTouchMove, {passive: false});
+        }
+
+        function handleStart(e) {
+            if (foundWords.length === wordList.length) return;
+            e.preventDefault();
+            isSelecting = true;
+            const target = e.target.closest('.game-cell');
+            if(!target) return;
+            const r = parseInt(target.dataset.r);
+            const c = parseInt(target.dataset.c);
+            selectionStart = { r, c };
+            updateSelection(r, c);
+        }
+
+        function handleMove(e) {
+            if (!isSelecting) return;
+            const target = e.target.closest('.game-cell');
+            if (!target) return;
+            const r = parseInt(target.dataset.r);
+            const c = parseInt(target.dataset.c);
+            updateSelection(r, c);
+        }
+
+        function handleTouchMove(e) {
+            if (!isSelecting) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target && target.classList.contains('game-cell')) {
+                const r = parseInt(target.dataset.r);
+                const c = parseInt(target.dataset.c);
+                updateSelection(r, c);
+            }
+        }
+
+        function handleEnd(e) {
+            if (!isSelecting) return;
+            isSelecting = false;
+            checkSelection();
+            clearSelectionHighlight();
+        }
+
+        function updateSelection(endR, endC) {
+            clearSelectionHighlight();
+            const startR = selectionStart.r;
+            const startC = selectionStart.c;
+            const cells = getCellsInLine(startR, startC, endR, endC);
+            if (cells) {
+                selectedCells = cells;
+                cells.forEach(pos => {
+                    const cell = document.querySelector(`.game-cell[data-r="${pos.r}"][data-c="${pos.c}"]`);
+                    if(cell) cell.classList.add('selected');
+                });
+            } else {
+                selectedCells = [];
+            }
+        }
+
+        function getCellsInLine(r1, c1, r2, c2) {
+            const dr = r2 - r1;
+            const dc = c2 - c1;
+            if (dr === 0 && dc === 0) return [{r:r1, c:c1}];
+            const stepR = dr === 0 ? 0 : dr / Math.abs(dr);
+            const stepC = dc === 0 ? 0 : dc / Math.abs(dc);
+            if (dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) return null;
+            const points = [];
+            let cr = r1;
+            let cc = c1;
+            const len = Math.max(Math.abs(dr), Math.abs(dc));
+            for (let i = 0; i <= len; i++) {
+                points.push({r: cr, c: cc});
+                cr += stepR;
+                cc += stepC;
+            }
+            return points;
+        }
+
+        function clearSelectionHighlight() {
+            document.querySelectorAll('.game-cell.selected').forEach(el => el.classList.remove('selected'));
+        }
+
+        function checkSelection() {
+            if (selectedCells.length === 0) return;
+            let word = "";
+            let reverseWord = "";
+            selectedCells.forEach(pos => {
+                word += gridData[pos.r][pos.c];
+            });
+            reverseWord = word.split('').reverse().join('');
+            const foundIndex = wordList.indexOf(word);
+            const foundReverseIndex = wordList.indexOf(reverseWord);
+            
+            let validWord = null;
+            if (foundIndex !== -1 && !foundWords.includes(word)) validWord = word;
+            else if (foundReverseIndex !== -1 && !foundWords.includes(reverseWord)) validWord = reverseWord;
+
+            if (validWord) {
+                foundWords.push(validWord);
+                markWordFound(validWord, selectedCells);
+                playSound('success');
+                // Skor lebih tinggi di level tinggi
+                const wordScore = (validWord.length * 10) + (currentLevel * 2);
+                score += wordScore;
+                document.getElementById('score-display').innerText = score;
+                checkLevelComplete();
+            }
+        }
+
+        function markWordFound(word, cells) {
+            cells.forEach(pos => {
+                const cell = document.querySelector(`.game-cell[data-r="${pos.r}"][data-c="${pos.c}"]`);
+                if(cell) cell.classList.add('found');
+            });
+            const wordEl = document.getElementById(`word-${word}`);
+            if(wordEl) {
+                wordEl.classList.add('found');
+                wordEl.classList.remove('bg-slate-100');
+                wordEl.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+            }
+            updateFoundCount();
+        }
+
+        function updateFoundCount() {
+            document.getElementById('found-count').innerText = `${foundWords.length}/${wordList.length} Ditemukan`;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-display').innerText = formatTime(timeLeft);
+                if (timeLeft <= 30) {
+                     document.getElementById('timer-display').classList.add('animate-pulse');
+                } else {
+                     document.getElementById('timer-display').classList.remove('animate-pulse');
+                }
+
+                if (timeLeft <= 0) {
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function checkLevelComplete() {
+            if (foundWords.length === wordList.length) {
+                clearInterval(timerInterval);
+                playSound('levelComplete');
+                // Bonus waktu lebih besar jika waktu sisa banyak
+                const timeBonus = timeLeft * 3;
+                score += timeBonus;
+                document.getElementById('score-display').innerText = score;
+
+                setTimeout(() => {
+                    showModal(true, `Level ${currentLevel} Selesai!`, `Skor Total: ${score}`);
+                }, 500);
+            }
+        }
+
+        function gameOver() {
+            clearInterval(timerInterval);
+            playSound('fail');
+            if (!hasSavedScore) {
+                saveHighScore(score);
+                hasSavedScore = true;
+            }
+            showModal(false, "Waktu Habis!", `Skor Akhir: ${score}`);
+        }
+
+        function showModal(isWin, title, msg) {
+            const modal = document.getElementById('result-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-title').className = isWin ? "text-3xl font-bold mb-2 text-green-600" : "text-3xl font-bold mb-2 text-red-600";
+            document.getElementById('modal-message').innerText = msg;
+            
+            const nextBtn = document.getElementById('next-level-btn');
+            if (isWin && currentLevel < 50) {
+                nextBtn.classList.remove('hidden');
+                nextBtn.onclick = nextLevel;
+            } else {
+                nextBtn.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            if (currentLevel > 50) {
+                alert("Luar Biasa! Anda menamatkan 50 Level!");
+                goToMenu();
+                return;
+            }
+            document.getElementById('result-modal').classList.add('hidden');
+            initLevel();
+        }
+
+        function goToMenu() {
+            clearInterval(timerInterval);
+            if (!hasSavedScore) {
+                saveHighScore(score);
+                hasSavedScore = true;
+            }
+            
+            document.getElementById('game-ui').classList.add('hidden');
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('menu-screen').classList.remove('hidden');
+        }
+        
+        function quitGame() {
+            if(confirm("Yakin ingin keluar?")) {
+                goToMenu();
+            }
+        }
+
+        function saveHighScore(currentScore) {
+            if (currentScore === 0) return;
+            let highScores = JSON.parse(localStorage.getItem('wordSearchHighScores')) || [];
+            const date = new Date().toLocaleDateString('id-ID');
+            highScores.push({ score: currentScore, level: currentLevel, date: date });
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, 10);
+            localStorage.setItem('wordSearchHighScores', JSON.stringify(highScores));
+        }
+
+        function showHighScores() {
+            const modal = document.getElementById('highscore-modal');
+            const list = document.getElementById('highscore-list');
+            list.innerHTML = '';
+            let highScores = JSON.parse(localStorage.getItem('wordSearchHighScores')) || [];
+            if (highScores.length === 0) {
+                list.innerHTML = '<li class="text-center text-slate-400">Belum ada rekor.</li>';
+            } else {
+                highScores.forEach((hs, index) => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between border-b border-slate-100 py-2";
+                    li.innerHTML = `
+                        <span>#${index+1} <span class="text-slate-500 text-xs">(${hs.date})</span></span>
+                        <span class="font-bold text-indigo-600">Lv.${hs.level} - ${hs.score}</span>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            const btn = document.getElementById('sound-btn');
+            btn.innerText = isSoundOn ? "SUARA: ON" : "SUARA: OFF";
+            btn.className = isSoundOn 
+                ? "w-full bg-slate-400 hover:bg-slate-500 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(71,85,105)] active:shadow-[0_0px_0_rgb(71,85,105)] active:translate-y-1 transition-all"
+                : "w-full bg-slate-300 text-slate-500 font-bold py-3 px-6 rounded-xl shadow-none translate-y-1 transition-all";
+        }
+
+        function playSound(type) {
+            if (!isSoundOn) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } else if (type === 'levelComplete') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, ctx.currentTime);
+                osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } else if (type === 'fail') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            }
+        }
+    </script>
+</body>
+</html>
+
+
