@@ -3,388 +3,428 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0f2027">
-    <link rel="manifest" href="/manifest.json">
-
-    <title>Brain Training Hub</title>
+    <title>Kekacauan Warna - Fixed Layout</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Fredoka (CDN) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    
     <style>
-        /* --- SETUP LAYOUT FULLSCREEN --- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            height: 100%; /* Wajib penuh */
-            overflow: hidden; /* MENCEGAH SCROLL HALAMAN UTAMA */
-        }
-
+        /* CSS INTERNAL */
         body {
-            /* Background Premium Dark Blue */
-            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-            color: white;
-            display: flex;
-            flex-direction: column; /* Susunan Atas ke Bawah */
+            font-family: 'Fredoka', sans-serif;
+            background-color: #18181b; 
+            touch-action: manipulation;
+            user-select: none;
+            overflow: hidden;
+            /* FIX UTAMA: Gunakan dvh (dynamic viewport height) untuk mobile */
+            height: 100vh;
+            height: 100dvh; 
+            transition: background-image 0.8s ease-in-out, background-color 0.8s ease-in-out;
         }
 
-        /* --- 1. BAGIAN ATAS (HEADER) - DIAM --- */
-        header {
-            flex-shrink: 0; /* Tidak boleh mengecil */
-            text-align: center;
-            padding: 15px 20px 10px 20px;
-            background: rgba(15, 32, 39, 0.9); /* Sedikit gelap agar tulisan jelas */
-            z-index: 10;
-        }
-
-        .brain-icon {
-            font-size: 45px; /* Sedikit diperkecil agar hemat tempat */
-            margin-bottom: 5px;
-            display: inline-block;
-            filter: drop-shadow(0 0 15px rgba(0,255,255,0.4));
-            animation: float 3s ease-in-out infinite;
-        }
-
-        h1 { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 2px; }
-        p { font-size: 12px; opacity: 0.8; font-weight: 300; }
-
-        /* --- 2. BAGIAN TENGAH (GAME LIST) - BISA SCROLL --- */
-        .scroll-area {
-            flex-grow: 1; /* Mengisi sisa ruang kosong */
-            overflow-y: auto; /* HANYA INI YANG BISA SCROLL */
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            padding: 10px 20px;
-            
-            /* Sembunyikan Scrollbar agar rapi */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE/Edge */
-        }
-        .scroll-area::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
-
-        .game-list {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-bottom: 20px; /* Jarak aman di bawah list */
-        }
-
-        .game-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            padding: 12px 15px; /* Padding sedikit dirampingkan */
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            transition: transform 0.2s, background 0.2s;
-        }
-
-        .game-card:active {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(0.98);
-        }
-
-        .icon-box {
-            width: 42px; /* Diperkecil sedikit */
-            height: 42px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            margin-right: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            flex-shrink: 0;
-        }
-
-        .content h3 { color: white; font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-        .content span { color: rgba(255, 255, 255, 0.6); font-size: 11px; }
-        .arrow { margin-left: auto; color: rgba(255, 255, 255, 0.4); font-weight: bold; font-size: 12px; }
-
-        /* TEMA WARNA ICON */
-        .theme-matrix .icon-box { background: linear-gradient(135deg, #00b09b, #96c93d); }
-        .theme-logic .icon-box { background: linear-gradient(135deg, #00c6ff, #0072ff); }
-        .theme-memory .icon-box { background: linear-gradient(135deg, #8e2de2, #4a00e0); }
-        .theme-chaos .icon-box { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
-        .theme-flow .icon-box { background: linear-gradient(135deg, #f09819, #edde5d); }
-        .theme-words .icon-box { background: linear-gradient(135deg, #ec008c, #fc6767); }
-        .theme-solitaire .icon-box { background: linear-gradient(135deg, #1fa2ff, #12d8fa, #a6ffcb); }
-
-        /* --- 3. BAGIAN BAWAH (FOOTER & TOMBOL) - DIAM --- */
-        .bottom-section {
-            flex-shrink: 0; /* Tidak boleh mengecil */
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px 20px 20px 20px;
-            background: rgba(0, 0, 0, 0.2); /* Latar belakang transparan gelap */
-            backdrop-filter: blur(10px); /* Efek blur di belakang tombol */
-            border-top: 1px solid rgba(255,255,255,0.05);
-            z-index: 10;
-        }
-
-        .action-container {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            gap: 10px; /* Jarak antar tombol */
-        }
-
-        /* Tombol Install & Donasi dibuat sejajar/rapi */
-        .btn-action {
-            flex: 1; /* Ukuran sama rata */
-            border: none;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: transform 0.2s;
-            text-align: center;
-            color: white;
-        }
+        /* Animasi Bar Waktu */
+        .timer-bar { transition: width 0.1s linear; }
         
-        .btn-action:active { transform: scale(0.95); }
-
-        /* Gaya Khusus Tombol */
-        .btn-install {
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-            box-shadow: 0 4px 10px rgba(0, 114, 255, 0.3);
-            display: none; /* Default sembunyi */
+        /* Animasi Getar (Salah) */
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
-        .btn-donate {
-            background: linear-gradient(45deg, #FFD700, #FFA500);
-            color: #333;
-            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+        /* Animasi Muncul */
+        .pop-in { animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
-        footer {
-            margin-top: 15px;
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.3);
-            letter-spacing: 1px;
-        }
+        .fade-enter { animation: fadeEnter 0.5s ease-out; }
+        @keyframes fadeEnter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- POPUP --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(8px);
-        }
-
-        .modal-content {
-            background: white;
-            width: 85%;
-            max-width: 320px;
-            padding: 25px;
-            border-radius: 20px;
-            text-align: center;
-            color: #333;
-            animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .modal-content h2 { margin-bottom: 5px; font-size: 18px; color: #2d3436; }
-        .modal-content p.desc { font-size: 12px; color: #636e72; margin-bottom: 15px; }
-        
-        .qris-img {
-            width: 100%;
-            max-width: 220px;
-            border-radius: 12px;
-            border: 1px solid #dfe6e9;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .qris-caption {
-            font-size: 11px;
-            color: #555;
-            margin-top: 10px;
-            margin-bottom: 15px;
-            font-weight: 600;
-            background: #f1f2f6;
-            padding: 5px 10px;
-            border-radius: 5px;
-            display: inline-block;
-        }
-
-        .close-btn {
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            width: 100%;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
     </style>
 </head>
-<body>
+<body id="main-body" class="w-full flex items-center justify-center text-white relative bg-gradient-to-br from-gray-900 to-black">
 
-    <header>
-        <span class="brain-icon">🧠</span>
-        <h1>Brain Gym</h1>
-        <p>7 Tantangan Asah Otak</p>
-    </header>
+    <!-- 1. Start Screen -->
+    <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in bg-black/40 backdrop-blur-sm">
+        <div class="mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-500 filter drop-shadow-lg">KEKACAUAN<br>WARNA</h1>
+            <p class="text-gray-300 text-sm mt-2 font-mono">Layout Fixed Edition</p>
+        </div>
+        
+        <div class="bg-gray-800/90 backdrop-blur p-4 rounded-xl max-w-xs w-full mb-6 text-left space-y-2 text-sm border border-gray-700 shadow-xl">
+            <p class="flex items-center"><span class="w-6 text-green-400 font-bold">✓</span> "Pilih WARNA" = Lihat Tinta</p>
+            <p class="flex items-center"><span class="w-6 text-pink-400 font-bold">✓</span> "Pilih TEKS" = Baca Kata</p>
+            <p class="flex items-center text-yellow-400 mt-2 pt-2 border-t border-gray-700 font-bold text-xs">
+                <span class="w-6 text-lg">🎲</span> Warna & Tema berubah tiap 50 poin!
+            </p>
+        </div>
 
-    <div class="scroll-area">
-        <div class="game-list">
+        <button onclick="startGame()" class="w-full max-w-xs py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full font-bold text-lg shadow-lg hover:scale-105 transition-transform active:scale-95 mb-4 border border-white/10">
+            MULAI GAME
+        </button>
+
+        <button onclick="showLeaderboard()" class="text-gray-300 hover:text-white text-sm underline flex items-center gap-2">
+            🏆 Lihat Top 10
+        </button>
+    </div>
+
+    <!-- 2. Leaderboard Screen -->
+    <div id="leaderboard-screen" class="hidden absolute inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center p-6">
+        <h2 class="text-3xl font-bold text-yellow-400 mb-6 flex items-center gap-2">🏆 Papan Peringkat</h2>
+        <div class="bg-gray-800 w-full max-w-md rounded-xl border border-gray-700 overflow-hidden shadow-2xl flex flex-col max-h-[60vh]">
+            <div class="grid grid-cols-3 bg-gray-700 p-3 font-bold text-xs uppercase tracking-wider text-gray-300">
+                <div class="text-center">#</div>
+                <div>Nama</div>
+                <div class="text-right">Skor</div>
+            </div>
+            <div id="leaderboard-list" class="overflow-y-auto custom-scroll p-0"></div>
+        </div>
+        <button onclick="closeLeaderboard()" class="mt-8 px-8 py-2 bg-gray-700 hover:bg-gray-600 rounded-full font-bold transition">Kembali</button>
+    </div>
+
+    <!-- 3. Game Over Screen -->
+    <div id="game-over-screen" class="hidden absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-6 text-center">
+        <div id="game-over-content">
+            <h2 class="text-4xl font-bold text-red-500 mb-2">Waktu Habis!</h2>
+            <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-xs mb-6 border border-gray-700 shadow-2xl mt-4 mx-auto">
+                <div class="text-gray-400 text-sm uppercase tracking-widest mb-1">Skor Kamu</div>
+                <div id="final-score" class="text-6xl font-bold text-white mb-2">0</div>
+            </div>
+            <div id="new-record-section" class="hidden mb-6 animate-bounce-in">
+                <p class="text-yellow-400 font-bold mb-2 text-lg">🎉 REKOR BARU! 🎉</p>
+                <input type="text" id="player-name-input" maxlength="10" placeholder="Ketik Nama" 
+                    class="w-56 px-4 py-3 bg-gray-900 border border-yellow-500 rounded-lg text-center text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3 uppercase">
+                <button onclick="saveRecord()" class="block w-full max-w-[200px] mx-auto py-2 mt-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg">SIMPAN</button>
+            </div>
+            <div id="standard-buttons">
+                <button onclick="startGame()" class="px-10 py-3 bg-white text-black font-bold rounded-full shadow-lg hover:bg-gray-200 transition mb-4 active:scale-95">Main Lagi</button><br>
+                <button onclick="showLeaderboard()" class="text-gray-500 hover:text-white text-sm underline">Lihat Peringkat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Main Game UI -->
+    <div id="game-ui" class="hidden w-full max-w-md h-full flex flex-col p-4 pb-8 safe-area-pb">
+        
+        <!-- Top Bar -->
+        <div class="w-full flex justify-between items-center mb-2 flex-none">
+            <div class="bg-black/40 backdrop-blur px-4 py-2 rounded-full border border-white/10 shadow-lg">
+                <span class="text-gray-300 text-xs uppercase mr-2">Skor</span>
+                <span id="score-display" class="font-bold text-xl text-white">0</span>
+            </div>
+            <div class="flex-1 mx-4 h-3 bg-black/40 rounded-full overflow-hidden border border-white/20 relative shadow-inner">
+                <div id="timer-bar" class="h-full bg-gradient-to-r from-green-500 to-yellow-400 w-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+            </div>
+        </div>
+
+        <!-- Central Challenge Area (Flexible Space) -->
+        <div class="flex-1 flex flex-col items-center justify-center relative min-h-0">
+            <!-- Instruksi digeser sedikit ke atas -->
+            <div class="mb-6 transform transition-all duration-300" id="instruction-container">
+                <span id="instruction-text" class="px-6 py-2 bg-black/60 backdrop-blur rounded-full text-base font-bold border border-white/20 text-gray-200 shadow-2xl block text-center">
+                    Pilih WARNA TINTA
+                </span>
+            </div>
             
-            <a href="game-matrix/index.html" class="game-card theme-matrix">
-                <div class="icon-box">▦</div>
-                <div class="content">
-                    <h3>Memori Matriks</h3>
-                    <span>Ingat pola kotak</span>
-                </div>
-                <div class="arrow">➔</div>
-            </a>
-
-            <a href="game-logic/index.html" class="game-card theme-logic">
-                <div class="icon-box">🎲</div>
-                <div class="content">
-                    <h3>Logic Cube</h3>
-                    <span>Teka-teki bangun ruang</span>
-                </div>
-                <div class="arrow">➔</div>
-            </a>
-
-            <a href="game-memory/index.html" class="game-card theme-memory">
-                <div class="icon-box">🃏</div>
-                <div class="content">
-                    <h3>Memory Match</h3>
-                    <span>Cari pasangan kartu</span>
-                </div>
-                <div class="arrow">➔</div>
-            </a>
-
-            <a href="game-color/index.html" class="game-card theme-chaos">
-                <div class="icon-box">🎨</div>
-                <div class="content">
-                    <h3>Kekacauan Warna</h3>
-                    <span>Warna vs Tulisan</span>
-                </div>
-                <div class="arrow">➔</div>
-            </a>
-
-            <a href="game-flow/index.html" class="game-card theme-flow">
-                <div class="icon-box">🌊</div>
-                <div class="content">
-                    <h3>Flow Master</h3>
-                    <span>Sambungkan aliran</span>
-                </div>
-                <div class="arrow">➔</div>
-            </a>
-
-            <a href="game-wordsearch/index.html" class="game-card theme-words">
-                <div class="icon-box">abc</div>
-                <div class="content">
-                    <h3>Cari Kata</h3>
-                    <span>Temukan kata tersembunyi</span>
-                </div>
-                <div class="arrow">➔</div>
-            </a>
-
-            <a href="game-solitaire/index.html" class="game-card theme-solitaire">
-                <div class="icon-box">♠️</div>
-                <div class="content">
-                    <h3>Solitaire Freecell</h3>
-                    <span>Strategi kartu klasik</span>
-                </div>
-                <div class="arrow">➔</div>
-            </a>
-
-        </div>
-    </div>
-
-    <div class="bottom-section">
-        <div class="action-container">
-            <button class="btn-action btn-install" id="installButton">
-                📲 Install App
-            </button>
+            <div id="challenge-word-container" class="w-full text-center flex items-center justify-center">
+                <h1 id="challenge-word" class="text-5xl md:text-6xl font-black tracking-wider drop-shadow-2xl transition-all duration-300 leading-tight">
+                    MERAH
+                </h1>
+            </div>
             
-            <button class="btn-action btn-donate" onclick="openDonation()">
-                ☕ Traktir Kopi
-            </button>
+            <div id="shuffle-notification" class="absolute bottom-4 text-yellow-300 text-xs font-bold opacity-0 transition-opacity duration-500 bg-black/50 px-3 py-1 rounded-full">
+                ⚡ WARNA DIACAK! ⚡
+            </div>
         </div>
 
-        <footer>
-            &copy; 2026 Brain Training Projects by Esel Store
-        </footer>
-    </div>
-
-    <div class="modal-overlay" id="donationModal">
-        <div class="modal-content">
-            <h2>Terima Kasih! ✨</h2>
-            <p class="desc">Dukungan Anda membantu saya membuat lebih banyak game gratis.</p>
-            <img src="qris.jpg" alt="Scan QRIS" class="qris-img">
-            <div class="qris-caption">Scan QRIS ini untuk kirim donasi</div>
-            <button class="close-btn" onclick="closeDonation()">Tutup</button>
+        <!-- Buttons Area (Fixed at bottom, but lifted slightly) -->
+        <div id="buttons-container" class="grid grid-cols-2 gap-3 mb-2 flex-none">
+            <!-- Buttons generated by JS -->
         </div>
     </div>
 
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- LOGIKA TOMBOL INSTALL ---
-        let deferredPrompt;
-        const installButton = document.getElementById('installButton');
+        // --- 1. CONFIGURATION ---
+        const MASTER_COLORS = {
+            merah:  { hex: '#ef4444', label: 'MERAH',  border: 'border-red-600', text: 'text-red-500' },
+            biru:   { hex: '#3b82f6', label: 'BIRU',   border: 'border-blue-600', text: 'text-blue-500' },
+            hijau:  { hex: '#22c55e', label: 'HIJAU',  border: 'border-green-600', text: 'text-green-500' },
+            kuning: { hex: '#eab308', label: 'KUNING', border: 'border-yellow-500', text: 'text-yellow-400' },
+            ungu:   { hex: '#a855f7', label: 'UNGU',   border: 'border-purple-600', text: 'text-purple-500' },
+            oranye: { hex: '#f97316', label: 'ORANYE', border: 'border-orange-600', text: 'text-orange-500' },
+            pink:   { hex: '#ec4899', label: 'PINK',   border: 'border-pink-600', text: 'text-pink-500' },
+            cyan:   { hex: '#06b6d4', label: 'CYAN',   border: 'border-cyan-600', text: 'text-cyan-400' }
+        };
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installButton.style.display = 'flex'; // Munculkan tombol
-        });
+        const THEME_CLASSES = [
+            "from-gray-900 to-black",
+            "from-blue-900 to-slate-900",
+            "from-emerald-900 to-gray-900",
+            "from-red-900 to-orange-950",
+            "from-fuchsia-900 to-purple-950",
+            "from-indigo-900 to-slate-950",
+            "from-pink-900 to-rose-950"
+        ];
 
-        installButton.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                installButton.style.display = 'none';
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-            }
-        });
+        const STORAGE_KEY = 'colorChaosHighScores_v5';
+        let maxTime = 3500; 
+        let minTimeLimit = 1300; 
 
-        window.addEventListener('appinstalled', () => {
-            installButton.style.display = 'none';
-            deferredPrompt = null;
-        });
+        // --- 2. STATE ---
+        let score = 0;
+        let timerInterval;
+        let isGameOver = false;
+        
+        let currentRule = 'color'; 
+        let activeKeys = [];
+        let currentWordKey = '';   
+        let currentColorKey = '';  
 
-        // --- LOGIKA POPUP DONASI ---
-        function openDonation() {
-            document.getElementById('donationModal').style.display = 'flex';
+        // --- 3. DOM ELEMENTS ---
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-ui'),
+            over: document.getElementById('game-over-screen'),
+            leaderboard: document.getElementById('leaderboard-screen')
+        };
+        const bodyEl = document.getElementById('main-body');
+        const elScore = document.getElementById('score-display');
+        const elTimerBar = document.getElementById('timer-bar');
+        const elInstruction = document.getElementById('instruction-text');
+        const elWord = document.getElementById('challenge-word');
+        const elWordContainer = document.getElementById('challenge-word-container');
+        const elButtonsContainer = document.getElementById('buttons-container');
+        const elShuffleNote = document.getElementById('shuffle-notification');
+
+        // --- 4. LOGIC UTAMA ---
+
+        function startGame() {
+            score = 0;
+            maxTime = 3500; 
+            isGameOver = false;
+
+            randomizeContext(); 
+            showScreen('game');
+            updateScoreUI();
+            
+            setTimeout(nextRound, 300);
         }
-        function closeDonation() {
-            document.getElementById('donationModal').style.display = 'none';
-        }
-        window.onclick = function(event) {
-            let modal = document.getElementById('donationModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
+
+        function randomizeContext() {
+            const randomTheme = THEME_CLASSES[Math.floor(Math.random() * THEME_CLASSES.length)];
+            bodyEl.className = `w-full flex items-center justify-center text-white relative bg-gradient-to-br ${randomTheme} h-[100dvh] overflow-hidden`;
+
+            const allKeys = Object.keys(MASTER_COLORS);
+            for (let i = allKeys.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allKeys[i], allKeys[j]] = [allKeys[j], allKeys[i]];
             }
+            activeKeys = allKeys.slice(0, 4); 
+
+            renderButtons();
+            
+            if(score > 0) {
+                elShuffleNote.style.opacity = '1';
+                setTimeout(() => elShuffleNote.style.opacity = '0', 1500);
+            }
+        }
+
+        function renderButtons() {
+            elButtonsContainer.innerHTML = ''; 
+            
+            activeKeys.forEach(key => {
+                const colorData = MASTER_COLORS[key];
+                const btn = document.createElement('button');
+                
+                // Styling: h-16 di mobile, h-20 di layar besar (md)
+                btn.className = `touch-manipulation h-16 md:h-20 bg-black/40 backdrop-blur border-b-4 rounded-xl active:scale-95 active:border-b-0 active:mt-1 transition-all flex items-center justify-center hover:bg-black/60 shadow-lg group fade-enter ${colorData.border}`;
+                btn.onclick = () => handleAnswer(key);
+                
+                const span = document.createElement('span');
+                span.className = `${colorData.text} font-bold text-xl md:text-2xl group-hover:scale-110 transition-transform`;
+                span.innerText = colorData.label;
+                
+                btn.appendChild(span);
+                elButtonsContainer.appendChild(btn);
+            });
+        }
+
+        function nextRound() {
+            if (isGameOver) return;
+
+            if (score > 0 && score % 50 === 0) {
+                randomizeContext();
+            }
+
+            const isColorRule = Math.random() > 0.5;
+            currentRule = isColorRule ? 'color' : 'text';
+
+            currentWordKey = activeKeys[Math.floor(Math.random() * activeKeys.length)];
+            
+            if (Math.random() > 0.2) { 
+                const conflicts = activeKeys.filter(k => k !== currentWordKey);
+                currentColorKey = conflicts[Math.floor(Math.random() * conflicts.length)];
+            } else {
+                currentColorKey = currentWordKey;
+            }
+
+            renderChallenge();
+
+            let timeDrop = (score / 10) * 40; 
+            let roundTime = Math.max(minTimeLimit, maxTime - timeDrop);
+            startTimer(roundTime);
+        }
+
+        function renderChallenge() {
+            if (currentRule === 'color') {
+                elInstruction.innerHTML = 'Pilih <span class="text-white border-b-2 border-purple-500">WARNA TINTA</span>';
+                elInstruction.className = "px-6 py-2 bg-black/60 backdrop-blur rounded-full text-base md:text-lg font-bold border-2 border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all block text-center";
+            } else {
+                elInstruction.innerHTML = 'Baca <span class="text-white border-b-2 border-blue-500">TULISAN KATA</span>';
+                elInstruction.className = "px-6 py-2 bg-black/60 backdrop-blur rounded-full text-base md:text-lg font-bold border-2 border-blue-500 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all block text-center";
+            }
+
+            elWord.innerText = MASTER_COLORS[currentWordKey].label;
+            elWord.style.color = MASTER_COLORS[currentColorKey].hex;
+            
+            elWordContainer.classList.remove('pop-in');
+            void elWordContainer.offsetWidth; 
+            elWordContainer.classList.add('pop-in');
+        }
+
+        function startTimer(duration) {
+            clearInterval(timerInterval);
+            let startTime = Date.now();
+            let endTime = startTime + duration;
+
+            elTimerBar.style.width = '100%';
+            elTimerBar.className = 'h-full w-full bg-gradient-to-r from-green-500 to-yellow-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]';
+
+            timerInterval = setInterval(() => {
+                let now = Date.now();
+                let remaining = endTime - now;
+                let percentage = (remaining / duration) * 100;
+
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    elTimerBar.style.width = '0%';
+                    handleGameOver();
+                } else {
+                    elTimerBar.style.width = percentage + '%';
+                    if (percentage < 30) {
+                        elTimerBar.className = 'h-full w-full bg-gradient-to-r from-red-600 to-red-400 shadow-[0_0_15px_rgba(239,68,68,0.8)]';
+                    }
+                }
+            }, 16);
+        }
+
+        function handleAnswer(selectedKey) {
+            if (isGameOver) return;
+
+            let correctKey = (currentRule === 'color') ? currentColorKey : currentWordKey;
+            
+            if (selectedKey === correctKey) {
+                score += 10;
+                updateScoreUI();
+                nextRound();
+            } else {
+                const buttons = elButtonsContainer.querySelectorAll('button');
+                const btnIndex = activeKeys.indexOf(selectedKey);
+                if(btnIndex !== -1 && buttons[btnIndex]) {
+                    buttons[btnIndex].classList.add('shake');
+                    setTimeout(() => buttons[btnIndex].classList.remove('shake'), 400);
+                }
+                
+                clearInterval(timerInterval);
+                setTimeout(handleGameOver, 400);
+            }
+        }
+
+        function updateScoreUI() { elScore.innerText = score; }
+        
+        function showScreen(name) {
+            Object.values(screens).forEach(s => s.classList.add('hidden'));
+            if(name === 'game') screens.game.classList.remove('hidden'), screens.game.classList.add('flex');
+            else if(name === 'over') screens.over.classList.remove('hidden'), screens.over.classList.add('flex');
+            else screens[name].classList.remove('hidden');
+        }
+
+        function handleGameOver() {
+            isGameOver = true;
+            clearInterval(timerInterval);
+            document.getElementById('final-score').innerText = score;
+            showScreen('over');
+
+            const scores = getScores();
+            const lowestTop10 = scores.length < 10 ? 0 : scores[scores.length - 1].score;
+            const newRecordSection = document.getElementById('new-record-section');
+            const standardButtons = document.getElementById('standard-buttons');
+            const nameInput = document.getElementById('player-name-input');
+
+            if (score > 0 && (scores.length < 10 || score > lowestTop10)) {
+                newRecordSection.classList.remove('hidden');
+                standardButtons.classList.add('hidden');
+                nameInput.value = '';
+                nameInput.focus();
+            } else {
+                newRecordSection.classList.add('hidden');
+                standardButtons.classList.remove('hidden');
+            }
+        }
+
+        function getScores() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function saveRecord() {
+            const nameInput = document.getElementById('player-name-input');
+            let name = nameInput.value.trim().toUpperCase().substring(0, 10) || "PLAYER";
+            
+            const newEntry = { name: name, score: score, date: new Date().toLocaleDateString() };
+            let scores = getScores();
+            scores.push(newEntry);
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 10);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+
+            document.getElementById('new-record-section').classList.add('hidden');
+            document.getElementById('standard-buttons').classList.remove('hidden');
+            showLeaderboard();
+        }
+
+        function showLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            const scores = getScores();
+            list.innerHTML = scores.length ? '' : '<div class="p-6 text-center text-gray-500 italic">Belum ada rekor.</div>';
+            
+            scores.forEach((s, index) => {
+                let rowClass = "grid grid-cols-3 p-3 border-b border-gray-700 items-center text-sm";
+                let rank = index + 1;
+                if (index === 0) { rowClass += " bg-yellow-900/30 text-yellow-300 font-bold"; rank = "🥇 1"; }
+                else if (index === 1) { rowClass += " text-gray-300"; rank = "🥈 2"; }
+                else if (index === 2) { rowClass += " text-yellow-700"; rank = "🥉 3"; }
+                else { rowClass += " text-gray-400"; }
+
+                list.innerHTML += `<div class="${rowClass}"><div class="text-center">${rank}</div><div class="truncate pr-2">${s.name}</div><div class="text-right font-mono text-white">${s.score}</div></div>`;
+            });
+            showScreen('leaderboard');
+        }
+
+        function closeLeaderboard() {
+            if (isGameOver && score > 0) showScreen('over');
+            else showScreen('start');
         }
     </script>
-
 </body>
 </html>
+
