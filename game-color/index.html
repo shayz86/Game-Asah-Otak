@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kekacauan Warna - Fixed Layout</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #18181b;
+            user-select: none;
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+            touch-action: manipulation;
+        }
+
+        .timer-bar { transition: width 0.1s linear; }
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%,90% { transform: translate3d(-1px,0,0); }
+            20%,80% { transform: translate3d(2px,0,0); }
+            30%,50%,70% { transform: translate3d(-4px,0,0); }
+            40%,60% { transform: translate3d(4px,0,0); }
+        }
+
+        .pop-in { animation: popIn 0.2s cubic-bezier(0.175,0.885,0.32,1.275); }
+        @keyframes popIn {
+            from { opacity:0; transform:scale(0.8); }
+            to { opacity:1; transform:scale(1); }
+        }
+
+        /* ===== FIX OVERLAY TOUCH (KUNCI UTAMA) ===== */
+        .screen-hidden {
+            pointer-events: none !important;
+        }
+        .screen-active {
+            pointer-events: auto !important;
+        }
+        button {
+            pointer-events: auto !important;
+        }
+        #buttons-container {
+            position: relative;
+            z-index: 20;
+        }
+    </style>
+</head>
+
+<body id="main-body" class="w-full flex items-center justify-center text-white relative bg-gradient-to-br from-gray-900 to-black">
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 text-center bg-black/40 backdrop-blur-sm">
+        <h1 class="text-4xl font-bold mb-6">KEKACAUAN WARNA</h1>
+        <button onclick="startGame()" class="px-8 py-3 bg-blue-600 rounded-full font-bold">
+            MULAI GAME
+        </button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over-screen" class="hidden absolute inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-6 text-center">
+        <h2 class="text-3xl font-bold text-red-500 mb-4">Game Over</h2>
+        <button onclick="startGame()" class="px-6 py-2 bg-white text-black rounded-full font-bold">
+            Main Lagi
+        </button>
+    </div>
+
+    <!-- GAME UI -->
+    <div id="game-ui" class="hidden w-full max-w-md h-full flex flex-col p-4 pb-8">
+        <div class="flex justify-between mb-4">
+            <div>Skor: <span id="score-display">0</span></div>
+            <div class="w-1/2 h-3 bg-gray-700 rounded">
+                <div id="timer-bar" class="h-full bg-green-500"></div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-center">
+            <h1 id="challenge-word" class="text-5xl font-bold mb-8">MERAH</h1>
+            <div id="buttons-container" class="grid grid-cols-2 gap-3 w-full"></div>
+        </div>
+    </div>
+
+    <script>
+        const MASTER_COLORS = {
+            merah: { hex:'#ef4444', label:'MERAH' },
+            biru: { hex:'#3b82f6', label:'BIRU' },
+            hijau: { hex:'#22c55e', label:'HIJAU' },
+            kuning: { hex:'#eab308', label:'KUNING' }
+        };
+
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-ui'),
+            over: document.getElementById('game-over-screen')
+        };
+
+        const elScore = document.getElementById('score-display');
+        const elWord = document.getElementById('challenge-word');
+        const elButtons = document.getElementById('buttons-container');
+
+        let score = 0;
+
+        /* ===== SHOW SCREEN (FIXED VERSION) ===== */
+        function showScreen(name) {
+            Object.values(screens).forEach(s => {
+                s.classList.add('hidden');
+                s.classList.remove('screen-active');
+                s.classList.add('screen-hidden');
+            });
+
+            const active = screens[name];
+            active.classList.remove('hidden');
+            active.classList.remove('screen-hidden');
+            active.classList.add('screen-active');
+
+            if (name === 'game') active.classList.add('flex');
+        }
+
+        function startGame() {
+            score = 0;
+            elScore.innerText = score;
+            showScreen('game');
+            nextRound();
+        }
+
+        function nextRound() {
+            const keys = Object.keys(MASTER_COLORS);
+            const correct = keys[Math.floor(Math.random() * keys.length)];
+            elWord.innerText = MASTER_COLORS[correct].label;
+            elWord.style.color = MASTER_COLORS[correct].hex;
+
+            elButtons.innerHTML = '';
+            keys.forEach(k => {
+                const btn = document.createElement('button');
+                btn.className = 'h-16 bg-black/40 rounded-xl font-bold';
+                btn.innerText = MASTER_COLORS[k].label;
+                btn.onclick = () => handleAnswer(k === correct);
+                elButtons.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(correct) {
+            if (correct) {
+                score += 10;
+                elScore.innerText = score;
+                nextRound();
+            } else {
+                showScreen('over');
+            }
+        }
+    </script>
+</body>
+</html>
