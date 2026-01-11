@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flow Master Premium</title>
+    <title>Flow Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* RESET */
+        /* RESET & LAYOUT */
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%; height: 100dvh;
             background-color: #0f172a; color: white; font-family: 'Fredoka', sans-serif;
@@ -49,13 +49,16 @@
         .overlay.show { display: flex; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { from{transform:scale(0.8);opacity:0;} to{transform:scale(1);opacity:1;} }
 
-        /* ANIMATION */
-        .anim-pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
-        .text-warn { color: #f87171; text-shadow: 0 0 10px rgba(248,113,113,0.5); }
+        /* DEBUG BOX (PENTING UNTUK DIAGNOSA) */
+        #debug-log {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: red; color: white;
+            font-size: 10px; padding: 2px; text-align: center; z-index: 9999; display: none;
+        }
     </style>
 </head>
 <body>
+
+    <div id="debug-log"></div>
 
     <div id="app-frame">
 
@@ -65,7 +68,7 @@
             <div class="mb-12 text-center">
                 <h1 class="text-7xl font-bold tracking-tighter mb-0 text-blue-500">FLOW</h1>
                 <h1 class="text-7xl font-bold tracking-tighter text-pink-500">MASTER</h1>
-                <div class="mt-4 bg-slate-800 px-4 py-1 rounded-full text-xs font-bold border border-slate-700 text-slate-400">CHALLENGE MODE</div>
+                <div class="mt-4 bg-slate-800 px-4 py-1 rounded-full text-xs font-bold border border-slate-700 text-slate-400">V25 • FINAL LOGIC</div>
             </div>
 
             <div class="w-full max-w-xs space-y-5">
@@ -92,21 +95,17 @@
                 <canvas id="gameCanvas" width="350" height="350"></canvas>
                 
                 <div id="overlay-win" class="overlay">
-                    <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 anim-pulse"></i>
-                    <h2 class="text-3xl font-bold text-white mb-2">SELESAI!</h2>
-                    <p class="text-slate-400 mb-6 text-xs text-center">Level Teratasi</p>
+                    <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 animate-pulse"></i>
+                    <h2 class="text-3xl font-bold text-white mb-2">SEMPURNA!</h2>
                     <button onclick="nextLevel()" ontouchstart="nextLevel()" class="btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700">LANJUT <i class="fas fa-arrow-right"></i></button>
                 </div>
 
                 <div id="overlay-lose" class="overlay">
-                    <i class="fas fa-times-circle text-6xl text-red-500 mb-4 anim-pulse"></i>
+                    <i class="fas fa-times-circle text-6xl text-red-500 mb-4 animate-pulse"></i>
                     <h2 class="text-3xl font-bold text-red-500 mb-2">WAKTU HABIS!</h2>
-                    <p class="text-slate-400 mb-6 text-xs text-center">Anda gagal menyelesaikan level.</p>
-                    
                     <div class="flex flex-col gap-3 w-full max-w-[200px]">
                         <button onclick="resetLevel()" ontouchstart="resetLevel()" class="btn-glow w-full bg-white text-slate-900 py-3 rounded-xl font-bold shadow-lg">COBA LAGI</button>
-                        <button onclick="showLeaderboard()" ontouchstart="showLeaderboard()" class="btn-glow w-full bg-slate-700 text-white py-3 rounded-xl font-bold border border-slate-600">LIHAT SKOR</button>
-                        <button onclick="goHome()" ontouchstart="goHome()" class="btn-glow w-full bg-slate-800 text-slate-400 py-3 rounded-xl font-bold border border-slate-700">MENU UTAMA</button>
+                        <button onclick="goHome()" ontouchstart="goHome()" class="btn-glow w-full bg-slate-800 text-slate-400 py-3 rounded-xl font-bold border border-slate-700">MENU</button>
                     </div>
                 </div>
             </div>
@@ -127,10 +126,17 @@
     </div>
 
     <script>
+        // ERROR HANDLING
+        window.onerror = function(msg, url, line) {
+            var el = document.getElementById('debug-log');
+            el.style.display = 'block';
+            el.innerHTML = "ERR: " + msg + " line " + line;
+        };
+
         // CONFIG
         var COLORS = { 1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8' };
         
-        // DATA LEVEL (Dengan Waktu per Level)
+        // LEVEL DATA
         var LEVELS = [
             {time: 20, size:5, grid:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
             {time: 30, size:5, grid:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
@@ -144,7 +150,7 @@
         var grid = [];
         var paths = {};
         var activeColor = null;
-        var isLocked = false; // Kunci input saat menang/kalah
+        var isLocked = false; 
         var timer = null;
         var timeLeft = 0;
         var canvas, ctx, cellSize, gridSize;
@@ -157,9 +163,11 @@
         }
 
         function startGame() {
-            currentLevel = 0;
-            switchScreen('screen-game');
-            setTimeout(function(){ loadLevel(0); }, 100);
+            try {
+                currentLevel = 0;
+                switchScreen('screen-game');
+                setTimeout(function(){ loadLevel(0); }, 50);
+            } catch(e) { alert("Start Error: " + e.message); }
         }
 
         function goHome() {
@@ -192,7 +200,7 @@
             paths = {};
             activeColor = null;
             isLocked = false;
-            timeLeft = lvl.time; // Set waktu dari config level
+            timeLeft = lvl.time;
 
             // Init Paths
             for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
@@ -204,7 +212,6 @@
             document.getElementById('ui-level').innerText = idx + 1;
             document.getElementById('overlay-win').classList.remove('show');
             document.getElementById('overlay-lose').classList.remove('show');
-            document.getElementById('win-overlay').style.display = 'none'; // Safety
             document.getElementById('overlay-win').style.display = 'none'; 
             document.getElementById('overlay-lose').style.display = 'none';
             
@@ -242,7 +249,7 @@
             draw();
         }
 
-        // --- INPUT & CUTTING LOGIC (FIXED FOR V23) ---
+        // --- INPUT & LOGIC ---
         function getPos(e) {
             var r = canvas.getBoundingClientRect();
             return {
@@ -262,13 +269,12 @@
             if(val > 0) {
                 activeColor = val;
                 
-                // Jika klik ENDPOINT -> Reset jalur
+                // Klik Endpoint -> Reset
                 if(base > 0) {
                     paths[val] = [{r:p.r, c:p.c}];
                     updateGrid();
                 } else {
-                    // Jika klik Jalur -> Potong (Resume)
-                    // (Logic ini otomatis memotong jalur sendiri jika diklik di tengah)
+                    // Klik Jalur -> Potong
                     var path = paths[val];
                     var idx = -1;
                     for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) idx=i;
@@ -295,7 +301,7 @@
                 var targetBase = LEVELS[currentLevel].grid[p.r][p.c];
                 var targetCurr = grid[p.r][p.c];
 
-                // 1. BACKTRACK (Mundur di jalur sendiri)
+                // 1. BACKTRACK
                 var selfIdx = -1;
                 for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) selfIdx=i;
                 if(selfIdx !== -1) {
@@ -303,32 +309,28 @@
                     updateGrid(); draw(); return;
                 }
 
-                // 2. CEK TABRAKAN
-                // Dilarang tabrak Endpoint Orang Lain
+                // 2. DEAD END CHECK (Fix for "Tembus" Issue)
+                var currentStandingBase = LEVELS[currentLevel].grid[last.r][last.c];
+                if(currentStandingBase === activeColor && path.length > 1) {
+                    return; // Sudah sampai tujuan, jangan gerak lagi
+                }
+
+                // 3. TABRAK BASE
                 if(targetBase > 0 && targetBase !== activeColor) return;
 
-                // 3. FITUR CUTTING (Potong Jalur Orang Lain)
+                // 4. CUTTING (Potong Lawan)
                 if(targetCurr > 0 && targetCurr !== activeColor) {
-                    // Kita akan menimpa jalur ini.
-                    // Cari warna apa yang kita tabrak
-                    var victimColor = targetCurr;
-                    var victimPath = paths[victimColor];
-                    
-                    // Potong jalur korban sampai SEBELUM titik ini
+                    var victimPath = paths[targetCurr];
                     var cutIdx = -1;
                     for(var j=0; j<victimPath.length; j++) {
                         if(victimPath[j].r === p.r && victimPath[j].c === p.c) { cutIdx = j; break; }
                     }
-                    
-                    if(cutIdx !== -1) {
-                        // Potong jalur korban
-                        paths[victimColor] = victimPath.slice(0, cutIdx);
-                    }
+                    if(cutIdx !== -1) paths[targetCurr] = victimPath.slice(0, cutIdx);
                 }
 
-                // Execute Move
+                // Move
                 path.push({r:p.r, c:p.c});
-                updateGrid(); // Ini akan merefresh grid berdasarkan path yang baru dipotong
+                updateGrid(); 
                 draw();
                 checkWin();
             }
@@ -338,11 +340,9 @@
 
         function updateGrid() {
             var base = LEVELS[currentLevel].grid;
-            // 1. Reset ke Base (0 atau endpoint)
             for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
                 grid[r][c] = (base[r][c] > 0) ? base[r][c] : 0;
             }
-            // 2. Timpa dengan Path
             for(var k in paths) {
                 var id = parseInt(k);
                 var p = paths[k];
@@ -387,13 +387,11 @@
             // 1. Cek Penuh
             for(var r=0; r<size; r++) for(var c=0; c<size; c++) if(grid[r][c] === 0) return;
 
-            // 2. Cek Koneksi (Head to Tail = Endpoint to Endpoint)
+            // 2. Cek Koneksi
             for(var k in paths) {
                 var p = paths[k];
                 if(p.length < 2) return;
-                
                 var h = p[0]; var t = p[p.length-1];
-                // Cek apakah Head & Tail berada di Endpoint (Base Grid)
                 if(base[h.r][h.c] != k || base[t.r][t.c] != k) return;
             }
 
@@ -401,7 +399,7 @@
             isLocked = true;
             clearInterval(timer);
             var el = document.getElementById('overlay-win');
-            el.style.display = 'flex'; // Force display
+            el.style.display = 'flex';
             el.classList.add('show');
             saveScore(currentLevel+1);
         }
@@ -414,17 +412,13 @@
             el.classList.add('show');
         }
 
-        // --- TIMER COUNTDOWN ---
         function startTimer() {
             clearInterval(timer);
             updateTimerDisplay();
-            
             timer = setInterval(function(){
                 timeLeft--;
                 updateTimerDisplay();
-                if(timeLeft <= 0) {
-                    gameOver();
-                }
+                if(timeLeft <= 0) gameOver();
             }, 1000);
         }
 
@@ -432,4 +426,25 @@
             var m = Math.floor(timeLeft/60).toString().padStart(2,'0');
             var s = (timeLeft%60).toString().padStart(2,'0');
             var el = document.getElementById('ui-timer');
-            el.
+            el.innerText = m+":"+s;
+            if(timeLeft <= 10) el.style.color = '#f87171';
+            else el.style.color = '#34d399';
+        }
+
+        function saveScore(lvl) {
+            var s = JSON.parse(localStorage.getItem('flowV25')||"[]");
+            var f = false;
+            for(var i=0; i<s.length; i++) if(s[i].n==='YOU') { s[i].l = Math.max(s[i].l, lvl); f=true; }
+            if(!f) s.push({n:'YOU', l:lvl});
+            localStorage.setItem('flowV25', JSON.stringify(s));
+        }
+
+        function renderLb() {
+            var s = JSON.parse(localStorage.getItem('flowV25')||"[]");
+            if(s.length===0) s=[{n:'PRO', l:50}];
+            s.sort(function(a,b){return b.l-a.l});
+            var l = document.getElementById('lb-list');
+            l.innerHTML = '';
+            for(var i=0; i<s.length; i++) {
+                var d = document.createElement('div');
+   
