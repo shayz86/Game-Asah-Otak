@@ -4,322 +4,272 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flow Master</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* CSS SAFETY */
-        html, body {
+        /* --- CSS WAJIB (JALAN TANPA INTERNET) --- */
+        * { box-sizing: border-box; }
+        
+        body {
             margin: 0; padding: 0;
-            width: 100%; height: 100%; height: 100dvh;
-            background-color: #0f172a;
+            width: 100vw; height: 100vh; height: 100dvh;
+            background-color: #0f172a; /* Dark Blue */
             color: white;
             font-family: 'Fredoka', sans-serif;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Allow touch default agar tombol jalan */
+            touch-action: manipulation; 
             user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
         }
 
-        /* Loading Screen */
-        #loader {
-            position: fixed; inset: 0;
+        #app-container {
+            width: 100%; max-width: 450px;
+            height: 100%; position: relative;
             background: #0f172a;
-            z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            flex-direction: column;
-            transition: opacity 0.5s;
         }
 
-        /* Screen System */
+        /* SCREEN SYSTEM */
         .screen {
-            display: none !important;
             position: absolute; inset: 0;
-            width: 100%; height: 100%;
+            display: none; /* Hidden by default */
             flex-direction: column;
             align-items: center; justify-content: center;
+            padding: 20px;
             z-index: 10;
-            background-color: #0f172a;
+            background: #0f172a;
         }
-        .screen.active {
-            display: flex !important;
-            z-index: 50;
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Canvas & Button Styles */
-        canvas {
-            background: #1e293b;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            touch-action: none;
-            cursor: crosshair;
-        }
-        .btn-glow {
-            position: relative; overflow: hidden;
-            transition: transform 0.1s; cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-glow:active { transform: scale(0.95); opacity: 0.9; }
         
-        .anim-float { animation: float 3s infinite ease-in-out; }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        /* Menu muncul duluan tanpa JS */
+        #screen-menu { display: flex; z-index: 50; }
+        
+        .screen.active { display: flex !important; z-index: 60; }
 
-        /* Debug Box */
-        #debug-log {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: rgba(0,0,0,0.8); color: #ff5555;
-            font-size: 10px; padding: 5px; text-align: center;
-            z-index: 10000; pointer-events: none;
-            font-family: monospace;
-            max-height: 50px; overflow: hidden;
+        /* CANVAS */
+        #canvas-wrapper {
+            background: #1e293b;
+            padding: 5px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin: 10px 0;
+        }
+        canvas {
+            border-radius: 12px;
+            display: block;
+            cursor: crosshair;
+            /* MATIKAN SCROLL HANYA DI CANVAS */
+            touch-action: none; 
+        }
+
+        /* TOMBOL (Native Style jika Tailwind Gagal) */
+        .btn {
+            background: #3b82f6; /* Blue */
+            color: white;
+            border: none;
+            border-bottom: 4px solid #1d4ed8;
+            padding: 15px 0;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: transform 0.1s;
+            position: relative;
+            z-index: 100; /* Pastikan tombol di atas */
+        }
+        .btn:active { transform: translateY(4px); border-bottom: 0; }
+        .btn-secondary { background: #334155; border-bottom: 4px solid #0f172a; }
+        
+        .icon-btn {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            border: 2px solid #334155;
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* DEBUG BAR */
+        #debug {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: red; color: white; font-size: 10px;
+            text-align: center; pointer-events: none; z-index: 9999;
+            display: none; /* Nyalakan via JS jika error */
         }
     </style>
 </head>
 <body>
 
-    <div id="debug-log">Status: Loading...</div>
+    <div id="debug">System Ready</div>
 
-    <div id="loader">
-        <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
-        <div class="text-sm text-slate-400">MEMUAT GAME...</div>
-    </div>
+    <div id="app-container">
 
-    <div id="screen-menu" class="screen">
-        <a href="../index.html" class="absolute top-6 left-6 bg-slate-800 px-4 py-2 rounded-full text-slate-300 font-bold text-sm no-underline btn-glow z-50">
-            <i class="fas fa-arrow-left mr-2"></i> Menu
-        </a>
+        <div id="screen-menu" class="screen">
+            <div style="margin-bottom: 40px; text-align: center;">
+                <h1 style="font-size: 50px; line-height: 1; color: #3b82f6; margin: 0;">FLOW</h1>
+                <h1 style="font-size: 50px; line-height: 1; color: #ec4899; margin: 0;">MASTER</h1>
+                <p style="color: #64748b; margin-top: 10px; letter-spacing: 2px;">V17 INSTANT</p>
+            </div>
 
-        <div class="mb-12 text-center anim-float">
-            <h1 class="text-6xl font-bold mb-0 leading-tight">
-                <span class="text-blue-500 block">FLOW</span>
-                <span class="text-pink-500 block">MASTER</span>
-            </h1>
-            <div class="mt-4 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 inline-block">
-                <span class="text-xs font-bold text-slate-400">V16 STABLE</span>
+            <div style="width: 100%; max-width: 280px;">
+                <button onclick="window.game.start()" class="btn">MAINKAN</button>
+                <button onclick="window.game.showLb()" class="btn btn-secondary">SKOR</button>
+                <a href="../index.html" class="btn btn-secondary" style="display:block; text-align:center; text-decoration:none; line-height:20px;">MENU UTAMA</a>
             </div>
         </div>
 
-        <div class="w-full max-w-xs space-y-4">
-            <button id="btn-start" class="btn-glow w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl shadow-lg border-b-4 border-blue-800 flex items-center justify-center gap-3">
-                <i class="fas fa-play"></i> MAINKAN
-            </button>
-            
-            <button id="btn-lb" class="btn-glow w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
-                <i class="fas fa-trophy text-yellow-500"></i> SKOR
-            </button>
-        </div>
-    </div>
-
-    <div id="screen-game" class="screen">
-        <div class="w-full max-w-md flex justify-between items-center mb-6 px-4">
-            <button id="btn-home" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-xl">
-                <i class="fas fa-home"></i>
-            </button>
-            
-            <div class="flex gap-3">
-                <div class="bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 flex flex-col items-center min-w-[60px]">
-                    <span class="text-[10px] text-slate-400 font-bold">LEVEL</span>
-                    <span id="ui-level" class="text-white font-bold text-lg leading-none">1</span>
+        <div id="screen-game" class="screen">
+            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 10px;">
+                <button onclick="window.game.menu()" class="icon-btn"><i class="fas fa-home"></i></button>
+                <div style="text-align: center;">
+                    <div style="font-size: 12px; color: #94a3b8;">LEVEL <span id="val-lvl" style="color:white; font-size:16px;">1</span></div>
+                    <div id="val-timer" style="font-family: monospace; color: #34d399;">00:00</div>
                 </div>
-                <div class="bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 flex flex-col items-center min-w-[70px]">
-                    <span class="text-[10px] text-slate-400 font-bold">WAKTU</span>
-                    <span id="ui-timer" class="text-emerald-400 font-bold text-lg leading-none font-mono">00:00</span>
-                </div>
-                <div class="bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 flex flex-col items-center min-w-[60px]">
-                    <span class="text-[10px] text-slate-400 font-bold">MOVES</span>
-                    <span id="ui-moves" class="text-blue-400 font-bold text-lg leading-none">0</span>
-                </div>
+                <button onclick="window.game.reset()" class="icon-btn"><i class="fas fa-undo"></i></button>
+            </div>
+
+            <div id="canvas-wrapper">
+                <canvas id="gameCanvas" width="350" height="350"></canvas>
+            </div>
+
+            <div id="win-panel" style="display:none; text-align: center; margin-top: 20px;">
+                <h2 style="color: #34d399; font-size: 24px; margin-bottom: 10px;">SELESAI!</h2>
+                <button onclick="window.game.next()" class="btn" style="background: #10b981; border-color: #047857;">LEVEL LANJUT</button>
             </div>
             
-            <button id="btn-reset" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-xl">
-                <i class="fas fa-undo"></i>
-            </button>
-        </div>
-
-        <div class="relative p-2 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-2xl">
-            <canvas id="gameCanvas" width="350" height="350"></canvas>
-            
-            <div id="win-overlay" class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center hidden z-50">
-                <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 anim-float"></i>
-                <h2 class="text-2xl font-bold text-white mb-2">SELESAI!</h2>
-                <button id="btn-next" class="mt-4 btn-glow bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-lg border-b-4 border-emerald-700 flex items-center gap-2">
-                    LANJUT <i class="fas fa-arrow-right"></i>
-                </button>
+            <div style="margin-top: 20px; font-size: 12px; color: #64748b; text-align: center;">
+                Hubungkan warna. Semua kotak harus terisi!
             </div>
         </div>
-        
-        <div class="mt-6 text-center text-slate-500 text-xs">Isi semua kotak & hubungkan warna!</div>
-    </div>
 
-    <div id="screen-lb" class="screen">
-        <h2 class="text-2xl font-bold text-yellow-500 mb-6 flex items-center gap-2"><i class="fas fa-trophy"></i> TOP SKOR</h2>
-        <div class="bg-slate-800 w-full max-w-md rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh] mx-4">
-            <div class="grid grid-cols-3 bg-slate-900 p-4 font-bold text-xs uppercase text-slate-400">
-                <div class="text-center">#</div> <div>Player</div> <div class="text-right">Level</div>
+        <div id="screen-lb" class="screen">
+            <h2 style="color: #eab308; margin-bottom: 20px;">🏆 TOP SKOR</h2>
+            <div style="background: #1e293b; width: 100%; border-radius: 12px; padding: 10px; flex: 1; max-height: 50%;">
+                <div id="lb-list" style="overflow-y: auto; height: 100%; font-size: 14px;"></div>
             </div>
-            <div id="lb-list" class="overflow-y-auto p-0 flex-1"></div>
+            <button onclick="window.game.menu()" class="btn btn-secondary" style="margin-top: 20px;">TUTUP</button>
         </div>
-        <button id="btn-close-lb" class="mt-6 px-10 py-3 bg-slate-700 rounded-full font-bold text-white shadow-lg border-b-4 border-slate-900 btn-glow">TUTUP</button>
+
     </div>
 
     <script>
-        // --- ERROR LOGGER (Agar kita tahu kenapa macet) ---
-        window.onerror = function(msg, url, line) {
-            document.getElementById('debug-log').innerHTML = "ERR: " + msg + " (" + line + ")";
-            return false;
+        // Error Handler
+        window.onerror = function(msg) {
+            var d = document.getElementById('debug');
+            d.style.display = 'block';
+            d.innerHTML = "ERR: " + msg;
         };
 
-        // --- VARS ---
-        var COLORS = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8'};
+        // --- DATA LEVEL ---
         var LEVELS = [
             {size:5, grid:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
             {size:5, grid:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
             {size:6, grid:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]},
+            {size:6, grid:[[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]]},
             {size:7, grid:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}
         ];
+        var COLORS = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8'};
 
-        var app = {
+        // --- GAME OBJECT ---
+        window.game = {
             lvl: 0,
             grid: [],
             paths: {},
-            color: null,
-            moves: 0,
+            active: null,
             done: false,
             timer: null,
-            t0: 0,
+            startT: 0,
             cvs: null,
             ctx: null,
             cell: 0,
-            
-            // --- INIT ---
+
+            // STARTUP
             init: function() {
-                try {
-                    this.cvs = document.getElementById('gameCanvas');
-                    this.ctx = this.cvs.getContext('2d');
-                    
-                    // Bind Buttons (Menggunakan addEventListener agar lebih aman)
-                    this.bind('btn-start', function() { app.start(); });
-                    this.bind('btn-lb', function() { app.showLb(); });
-                    this.bind('btn-home', function() { app.menu(); });
-                    this.bind('btn-reset', function() { app.load(app.lvl); });
-                    this.bind('btn-next', function() { app.next(); });
-                    this.bind('btn-close-lb', function() { app.menu(); });
-
-                    // Init Input Canvas
-                    this.initInput();
-                    
-                    // Sembunyikan Loader & Masuk Menu
-                    setTimeout(function(){
-                        document.getElementById('loader').style.opacity = '0';
-                        setTimeout(function(){ 
-                            document.getElementById('loader').style.display = 'none';
-                            app.switch('screen-menu');
-                            document.getElementById('debug-log').innerHTML = "Ready. v16";
-                        }, 500);
-                    }, 1000); // Delay 1 detik untuk memastikan CSS termuat
-
-                } catch(e) {
-                    document.getElementById('debug-log').innerHTML = "Init Err: " + e.message;
-                }
+                this.cvs = document.getElementById('gameCanvas');
+                this.ctx = this.cvs.getContext('2d');
+                
+                // Event Listeners (Passive false wajib untuk prevent scroll)
+                var self = this;
+                this.cvs.addEventListener('mousedown', function(e){ self.down(e); });
+                this.cvs.addEventListener('mousemove', function(e){ self.move(e); });
+                window.addEventListener('mouseup', function(){ self.up(); });
+                
+                this.cvs.addEventListener('touchstart', function(e){ 
+                    e.preventDefault(); 
+                    self.down(e.touches[0]); 
+                }, {passive: false});
+                
+                this.cvs.addEventListener('touchmove', function(e){ 
+                    e.preventDefault(); 
+                    self.move(e.touches[0]); 
+                }, {passive: false});
+                
+                window.addEventListener('touchend', function(){ self.up(); });
+                window.addEventListener('resize', function(){ self.resize(); });
             },
 
-            bind: function(id, fn) {
+            // SCREEN SWITCH
+            show: function(id) {
+                document.getElementById('screen-menu').style.display = 'none';
+                document.getElementById('screen-game').style.display = 'none';
+                document.getElementById('screen-lb').style.display = 'none';
+                
                 var el = document.getElementById(id);
-                if(el) {
-                    // Double bind untuk menjamin respon
-                    el.onclick = fn; 
-                    el.ontouchstart = function(e) { e.preventDefault(); fn(); };
-                }
+                el.style.display = 'flex';
+                
+                if(id === 'screen-game') setTimeout(function(){ window.game.resize(); }, 100);
             },
 
-            // --- NAV ---
-            switch: function(id) {
-                var screens = document.getElementsByClassName('screen');
-                for(var i=0; i<screens.length; i++) screens[i].classList.remove('active');
-                document.getElementById(id).classList.add('active');
-                if(id === 'screen-game') setTimeout(function(){ app.resize(); }, 100);
-            },
-
-            start: function() {
-                this.lvl = 0;
-                this.load(0);
-                this.switch('screen-game');
-            },
-
-            menu: function() {
-                clearInterval(this.timer);
-                this.switch('screen-menu');
-            },
-
-            showLb: function() {
-                this.renderLb();
-                this.switch('screen-lb');
-            },
-
+            // ACTIONS
+            start: function() { this.lvl=0; this.load(0); this.show('screen-game'); },
+            menu: function() { clearInterval(this.timer); this.show('screen-menu'); },
+            showLb: function() { this.renderLb(); this.show('screen-lb'); },
+            reset: function() { this.load(this.lvl); },
             next: function() {
                 this.lvl++;
-                if(this.lvl >= LEVELS.length) {
-                    alert("TAMAT!");
-                    this.menu();
-                } else {
-                    this.load(this.lvl);
-                }
+                if(this.lvl >= LEVELS.length) { alert("TAMAT!"); this.menu(); }
+                else this.load(this.lvl);
             },
 
-            // --- GAMEPLAY ---
+            // LOGIC
             load: function(idx) {
                 var l = LEVELS[idx];
                 this.grid = JSON.parse(JSON.stringify(l.grid));
                 this.paths = {};
-                this.color = null;
+                this.active = null;
                 this.done = false;
-                this.moves = 0;
 
-                var size = l.size;
-                for(var r=0; r<size; r++) {
-                    for(var c=0; c<size; c++) {
-                        var v = this.grid[r][c];
-                        if(v > 0) this.paths[v] = [];
-                    }
+                // Init paths
+                for(var r=0; r<l.size; r++) for(var c=0; c<l.size; c++) {
+                    var v = this.grid[r][c];
+                    if(v>0) this.paths[v] = [];
                 }
 
-                document.getElementById('ui-level').innerText = idx + 1;
-                document.getElementById('ui-moves').innerText = "0";
-                document.getElementById('ui-timer').innerText = "00:00";
-                document.getElementById('win-overlay').classList.add('hidden');
-
+                document.getElementById('val-lvl').innerText = idx+1;
+                document.getElementById('val-timer').innerText = "00:00";
+                document.getElementById('win-panel').style.display = 'none';
+                
                 this.resize();
-                this.timerGo();
+                this.startTimer();
                 this.save(idx);
             },
 
             resize: function() {
                 if(!this.cvs) return;
-                var w = Math.min(window.innerWidth - 40, 380);
-                this.cvs.width = w;
-                this.cvs.height = w;
-                this.cvs.style.width = w + 'px';
-                this.cvs.style.height = w + 'px';
+                var w = Math.min(window.innerWidth - 30, 380);
+                this.cvs.width = w; this.cvs.height = w;
+                this.cvs.style.width = w+'px'; this.cvs.style.height = w+'px';
                 
                 var size = LEVELS[this.lvl].size;
                 this.cell = w / size;
                 this.draw();
-            },
-
-            // --- INPUT ---
-            initInput: function() {
-                var self = this;
-                // Mouse
-                this.cvs.addEventListener('mousedown', function(e){ self.down(e); });
-                this.cvs.addEventListener('mousemove', function(e){ self.move(e); });
-                window.addEventListener('mouseup', function(){ self.up(); });
-                // Touch
-                this.cvs.addEventListener('touchstart', function(e){ e.preventDefault(); self.down(e.touches[0]); }, {passive:false});
-                this.cvs.addEventListener('touchmove', function(e){ e.preventDefault(); self.move(e.touches[0]); }, {passive:false});
-                window.addEventListener('touchend', function(){ self.up(); });
             },
 
             getPos: function(e) {
@@ -338,9 +288,8 @@
 
                 var base = LEVELS[this.lvl].grid;
                 var val = base[p.r][p.c] || this.grid[p.r][p.c];
-                
                 if(val > 0) {
-                    this.color = val;
+                    this.active = val;
                     this.paths[val] = [{r:p.r, c:p.c}];
                     this.updateG();
                     this.draw();
@@ -348,49 +297,44 @@
             },
 
             move: function(e) {
-                if(!this.color || this.done) return;
+                if(!this.active || this.done) return;
                 var p = this.getPos(e);
                 var size = LEVELS[this.lvl].size;
                 if(p.r<0 || p.r>=size || p.c<0 || p.c>=size) return;
 
-                var path = this.paths[this.color];
+                var path = this.paths[this.active];
                 var last = path[path.length-1];
 
                 if((last.r!==p.r || last.c!==p.c) && (Math.abs(last.r-p.r)+Math.abs(last.c-p.c)===1)) {
                     var base = LEVELS[this.lvl].grid;
-                    var tb = base[p.r][p.c];
-                    var tc = this.grid[p.r][p.c];
+                    var tb = base[p.r][p.c]; // Target Base
+                    var tc = this.grid[p.r][p.c]; // Target Current
 
                     // Backtrack
                     var idx = -1;
                     for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) idx=i;
                     
                     if(idx !== -1) {
-                        this.paths[this.color] = path.slice(0, idx+1);
-                        this.updateG();
-                        this.draw();
-                        return;
+                        this.paths[this.active] = path.slice(0, idx+1);
+                        this.updateG(); this.draw(); return;
                     }
 
-                    // Move
-                    if((tc===0 || tc===this.color) && (tb===0 || tb===this.color)) {
+                    // Forward
+                    if((tc===0 || tc===this.active) && (tb===0 || tb===this.active)) {
                         path.push({r:p.r, c:p.c});
-                        this.updateG();
-                        this.draw();
-                        this.check();
+                        this.updateG(); this.draw(); this.check();
                     }
                 }
             },
 
-            up: function() {
-                if(this.color) { this.moves++; document.getElementById('ui-moves').innerText = this.moves; this.color = null; }
-            },
+            up: function() { this.active = null; },
 
             updateG: function() {
                 var size = LEVELS[this.lvl].size;
                 var base = LEVELS[this.lvl].grid;
-                for(var r=0; r<size; r++) for(var c=0; c<size; c++) if(base[r][c]===0) this.grid[r][c] = 0;
-                
+                for(var r=0; r<size; r++) for(var c=0; c<size; c++) {
+                    if(base[r][c]===0) this.grid[r][c] = 0;
+                }
                 for(var k in this.paths) {
                     var id = parseInt(k);
                     var p = this.paths[k];
@@ -405,9 +349,9 @@
                 // Grid
                 this.ctx.strokeStyle = '#334155'; this.ctx.lineWidth = 1; this.ctx.beginPath();
                 for(var i=0; i<=size; i++) {
-                    var pos = i*this.cell;
-                    this.ctx.moveTo(pos,0); this.ctx.lineTo(pos,this.cvs.height);
-                    this.ctx.moveTo(0,pos); this.ctx.lineTo(this.cvs.width,pos);
+                    var p=i*this.cell;
+                    this.ctx.moveTo(p,0); this.ctx.lineTo(p,this.cvs.height);
+                    this.ctx.moveTo(0,p); this.ctx.lineTo(this.cvs.width,p);
                 }
                 this.ctx.stroke();
 
@@ -416,11 +360,11 @@
                     var p = this.paths[k];
                     if(p.length<2) continue;
                     this.ctx.strokeStyle = COLORS[k];
-                    this.ctx.lineWidth = this.cell*0.45;
+                    this.ctx.lineWidth = this.cell*0.4;
                     this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
                     this.ctx.beginPath();
-                    this.ctx.moveTo(p[0].c*this.cell + this.cell/2, p[0].r*this.cell + this.cell/2);
-                    for(var j=1; j<p.length; j++) this.ctx.lineTo(p[j].c*this.cell + this.cell/2, p[j].r*this.cell + this.cell/2);
+                    this.ctx.moveTo(p[0].c*this.cell+this.cell/2, p[0].r*this.cell+this.cell/2);
+                    for(var i=1; i<p.length; i++) this.ctx.lineTo(p[i].c*this.cell+this.cell/2, p[i].r*this.cell+this.cell/2);
                     this.ctx.stroke();
                 }
 
@@ -440,21 +384,57 @@
             check: function() {
                 var size = LEVELS[this.lvl].size;
                 var base = LEVELS[this.lvl].grid;
-                var full = true;
                 
-                for(var r=0; r<size; r++) for(var c=0; c<size; c++) if(base[r][c]===0 && this.grid[r][c]===0) full = false;
-                
-                if(full) {
-                    var allOk = true;
-                    // Simple connectivity check: paths must be >= 2 length
-                    // (Assuming visual check + full grid is enough for basic win)
-                    for(var k in this.paths) if(this.paths[k].length < 2) allOk = false;
+                // 1. Cek Full
+                for(var r=0; r<size; r++) for(var c=0; c<size; c++) {
+                    if(base[r][c]===0 && this.grid[r][c]===0) return;
+                }
 
-                    if(allOk) {
-                        this.done = true;
-                        clearInterval(this.timer);
-                        setTimeout(function(){
-                            document.getElementById('win-overlay').classList.remove('hidden');
-                            app.save(app.lvl+1);
-                        }, 200);
-                 
+                // 2. Cek Koneksi (Min path length 2 & all colors)
+                var colors = {};
+                for(var r=0; r<size; r++) for(var c=0; c<size; c++) if(base[r][c]>0) colors[base[r][c]]=true;
+                
+                for(var k in colors) {
+                    if(!this.paths[k] || this.paths[k].length<2) return;
+                }
+
+                this.done = true;
+                clearInterval(this.timer);
+                document.getElementById('win-panel').style.display = 'block';
+                this.save(this.lvl+1);
+            },
+
+            startTimer: function() {
+                clearInterval(this.timer);
+                this.startT = Date.now();
+                this.timer = setInterval(function(){
+                    var d = Math.floor((Date.now()-window.game.startT)/1000);
+                    var m = Math.floor(d/60).toString().padStart(2,'0');
+                    var s = (d%60).toString().padStart(2,'0');
+                    document.getElementById('val-timer').innerText = m+":"+s;
+                }, 1000);
+            },
+
+            save: function(lvl) {
+                var s = JSON.parse(localStorage.getItem('flowV17')||"[]");
+                var f=false;
+                for(var i=0; i<s.length; i++) if(s[i].n==='YOU') { s[i].l = Math.max(s[i].l, lvl); f=true; }
+                if(!f) s.push({n:'YOU', l:lvl});
+                localStorage.setItem('flowV17', JSON.stringify(s));
+            },
+
+            renderLb: function() {
+                var s = JSON.parse(localStorage.getItem('flowV17')||"[]");
+                if(s.length===0) s=[{n:'PRO', l:50}];
+                s.sort(function(a,b){return b.l-a.l});
+                var h = '';
+                for(var i=0; i<s.length; i++) h += '<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #334155;"><span>#'+(i+1)+' '+s[i].n+'</span><span style="color:#34d399">Lvl '+s[i].l+'</span></div>';
+                document.getElementById('lb-list').innerHTML = h;
+            }
+        };
+
+        // START
+        window.onload = function() { window.game.init(); };
+    </script>
+</body>
+</html>
