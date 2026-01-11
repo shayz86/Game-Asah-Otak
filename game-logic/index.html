@@ -9,43 +9,36 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; touch-action: none; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* Layer Game (3D) */
+        /* Z-INDEX SANGAT PENTING:
+           Layer 1: Game (Canvas)
+           Layer 10: UI HUD (Skor, Level)
+           Layer 50: Overlay Menu (Harus paling atas sebelum main)
+        */
         #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        
-        /* Layer UI (Overlay) - Penting: pointer-events none agar tembus pandang ke game */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        
-        /* Elemen Interaktif - Mengaktifkan klik pada tombol */
+        #overlay { position: absolute; inset: 0; z-index: 50; }
+
         .interactive { pointer-events: auto; cursor: pointer; }
         
         .instruction-card {
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
         }
-        .fade-text { transition: color 0.5s ease; }
     </style>
 </head>
 <body>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         <div class="flex justify-between items-start text-white w-full max-w-5xl mx-auto pointer-events-none">
-            
-            <div class="flex flex-col gap-2 items-start pointer-events-none">
-                <a href="../index.html" class="interactive flex items-center gap-2 bg-gray-800/80 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg border border-gray-600/50 text-xs font-bold transition no-underline backdrop-blur-md">
-                    <span>🏠</span> MENU UTAMA
-                </a>
-
-                <div class="mt-1">
-                    <h1 class="text-2xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 drop-shadow-sm">KUBUS LOGIKA</h1>
-                    <p class="text-sm font-medium text-gray-400">
-                        LEVEL <span id="level-display" class="text-xl text-white font-mono">1</span> <span class="text-gray-600">/ 50</span>
-                    </p>
-                    <p id="theme-name" class="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5 fade-text">Tema: Tutorial</p>
-                </div>
+            <div>
+                <h1 class="text-xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">KUBUS LOGIKA</h1>
+                <p class="text-sm font-medium text-gray-400">
+                    LEVEL <span id="level-display" class="text-xl text-white font-mono">1</span> <span class="text-gray-600">/ 50</span>
+                </p>
+                <p id="theme-name" class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Tema: Tutorial</p>
             </div>
-
             <div class="flex flex-col gap-2 items-end pointer-events-none">
                 <button id="reset-btn" class="interactive bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-xs font-bold transition backdrop-blur-sm border border-red-400/30">
                     ULANG (R)
@@ -56,400 +49,346 @@
             </div>
         </div>
 
-        <div id="overlay" class="absolute inset-0 flex items-center justify-center interactive bg-black/80 z-20 backdrop-blur-sm">
-            <div class="instruction-card p-8 rounded-3xl max-w-sm text-center text-white transform transition-all duration-300 mx-4">
-                <h2 id="overlay-title" class="text-4xl font-black mb-2 text-white">Mulai Misi</h2>
-                <div class="h-1 w-16 bg-gradient-to-r from-yellow-400 to-orange-500 mx-auto mb-4 rounded-full"></div>
-                
-                <p id="overlay-desc" class="mb-8 text-gray-300 text-sm leading-relaxed font-light">
-                    Nyalakan semua lantai menjadi <b class="text-yellow-400">EMAS</b>. <br>Jangan injak lantai emas dua kali!
-                </p>
-                
-                <div class="grid grid-cols-2 gap-3 text-xs text-gray-400 mb-8">
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/5">
-                        <span class="text-xl block mb-1">🎮</span>
-                        <span>WASD / Panah</span>
-                    </div>
-                    <div class="bg-white/5 p-3 rounded-xl border border-white/5">
-                        <span class="text-xl block mb-1">👆</span>
-                        <span>Swipe Layar</span>
-                    </div>
-                </div>
-
-                <button id="start-btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 ring-1 ring-white/20">
-                    MULAI MAIN
-                </button>
-            </div>
-        </div>
-        
         <div class="text-center pb-4 opacity-50 pointer-events-none">
             <p class="text-[10px] text-gray-400 uppercase tracking-widest">Geser area kosong untuk putar kamera</p>
+        </div>
+    </div>
+
+    <div id="overlay" class="flex items-center justify-center interactive bg-black/90 backdrop-blur-sm transition-opacity duration-300">
+        <div class="instruction-card p-8 rounded-3xl max-w-sm text-center text-white w-full mx-4 relative overflow-hidden">
+            
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+
+            <h2 id="overlay-title" class="text-4xl font-black mb-2 text-white mt-4">Mulai Misi</h2>
+            <div class="h-1 w-16 bg-gray-700 mx-auto mb-6 rounded-full"></div>
+            
+            <p id="overlay-desc" class="mb-6 text-gray-300 text-sm leading-relaxed font-light">
+                Nyalakan semua lantai menjadi <b class="text-yellow-400">EMAS</b>. <br>Jangan injak lantai emas dua kali!
+            </p>
+            
+            <div class="grid grid-cols-2 gap-3 text-xs text-gray-400 mb-8">
+                <div class="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <span class="text-xl block mb-1">🎮</span>
+                    <span>Panah / WASD</span>
+                </div>
+                <div class="bg-white/5 p-3 rounded-xl border border-white/5">
+                    <span class="text-xl block mb-1">👆</span>
+                    <span>Swipe Layar</span>
+                </div>
+            </div>
+
+            <button id="start-btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 ring-1 ring-white/20 mb-4">
+                MULAI MAIN
+            </button>
+
+            <a href="../index.html" class="block w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-3 px-8 rounded-xl border border-gray-700 transition-colors text-xs tracking-wider no-underline">
+                🏠 KEMBALI KE MENU UTAMA
+            </a>
+
         </div>
     </div>
 
     <div id="game-container"></div>
 
     <script>
-        // --- KONFIGURASI UMUM ---
-        const TILE_SIZE = 1.2;
-        const TOTAL_LEVELS = 50;
-        
-        // --- SISTEM TEMA WARNA ---
-        const THEMES = [
-            { name: "Neon City", bg: 0x0f172a, tile: 0x334155, on: 0xfacc15, player: 0x38bdf8, pEmit: 0x0ea5e9, fog: 0x0f172a }, // 1-10
-            { name: "Mars Base", bg: 0x2a0a0a, tile: 0x552222, on: 0xff5500, player: 0xffaa00, pEmit: 0xff4400, fog: 0x2a0a0a }, // 11-20
-            { name: "Cyber Jungle", bg: 0x052e16, tile: 0x14532d, on: 0x4ade80, player: 0x22d3ee, pEmit: 0x06b6d4, fog: 0x052e16 }, // 21-30
-            { name: "Deep Ocean", bg: 0x0c0a2a, tile: 0x1e1b4b, on: 0x818cf8, player: 0xf472b6, pEmit: 0xe879f9, fog: 0x0c0a2a }, // 31-40
-            { name: "Void Core", bg: 0x000000, tile: 0x262626, on: 0xffffff, player: 0xff0055, pEmit: 0xff0055, fog: 0x000000 }  // 41-50
-        ];
-
-        let currentTheme = THEMES[0];
-
-        // --- LEVEL GENERATOR ---
-        const staticLevels = [
-            { map: [[1,1,1],[1,1,1],[1,1,1]], start: {x:1, z:1} },
-            { map: [[1,1,1],[0,1,0],[0,1,0],[0,1,0]], start: {x:1, z:3} },
-            { map: [[1,0,1,1,1],[1,1,1,0,1],[0,0,1,1,1]], start: {x:0, z:0} },
-            { map: [[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,1,1,1]], start: {x:0, z:0} },
-            { map: [[1,1,1,0,1],[1,0,1,0,1],[1,0,1,1,1],[1,0,0,0,0],[1,1,1,1,1]], start: {x:0, z:0} }
-        ];
-
-        let levels = [...staticLevels];
-
-        function generateProceduralLevels() {
-            for (let i = 5; i < TOTAL_LEVELS; i++) {
-                levels.push(generateOneLevel(i));
-            }
-        }
-
-        function generateOneLevel(levelIndex) {
-            const size = Math.min(9, 4 + Math.floor(levelIndex / 8)); 
-            const minPath = 8 + levelIndex + Math.floor(levelIndex * 0.4); 
+        // Memastikan halaman selesai load sebelum menjalankan script
+        window.addEventListener('load', function() {
             
-            let map, startPos;
-            let success = false;
-            let attempts = 0;
+            // --- KONFIGURASI ---
+            const TILE_SIZE = 1.2;
+            const TOTAL_LEVELS = 50;
+            
+            // --- DATA ---
+            const THEMES = [
+                { name: "Neon City", bg: 0x0f172a, tile: 0x334155, on: 0xfacc15, player: 0x38bdf8, pEmit: 0x0ea5e9, fog: 0x0f172a },
+                { name: "Mars Base", bg: 0x2a0a0a, tile: 0x552222, on: 0xff5500, player: 0xffaa00, pEmit: 0xff4400, fog: 0x2a0a0a },
+                { name: "Cyber Jungle", bg: 0x052e16, tile: 0x14532d, on: 0x4ade80, player: 0x22d3ee, pEmit: 0x06b6d4, fog: 0x052e16 },
+                { name: "Deep Ocean", bg: 0x0c0a2a, tile: 0x1e1b4b, on: 0x818cf8, player: 0xf472b6, pEmit: 0xe879f9, fog: 0x0c0a2a },
+                { name: "Void Core", bg: 0x000000, tile: 0x262626, on: 0xffffff, player: 0xff0055, pEmit: 0xff0055, fog: 0x000000 }
+            ];
 
-            while (!success && attempts < 100) {
-                attempts++;
-                map = Array(size).fill().map(() => Array(size).fill(0));
+            let currentTheme = THEMES[0];
+            const staticLevels = [
+                { map: [[1,1,1],[1,1,1],[1,1,1]], start: {x:1, z:1} },
+                { map: [[1,1,1],[0,1,0],[0,1,0],[0,1,0]], start: {x:1, z:3} },
+                { map: [[1,0,1,1,1],[1,1,1,0,1],[0,0,1,1,1]], start: {x:0, z:0} },
+                { map: [[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,1,1,1]], start: {x:0, z:0} },
+                { map: [[1,1,1,0,1],[1,0,1,0,1],[1,0,1,1,1],[1,0,0,0,0],[1,1,1,1,1]], start: {x:0, z:0} }
+            ];
+            let levels = [...staticLevels];
+
+            // Procedural Gen
+            function generateProceduralLevels() {
+                for (let i = 5; i < TOTAL_LEVELS; i++) {
+                    const size = Math.min(9, 4 + Math.floor(i / 8)); 
+                    const minPath = 8 + i + Math.floor(i * 0.4); 
+                    let map, startPos, success = false, attempts = 0;
+
+                    while (!success && attempts < 100) {
+                        attempts++;
+                        map = Array(size).fill().map(() => Array(size).fill(0));
+                        let curr = { x: Math.floor(Math.random()*(size-2))+1, y: Math.floor(Math.random()*(size-2))+1 };
+                        startPos = { ...curr };
+                        let path = [curr];
+                        map[curr.y][curr.x] = 1;
+
+                        let stuck = false;
+                        while (path.length < minPath && !stuck) {
+                            let neighbors = [{x:0, y:-1}, {x:0, y:1}, {x:-1, y:0}, {x:1, y:0}]
+                                .map(d => ({x: curr.x + d.x, y: curr.y + d.y}))
+                                .filter(n => n.x >= 0 && n.x < size && n.y >= 0 && n.y < size && map[n.y][n.x] === 0);
+
+                            if (neighbors.length > 0) {
+                                let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                                map[next.y][next.x] = 1;
+                                path.push(next);
+                                curr = next;
+                            } else stuck = true;
+                        }
+                        if (path.length >= Math.max(6, minPath * 0.8)) success = true;
+                    }
+                    levels.push({ map: map, start: {x: startPos.x, z: startPos.y} });
+                }
+            }
+            generateProceduralLevels();
+
+            // --- THREEJS VARS ---
+            let scene, camera, renderer, playerMesh;
+            let tileMeshes = [];
+            let currentLevelIndex = 0;
+            let currentMap = [];
+            let playerPos = { x: 0, z: 0 };
+            let isMoving = false;
+            let isGameActive = false;
+            let cameraAngle = 0;
+            let cameraZoom = 14;
+            let isDragging = false;
+            let prevMouse = { x: 0, y: 0 };
+
+            // --- INIT ---
+            function initGame() {
+                const container = document.getElementById('game-container');
+                scene = new THREE.Scene();
                 
-                let curr = { 
-                    x: Math.floor(Math.random() * (size - 2)) + 1, 
-                    y: Math.floor(Math.random() * (size - 2)) + 1 
-                };
-                startPos = { ...curr };
+                camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
                 
-                let path = [curr];
-                map[curr.y][curr.x] = 1;
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
 
-                let stuck = false;
-                while (path.length < minPath && !stuck) {
-                    let neighbors = [
-                        {x:0, y:-1}, {x:0, y:1}, {x:-1, y:0}, {x:1, y:0}
-                    ].map(d => ({x: curr.x + d.x, y: curr.y + d.y}))
-                     .filter(n => n.x >= 0 && n.x < size && n.y >= 0 && n.y < size && map[n.y][n.x] === 0);
+                const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+                scene.add(ambient);
+                const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+                sun.position.set(10, 20, 10);
+                sun.castShadow = true;
+                sun.shadow.mapSize.width = 1024;
+                sun.shadow.mapSize.height = 1024;
+                scene.add(sun);
+                
+                window.addEventListener('resize', onWindowResize, false);
+                document.addEventListener('keydown', onKeyDown, false);
+                setupInputHandlers();
+                animate();
+                
+                // Load level 0 tapi jangan aktifkan game dulu (tunggu tombol start)
+                loadLevel(0);
+                isGameActive = false; 
+            }
 
-                    if (neighbors.length > 0) {
-                        let next = neighbors[Math.floor(Math.random() * neighbors.length)];
-                        map[next.y][next.x] = 1;
-                        path.push(next);
-                        curr = next;
-                    } else {
-                        stuck = true;
+            function applyTheme(idx) {
+                const themeIndex = Math.floor(idx / 10);
+                const theme = THEMES[Math.min(themeIndex, THEMES.length - 1)];
+                currentTheme = theme;
+                scene.background = new THREE.Color(theme.bg);
+                scene.fog = new THREE.Fog(theme.fog, 10, 40);
+                document.getElementById('theme-name').innerText = `TEMA: ${theme.name}`;
+                document.getElementById('theme-name').style.color = '#' + theme.on.toString(16);
+            }
+
+            function loadLevel(idx) {
+                if(playerMesh) scene.remove(playerMesh);
+                tileMeshes.forEach(m => scene.remove(m));
+                tileMeshes = [];
+
+                const levelData = levels[idx];
+                currentMap = JSON.parse(JSON.stringify(levelData.map));
+                playerPos = { ...levelData.start };
+                applyTheme(idx);
+
+                const h = currentMap.length; 
+                const w = currentMap[0].length;
+                const offX = (w*TILE_SIZE)/2 - (TILE_SIZE/2);
+                const offZ = (h*TILE_SIZE)/2 - (TILE_SIZE/2);
+                const geo = new THREE.BoxGeometry(TILE_SIZE*0.94, 0.3, TILE_SIZE*0.94);
+                
+                for(let z=0; z<h; z++) {
+                    for(let x=0; x<w; x++) {
+                        if(currentMap[z][x] !== 0) {
+                            const mat = new THREE.MeshStandardMaterial({ color: currentTheme.tile, roughness:0.3, metalness:0.2 });
+                            const tile = new THREE.Mesh(geo, mat);
+                            tile.position.set((x*TILE_SIZE)-offX, -0.15, (z*TILE_SIZE)-offZ);
+                            tile.receiveShadow = true; tile.castShadow = true;
+                            tile.userData = { gridX: x, gridZ: z, state: false };
+                            scene.add(tile);
+                            tileMeshes.push(tile);
+                        }
                     }
                 }
 
-                if (path.length >= Math.max(6, minPath * 0.8)) {
-                    success = true;
+                const pGeo = new THREE.SphereGeometry(TILE_SIZE*0.4, 32, 32);
+                const pMat = new THREE.MeshStandardMaterial({ color: currentTheme.player, emissive: currentTheme.pEmit, emissiveIntensity: 0.7, roughness:0.1 });
+                playerMesh = new THREE.Mesh(pGeo, pMat);
+                playerMesh.castShadow = true;
+                const startTile = getTileMesh(playerPos.x, playerPos.z);
+                if(startTile) {
+                    playerMesh.position.copy(startTile.position);
+                    playerMesh.position.y = TILE_SIZE*0.5;
+                    toggleTile(startTile, true);
+                }
+                scene.add(playerMesh);
+
+                document.getElementById('level-display').innerText = idx + 1;
+                const maxDim = Math.max(w, h);
+                cameraZoom = 10 + (maxDim * 0.8);
+                updateCameraPosition();
+            }
+
+            function getTileMesh(gx, gz) { return tileMeshes.find(t => t.userData.gridX === gx && t.userData.gridZ === gz); }
+            
+            function toggleTile(tile, skipAnim=false) {
+                if(!tile) return;
+                tile.userData.state = !tile.userData.state;
+                const isOn = tile.userData.state;
+                tile.material.color.setHex(isOn ? currentTheme.on : currentTheme.tile);
+                tile.material.emissive.setHex(isOn ? currentTheme.on : 0x000000);
+                tile.material.emissiveIntensity = isOn ? 0.6 : 0;
+
+                if(!skipAnim) {
+                    let f=0, baseY = -0.15;
+                    const anim = () => {
+                        if(f<8) { tile.position.y = baseY - 0.2 + Math.sin(f*0.5)*0.2; f++; requestAnimationFrame(anim); } 
+                        else tile.position.y = baseY;
+                    };
+                    anim();
                 }
             }
-            return { map: map, start: {x: startPos.x, z: startPos.y} };
-        }
 
-        generateProceduralLevels();
-
-        // --- GLOBAL VARS ---
-        let scene, camera, renderer;
-        let playerMesh, tileMeshes = [];
-        let currentLevelIndex = 0;
-        let currentMap = [];
-        let playerPos = { x: 0, z: 0 };
-        let isMoving = false;
-        let isGameActive = false;
-        
-        let cameraAngle = 0;
-        let cameraZoom = 14;
-        let isDragging = false;
-        let prevMouse = { x: 0, y: 0 };
-
-        // --- THREE.JS INIT ---
-        function init() {
-            const container = document.getElementById('game-container');
-            scene = new THREE.Scene();
-            
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            updateCameraPosition();
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
-            container.appendChild(renderer.domElement);
-
-            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambient);
-
-            const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-            sun.position.set(10, 20, 10);
-            sun.castShadow = true;
-            sun.shadow.mapSize.width = 1024;
-            sun.shadow.mapSize.height = 1024;
-            scene.add(sun);
-            
-            window.addEventListener('resize', onWindowResize, false);
-            document.addEventListener('keydown', onKeyDown, false);
-            setupInputHandlers();
-            
-            animate();
-        }
-
-        function applyTheme(levelIndex) {
-            const themeIndex = Math.floor(levelIndex / 10);
-            const theme = THEMES[Math.min(themeIndex, THEMES.length - 1)];
-            currentTheme = theme;
-
-            scene.background = new THREE.Color(theme.bg);
-            scene.fog = new THREE.Fog(theme.fog, 10, 40);
-
-            document.getElementById('theme-name').innerText = `TEMA: ${theme.name}`;
-            document.getElementById('theme-name').style.color = '#' + theme.on.toString(16);
-        }
-
-        function loadLevel(levelIndex) {
-            if (playerMesh) scene.remove(playerMesh);
-            tileMeshes.forEach(m => scene.remove(m));
-            tileMeshes = [];
-
-            const levelData = levels[levelIndex];
-            currentMap = JSON.parse(JSON.stringify(levelData.map));
-            playerPos = { ...levelData.start };
-            
-            applyTheme(levelIndex);
-
-            const h = currentMap.length;
-            const w = currentMap[0].length;
-            const offX = (w * TILE_SIZE) / 2 - (TILE_SIZE / 2);
-            const offZ = (h * TILE_SIZE) / 2 - (TILE_SIZE / 2);
-
-            const geo = new THREE.BoxGeometry(TILE_SIZE * 0.94, 0.3, TILE_SIZE * 0.94);
-            
-            for (let z = 0; z < h; z++) {
-                for (let x = 0; x < w; x++) {
-                    if (currentMap[z][x] !== 0) {
-                        const mat = new THREE.MeshStandardMaterial({ 
-                            color: currentTheme.tile, 
-                            roughness: 0.3, 
-                            metalness: 0.2 
+            function checkWin() {
+                const all = tileMeshes.length;
+                const active = tileMeshes.filter(t => t.userData.state).length;
+                if(active === all) {
+                    isGameActive = false;
+                    setTimeout(() => {
+                        const isNotLast = currentLevelIndex < TOTAL_LEVELS - 1;
+                        const title = isNotLast ? "LEVEL SELESAI!" : "MISI UTAMA SELESAI!";
+                        const desc = isNotLast ? `Siap untuk Level ${currentLevelIndex+2}?` : "Luar Biasa! 50 Level Selesai.";
+                        const btn = isNotLast ? "LANJUT" : "MAIN ULANG";
+                        
+                        showOverlay(title, desc, btn, () => {
+                            currentLevelIndex = isNotLast ? currentLevelIndex + 1 : 0;
+                            loadLevel(currentLevelIndex);
+                            hideOverlay();
+                            isGameActive = true;
                         });
-                        const tile = new THREE.Mesh(geo, mat);
-                        tile.position.set((x * TILE_SIZE) - offX, -0.15, (z * TILE_SIZE) - offZ);
-                        tile.receiveShadow = true;
-                        tile.castShadow = true;
-                        tile.userData = { gridX: x, gridZ: z, state: false };
-                        scene.add(tile);
-                        tileMeshes.push(tile);
-                    }
+                    }, 400);
                 }
             }
 
-            const pGeo = new THREE.SphereGeometry(TILE_SIZE * 0.4, 32, 32);
-            const pMat = new THREE.MeshStandardMaterial({ 
-                color: currentTheme.player, 
-                emissive: currentTheme.pEmit, 
-                emissiveIntensity: 0.7,
-                roughness: 0.1
-            });
-            playerMesh = new THREE.Mesh(pGeo, pMat);
-            playerMesh.castShadow = true;
-            
-            const startTile = getTileMesh(playerPos.x, playerPos.z);
-            if (startTile) {
-                playerMesh.position.copy(startTile.position);
-                playerMesh.position.y = TILE_SIZE * 0.5;
-                toggleTile(startTile, true);
+            function getRelativeDir(input) {
+                let theta = cameraAngle % (Math.PI*2);
+                if(theta < 0) theta += Math.PI*2;
+                const q = Math.round(theta / (Math.PI/2)) % 4;
+                let fwd = {x:0, z:-1}, rgt = {x:1, z:0};
+                if(q===1) {fwd={x:-1,z:0}; rgt={x:0,z:-1};}
+                else if(q===2) {fwd={x:0,z:1}; rgt={x:-1,z:0};}
+                else if(q===3) {fwd={x:1,z:0}; rgt={x:0,z:1};}
+                
+                if(input==='up') return fwd;
+                if(input==='down') return {x:-fwd.x, z:-fwd.z};
+                if(input==='right') return rgt;
+                if(input==='left') return {x:-rgt.x, z:-rgt.z};
+                return {x:0,z:0};
             }
-            scene.add(playerMesh);
 
-            document.getElementById('level-display').innerText = levelIndex + 1;
-            
-            const maxDim = Math.max(w, h);
-            const targetZoom = 10 + (maxDim * 0.8);
-            cameraZoom = targetZoom;
-            updateCameraPosition();
-        }
+            function move(dirStr) {
+                if(isMoving || !isGameActive) return;
+                const dir = getRelativeDir(dirStr);
+                const nx = playerPos.x + dir.x;
+                const nz = playerPos.z + dir.z;
 
-        function getTileMesh(gx, gz) {
-            return tileMeshes.find(t => t.userData.gridX === gx && t.userData.gridZ === gz);
-        }
+                if(nz<0 || nz>=currentMap.length || nx<0 || nx>=currentMap[0].length || currentMap[nz][nx]===0) {
+                    const start = playerMesh.position.clone();
+                    let i=0;
+                    const shake = () => {
+                        if(i<5){ playerMesh.position.x = start.x+(Math.random()-0.5)*0.15; playerMesh.position.z = start.z+(Math.random()-0.5)*0.15; i++; requestAnimationFrame(shake); }
+                        else playerMesh.position.copy(start);
+                    };
+                    shake(); return;
+                }
 
-        function toggleTile(tile, skipAnim = false) {
-            if (!tile) return;
-            tile.userData.state = !tile.userData.state;
-            
-            const isOn = tile.userData.state;
-            const targetColor = isOn ? currentTheme.on : currentTheme.tile;
-            const targetEmissive = isOn ? currentTheme.on : 0x000000;
-            const intensity = isOn ? 0.6 : 0;
-
-            tile.material.color.setHex(targetColor);
-            tile.material.emissive.setHex(targetEmissive);
-            tile.material.emissiveIntensity = intensity;
-
-            if (!skipAnim) {
-                let f = 0; const baseY = -0.15;
+                isMoving = true;
+                playerPos.x = nx; playerPos.z = nz;
+                const targetTile = getTileMesh(nx, nz);
+                const pStart = playerMesh.position.clone();
+                const pEnd = targetTile.position.clone(); pEnd.y = TILE_SIZE*0.5;
+                
+                let t=0;
                 const anim = () => {
-                    if (f < 8) {
-                        tile.position.y = baseY - 0.2 + Math.sin(f*0.5)*0.2;
-                        f++; requestAnimationFrame(anim);
-                    } else tile.position.y = baseY;
+                    t += 0.15; if(t>1) t=1;
+                    playerMesh.position.lerpVectors(pStart, pEnd, t);
+                    playerMesh.position.y = (TILE_SIZE*0.5)+Math.sin(t*Math.PI)*0.6;
+                    if(t<1) requestAnimationFrame(anim);
+                    else {
+                        isMoving=false; playerMesh.position.y = TILE_SIZE*0.5;
+                        toggleTile(targetTile);
+                        checkWin();
+                    }
                 };
                 anim();
             }
-        }
 
-        // --- LOGIC GAMEPLAY ---
-
-        function checkWin() {
-            const all = tileMeshes.length;
-            const active = tileMeshes.filter(t => t.userData.state).length;
-            
-            if (active === all) {
-                isGameActive = false;
-                setTimeout(() => {
-                    const isNotLast = currentLevelIndex < TOTAL_LEVELS - 1;
-                    const title = isNotLast ? "LEVEL SELESAI!" : "MISI UTAMA SELESAI!";
-                    const desc = isNotLast 
-                        ? `Kerja bagus! Siap untuk Level ${currentLevelIndex + 2}?` 
-                        : "Luar Biasa! Anda telah menaklukkan 50 level logika.";
-                    const btn = isNotLast ? "LANJUT LEVEL BERIKUTNYA" : "MAIN ULANG DARI AWAL";
-
-                    showOverlay(title, desc, btn, () => {
-                        currentLevelIndex = isNotLast ? currentLevelIndex + 1 : 0;
-                        loadLevel(currentLevelIndex);
-                        hideOverlay();
-                        isGameActive = true;
-                    });
-                }, 400);
-            }
-        }
-
-        function getRelativeDir(input) {
-            let theta = cameraAngle % (Math.PI * 2);
-            if (theta < 0) theta += Math.PI * 2;
-            const q = Math.round(theta / (Math.PI / 2)) % 4;
-            
-            let fwd = {x: 0, z: -1}; 
-            let rgt = {x: 1, z: 0};  
-
-            if (q === 1) { fwd = {x: -1, z: 0}; rgt = {x: 0, z: -1}; }
-            else if (q === 2) { fwd = {x: 0, z: 1}; rgt = {x: -1, z: 0}; }
-            else if (q === 3) { fwd = {x: 1, z: 0}; rgt = {x: 0, z: 1}; }
-
-            if (input === 'up') return fwd;
-            if (input === 'down') return {x: -fwd.x, z: -fwd.z};
-            if (input === 'right') return rgt;
-            if (input === 'left') return {x: -rgt.x, z: -rgt.z};
-            return {x:0,z:0};
-        }
-
-        function move(dirStr) {
-            if (isMoving || !isGameActive) return;
-
-            const dir = getRelativeDir(dirStr);
-            const nx = playerPos.x + dir.x;
-            const nz = playerPos.z + dir.z;
-
-            if (nz < 0 || nz >= currentMap.length || nx < 0 || nx >= currentMap[0].length || currentMap[nz][nx] === 0) {
-                const start = playerMesh.position.clone();
-                let i=0;
-                const shake = () => {
-                    if(i<5){
-                        playerMesh.position.x = start.x + (Math.random()-0.5)*0.15;
-                        playerMesh.position.z = start.z + (Math.random()-0.5)*0.15;
-                        i++; requestAnimationFrame(shake);
-                    } else playerMesh.position.copy(start);
-                };
-                shake();
-                return;
-            }
-
-            isMoving = true;
-            playerPos.x = nx;
-            playerPos.z = nz;
-            
-            const targetTile = getTileMesh(nx, nz);
-            const pStart = playerMesh.position.clone();
-            const pEnd = targetTile.position.clone();
-            pEnd.y = TILE_SIZE * 0.5;
-
-            let t = 0;
-            const anim = () => {
-                t += 0.15; 
-                if (t > 1) t = 1;
-                
-                playerMesh.position.lerpVectors(pStart, pEnd, t);
-                playerMesh.position.y = (TILE_SIZE * 0.5) + Math.sin(t * Math.PI) * 0.6; 
-
-                if (t < 1) requestAnimationFrame(anim);
-                else {
-                    isMoving = false;
-                    playerMesh.position.y = TILE_SIZE * 0.5;
-                    toggleTile(targetTile);
-                    checkWin();
+            function onKeyDown(e) {
+                if(e.key.toLowerCase()==='r') { if(isGameActive) loadLevel(currentLevelIndex); return; }
+                if(!isGameActive) return;
+                switch(e.key) {
+                    case 'ArrowUp': case 'w': move('up'); break;
+                    case 'ArrowDown': case 's': move('down'); break;
+                    case 'ArrowLeft': case 'a': move('left'); break;
+                    case 'ArrowRight': case 'd': move('right'); break;
                 }
-            };
-            anim();
-        }
-
-        // --- INPUTS ---
-        function onKeyDown(e) {
-            if (e.key.toLowerCase() === 'r') { resetLevel(); return; }
-            if (!isGameActive) return;
-            switch(e.key) {
-                case 'ArrowUp': case 'w': move('up'); break;
-                case 'ArrowDown': case 's': move('down'); break;
-                case 'ArrowLeft': case 'a': move('left'); break;
-                case 'ArrowRight': case 'd': move('right'); break;
             }
-        }
 
-        function setupInputHandlers() {
-            // Mouse Drag
-            document.addEventListener('mousedown', e => { 
-                if(e.target.closest('.interactive')) return; 
-                isDragging=true; prevMouse={x:e.clientX, y:e.clientY}; 
-            });
-            document.addEventListener('mouseup', () => isDragging=false);
-            document.addEventListener('mousemove', e => {
-                if (isDragging) {
-                    cameraAngle -= (e.clientX - prevMouse.x) * 0.005;
-                    updateCameraPosition();
-                    prevMouse = {x:e.clientX, y:e.clientY};
-                }
-            });
+            function setupInputHandlers() {
+                document.addEventListener('mousedown', e => { 
+                    if(e.target.closest('.interactive')) return; 
+                    isDragging=true; prevMouse={x:e.clientX, y:e.clientY}; 
+                });
+                document.addEventListener('mouseup', () => isDragging=false);
+                document.addEventListener('mousemove', e => {
+                    if(isDragging) {
+                        cameraAngle -= (e.clientX - prevMouse.x)*0.005;
+                        updateCameraPosition();
+                        prevMouse = {x:e.clientX, y:e.clientY};
+                    }
+                });
 
-            // Touch
-            let tx=0, ty=0;
-            document.addEventListener('touchstart', e => { 
-                if(e.target.closest('.interactive')) return;
-                tx=e.touches[0].clientX; ty=e.touches[0].clientY; 
-            }, {passive:false});
-            
-            document.addEventListener('touchend', e => {
-                if(e.target.closest('.interactive')) return;
-                const dx = e.changedTouches[0].clientX - tx;
-                const dy = e.changedTouches[0].clientY - ty;
-                if (Math.abs(dx)>30 || Math.abs(dy)>30) {
-                    if (Math.abs(dx) > Math.abs(dy)) move(dx>0?'
+                let tx=0, ty=0;
+                document.addEventListener('touchstart', e => { 
+                    if(e.target.closest('.interactive')) return;
+                    tx=e.touches[0].clientX; ty=e.touches[0].clientY; 
+                }, {passive:false});
+                document.addEventListener('touchend', e => {
+                    if(e.target.closest('.interactive')) return;
+                    const dx = e.changedTouches[0].clientX - tx;
+                    const dy = e.changedTouches[0].clientY - ty;
+                    if(Math.abs(dx)>30 || Math.abs(dy)>30) {
+                        if(Math.abs(dx)>Math.abs(dy)) move(dx>0?'right':'left');
+                        else move(dy>0?'down':'up');
+                    }
+                }, {passive:false});
+
+                document.getElementById('cam-reset-btn').addEventListener('click', () => { cameraAngle=0; updateCameraPosition(); });
+                document.getElementById('reset-btn').addEventListener('click', () => { if(isGameActive) loadLev
