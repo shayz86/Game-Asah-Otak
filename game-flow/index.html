@@ -9,17 +9,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. VISUAL & LAYOUT --- */
+        /* --- 1. SETTING UTAMA --- */
         html, body {
             margin: 0; padding: 0;
             width: 100%; height: 100%; height: 100dvh;
-            background-color: #0f172a; /* Slate 900 */
+            background-color: #0f172a;
             color: white;
             font-family: 'Fredoka', sans-serif;
             overflow: hidden;
             display: flex; justify-content: center; align-items: center;
             user-select: none; -webkit-user-select: none;
-            touch-action: manipulation; /* Tombol responsif */
+            touch-action: manipulation;
         }
 
         #app-frame {
@@ -27,41 +27,38 @@
             background: radial-gradient(circle at top, #1e293b, #0f172a);
         }
 
-        /* --- 2. SISTEM SCREEN (INSTANT V17) --- */
+        /* --- 2. SISTEM LAYAR --- */
         .screen {
             position: absolute; inset: 0;
-            display: none; /* Hidden by default */
+            display: none; /* Default Mati */
             flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; z-index: 10;
+            background-color: #0f172a; /* Mencegah layar bawah terlihat */
         }
         
-        /* Menu muncul duluan secara CSS (Anti-Loading) */
-        #screen-menu { display: flex; z-index: 50; }
-        .screen.active { display: flex !important; z-index: 60; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        #screen-menu { display: flex; z-index: 50; } /* Menu muncul duluan */
+        .screen.active { display: flex !important; z-index: 60; animation: fade 0.3s ease-out; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- 3. CANVAS & GAME ELEMENTS --- */
+        /* --- 3. KOMPONEN --- */
         canvas {
             background: #1e293b;
             border-radius: 16px;
             box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.6);
             border: 2px solid #334155;
-            touch-action: none; /* Matikan scroll HANYA di canvas */
+            touch-action: none; /* HANYA matikan touch di canvas */
             cursor: crosshair;
         }
 
-        /* Tombol Premium */
         .btn-glow {
-            transition: all 0.1s; cursor: pointer; position: relative;
-            overflow: hidden;
+            transition: transform 0.1s; cursor: pointer; position: relative;
+            -webkit-tap-highlight-color: transparent;
         }
-        .btn-glow:active { transform: scale(0.95); filter: brightness(1.1); }
+        .btn-glow:active { transform: scale(0.90); filter: brightness(1.2); }
 
-        /* Dekorasi */
         .anim-float { animation: float 3s ease-in-out infinite; }
         @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
         
-        /* Utility */
         .hide-scroll::-webkit-scrollbar { display: none; }
         .text-gradient { background: linear-gradient(to right, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
@@ -71,7 +68,7 @@
     <div id="app-frame">
 
         <div id="screen-menu" class="screen">
-            <a href="../index.html" class="absolute top-6 left-6 bg-slate-800/80 px-4 py-2 rounded-full text-slate-300 font-bold text-sm no-underline btn-glow z-50 border border-slate-700">
+            <a href="../index.html" class="absolute top-6 left-6 bg-slate-800/80 px-4 py-2 rounded-full text-slate-300 font-bold text-sm no-underline btn-glow border border-slate-700 z-50">
                 <i class="fas fa-arrow-left mr-2"></i> Menu
             </a>
 
@@ -87,37 +84,41 @@
                 </div>
             </div>
 
-            <div class="w-full max-w-xs space-y-5 relative z-20">
-                <button onclick="window.game.start()" class="btn-glow w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-indigo-900 flex items-center justify-center gap-3">
+            <div class="w-full max-w-xs space-y-5">
+                <button onclick="window.game.start()" ontouchstart="window.game.start()" class="btn-glow w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-indigo-900 flex items-center justify-center gap-3">
                     <i class="fas fa-play"></i> MAINKAN
                 </button>
                 
-                <button onclick="window.game.showLb()" class="btn-glow w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
+                <button onclick="window.game.showLb()" ontouchstart="window.game.showLb()" class="btn-glow w-full bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
                     <i class="fas fa-trophy text-yellow-400"></i> TOP SKOR
                 </button>
             </div>
             
-            <div class="mt-10 text-slate-600 text-xs font-mono relative z-10">V18.0 • FIXED & BEAUTIFUL</div>
+            <div class="mt-10 text-slate-600 text-xs font-mono">V19.0 • ALL BUTTONS FIXED</div>
         </div>
 
         <div id="screen-game" class="screen">
             <div class="w-full max-w-md flex justify-between items-center mb-6 px-4 z-20">
-                <button onclick="window.game.menu()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg">
+                <button onclick="window.game.menu()" ontouchstart="window.game.menu()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg">
                     <i class="fas fa-home"></i>
                 </button>
                 
                 <div class="flex gap-3">
-                    <div class="bg-slate-800/90 px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[70px]">
-                        <span class="text-[10px] text-slate-400 font-bold">LEVEL</span>
+                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[60px]">
+                        <span class="text-[9px] text-slate-400 font-bold">LEVEL</span>
                         <span id="ui-level" class="text-white font-bold text-lg leading-none">1</span>
                     </div>
-                    <div class="bg-slate-800/90 px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[80px]">
-                        <span class="text-[10px] text-slate-400 font-bold">WAKTU</span>
+                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[70px]">
+                        <span class="text-[9px] text-slate-400 font-bold">WAKTU</span>
                         <span id="ui-timer" class="text-emerald-400 font-bold text-lg leading-none font-mono">00:00</span>
+                    </div>
+                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[60px]">
+                        <span class="text-[9px] text-slate-400 font-bold">MOVES</span>
+                        <span id="ui-moves" class="text-blue-400 font-bold text-lg leading-none">0</span>
                     </div>
                 </div>
                 
-                <button onclick="window.game.reset()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg">
+                <button onclick="window.game.reset()" ontouchstart="window.game.reset()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg">
                     <i class="fas fa-undo"></i>
                 </button>
             </div>
@@ -130,14 +131,15 @@
                         <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 anim-float"></i>
                         <h2 class="text-3xl font-bold text-white mb-2">SEMPURNA!</h2>
                         <p class="text-slate-400 mb-6 text-sm">Semua kotak terisi penuh.</p>
-                        <button onclick="window.game.next()" class="btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700 flex items-center gap-2">
+                        
+                        <button onclick="window.game.next()" ontouchstart="window.game.next()" class="btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700 flex items-center gap-2">
                             LEVEL BERIKUTNYA <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 text-center text-slate-500 text-xs font-medium px-4 z-10 opacity-70">
+            <div class="mt-8 text-center text-slate-500 text-xs font-medium px-4 opacity-70">
                 Hubungkan warna yang sama. <br> Seluruh kotak harus terisi warna!
             </div>
         </div>
@@ -146,9 +148,9 @@
             <div class="bg-slate-800 w-full max-w-md rounded-3xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh] mx-4">
                 <div class="bg-slate-900 p-5 border-b border-slate-700 flex justify-between items-center">
                     <h2 class="text-xl font-bold text-yellow-500 flex items-center gap-2">
-                        <i class="fas fa-crown"></i> TOP 10 SKOR
+                        <i class="fas fa-crown"></i> TOP SKOR
                     </h2>
-                    <button onclick="window.game.menu()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition btn-glow">
+                    <button onclick="window.game.menu()" ontouchstart="window.game.menu()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition btn-glow">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -159,10 +161,8 @@
     </div>
 
     <script>
-        // CONFIG
         const COLORS = { 1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8' };
         
-        // LEVEL DATA
         const LEVELS = [
             {size:5, grid:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
             {size:5, grid:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
@@ -171,11 +171,10 @@
             {size:7, grid:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}
         ];
 
-        // GLOBAL GAME OBJECT
         window.game = {
             lvl: 0,
-            grid: [], // Grid saat ini (berubah)
-            paths: {}, // Menyimpan koordinat jalur per warna
+            grid: [],
+            paths: {},
             activeColor: null,
             done: false,
             timer: null,
@@ -192,19 +191,16 @@
                 window.addEventListener('resize', () => this.resize());
             },
 
-            // --- SCREEN MANAGEMENT ---
+            // --- NAVIGASI ---
             show: function(id) {
                 document.getElementById('screen-menu').style.display = 'none';
                 document.getElementById('screen-game').style.display = 'none';
                 document.getElementById('screen-lb').style.display = 'none';
-                
-                // Manual display flex (override CSS class)
                 document.getElementById(id).style.display = 'flex';
                 
                 if(id === 'screen-game') setTimeout(() => this.resize(), 50);
             },
 
-            // --- ACTIONS ---
             start: function() { this.lvl = 0; this.load(0); this.show('screen-game'); },
             menu: function() { clearInterval(this.timer); this.show('screen-menu'); },
             showLb: function() { this.renderLb(); this.show('screen-lb'); },
@@ -215,27 +211,26 @@
                 else this.load(this.lvl);
             },
 
-            // --- GAME LOGIC (FIXED) ---
+            // --- LOGIC ---
             load: function(idx) {
                 const l = LEVELS[idx];
-                // Deep Copy Grid Awal
                 this.grid = JSON.parse(JSON.stringify(l.grid));
                 this.paths = {};
                 this.activeColor = null;
                 this.done = false;
+                this.moves = 0;
 
-                // Init Paths dari Titik Awal
                 const size = l.size;
                 for(let r=0; r<size; r++) {
                     for(let c=0; c<size; c++) {
                         let v = this.grid[r][c];
-                        if(v > 0) this.paths[v] = []; // Wadah kosong untuk jalur
+                        if(v > 0) this.paths[v] = [];
                     }
                 }
 
-                // UI
                 document.getElementById('ui-level').innerText = idx + 1;
                 document.getElementById('ui-timer').innerText = "00:00";
+                document.getElementById('ui-moves').innerText = "0";
                 document.getElementById('win-overlay').classList.add('hidden');
                 
                 this.resize();
@@ -254,7 +249,7 @@
                 this.draw();
             },
 
-            // --- INPUT SYSTEM (MOUSE + TOUCH) ---
+            // --- INPUT ---
             initInput: function() {
                 const start = (e) => this.down(e);
                 const move = (e) => this.move(e);
@@ -277,26 +272,21 @@
                 };
             },
 
-            // --- MOVEMENT LOGIC (STRICT) ---
             down: function(e) {
                 if(this.done) return;
                 const p = this.getPos(e);
                 const size = LEVELS[this.lvl].size;
                 if(p.r<0 || p.r>=size || p.c<0 || p.c>=size) return;
 
-                // Cek apa isi cell saat ini
                 const val = this.grid[p.r][p.c];
-                const baseVal = LEVELS[this.lvl].grid[p.r][p.c]; // Cek titik awal asli
+                const baseVal = LEVELS[this.lvl].grid[p.r][p.c];
 
-                // Mulai gambar HANYA jika klik di Titik Awal ATAU Jalur yang sudah ada
                 if(val > 0) {
                     this.activeColor = val;
-                    // Jika klik di titik awal asli, reset jalur
                     if(baseVal > 0) {
                         this.paths[val] = [{r:p.r, c:p.c}];
                         this.updateGrid();
                     } else {
-                        // Jika klik di tengah jalur, potong jalur sampai sini (Resume drawing)
                         const path = this.paths[val];
                         const idx = path.findIndex(pt => pt.r === p.r && pt.c === p.c);
                         if(idx !== -1) {
@@ -317,13 +307,11 @@
                 const path = this.paths[this.activeColor];
                 const last = path[path.length-1];
 
-                // Cek Tetangga (Atas/Bawah/Kiri/Kanan)
                 if((last.r!==p.r || last.c!==p.c) && (Math.abs(last.r-p.r)+Math.abs(last.c-p.c)===1)) {
-                    
-                    const targetVal = this.grid[p.r][p.c]; // Isi cell tujuan
-                    const baseVal = LEVELS[this.lvl].grid[p.r][p.c]; // Apakah tujuan itu titik awal orang lain?
+                    const targetVal = this.grid[p.r][p.c];
+                    const baseVal = LEVELS[this.lvl].grid[p.r][p.c];
 
-                    // LOGIKA 1: BACKTRACK (Mundur Hapus Jalur)
+                    // Backtrack
                     const existingIdx = path.findIndex(pt => pt.r === p.r && pt.c === p.c);
                     if(existingIdx !== -1) {
                         this.paths[this.activeColor] = path.slice(0, existingIdx+1);
@@ -332,9 +320,7 @@
                         return;
                     }
 
-                    // LOGIKA 2: MAJU (Validasi Tabrakan)
-                    // Boleh masuk jika: KOSONG (0) ATAU Warna Sendiri (Self)
-                    // DILARANG jika: Nabrak Titik Awal Orang Lain (baseVal != 0 dan != activeColor)
+                    // Forward
                     if((targetVal === 0 || targetVal === this.activeColor) && (baseVal === 0 || baseVal === this.activeColor)) {
                         path.push({r:p.r, c:p.c});
                         this.updateGrid();
@@ -344,35 +330,33 @@
                 }
             },
 
-            up: function() { this.activeColor = null; },
+            up: function() { 
+                if(this.activeColor) {
+                    this.moves++;
+                    document.getElementById('ui-moves').innerText = this.moves;
+                    this.activeColor = null; 
+                }
+            },
 
-            // --- HELPER: UPDATE GRID FROM PATHS ---
             updateGrid: function() {
                 const size = LEVELS[this.lvl].size;
                 const base = LEVELS[this.lvl].grid;
-                
-                // 1. Reset Grid ke Base Level (Hapus semua jalur lama)
                 for(let r=0; r<size; r++) {
                     for(let c=0; c<size; c++) {
                         this.grid[r][c] = (base[r][c] > 0) ? base[r][c] : 0;
                     }
                 }
-
-                // 2. Gambar ulang jalur dari data 'paths'
                 for(const [k, path] of Object.entries(this.paths)) {
                     const id = parseInt(k);
-                    path.forEach(pt => {
-                        this.grid[pt.r][pt.c] = id;
-                    });
+                    path.forEach(pt => { this.grid[pt.r][pt.c] = id; });
                 }
             },
 
-            // --- RENDERER (GLOWING STYLE) ---
             draw: function() {
                 const size = LEVELS[this.lvl].size;
                 this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
                 
-                // Grid Lines
+                // Grid
                 this.ctx.strokeStyle = '#334155'; this.ctx.lineWidth = 1; this.ctx.beginPath();
                 for(let i=0; i<=size; i++) {
                     let p=i*this.cell;
@@ -381,25 +365,22 @@
                 }
                 this.ctx.stroke();
 
-                // Draw Paths
+                // Path
                 for(const [k, path] of Object.entries(this.paths)) {
                     if(path.length < 2) continue;
                     const color = COLORS[k];
                     this.ctx.strokeStyle = color;
                     this.ctx.lineWidth = this.cell * 0.45;
                     this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
-                    this.ctx.shadowBlur = 15; this.ctx.shadowColor = color; // Glow Effect
-                    
+                    this.ctx.shadowBlur = 15; this.ctx.shadowColor = color;
                     this.ctx.beginPath();
                     this.ctx.moveTo(path[0].c*this.cell+this.cell/2, path[0].r*this.cell+this.cell/2);
-                    for(let i=1; i<path.length; i++) {
-                        this.ctx.lineTo(path[i].c*this.cell+this.cell/2, path[i].r*this.cell+this.cell/2);
-                    }
+                    for(let i=1; i<path.length; i++) this.ctx.lineTo(path[i].c*this.cell+this.cell/2, path[i].r*this.cell+this.cell/2);
                     this.ctx.stroke();
-                    this.ctx.shadowBlur = 0; // Reset glow
+                    this.ctx.shadowBlur = 0;
                 }
 
-                // Draw Endpoints
+                // Dots
                 const base = LEVELS[this.lvl].grid;
                 for(let r=0; r<size; r++) for(let c=0; c<size; c++) {
                     let v = base[r][c];
@@ -409,7 +390,27 @@
                         this.ctx.beginPath();
                         this.ctx.arc(cx, cy, this.cell*0.3, 0, Math.PI*2);
                         this.ctx.fill();
-                        // Inner Dot
                         this.ctx.fillStyle = 'rgba(255,255,255,0.4)';
                         this.ctx.beginPath();
- 
+                        this.ctx.arc(cx, cy, this.cell*0.1, 0, Math.PI*2);
+                        this.ctx.fill();
+                    }
+                }
+            },
+
+            checkWin: function() {
+                const size = LEVELS[this.lvl].size;
+                const base = LEVELS[this.lvl].grid;
+                for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(this.grid[r][c] === 0) return;
+                for(let k in this.paths) if(this.paths[k].length < 2) return;
+
+                this.done = true;
+                clearInterval(this.timer);
+                document.getElementById('win-overlay').classList.remove('hidden');
+                this.save(this.lvl+1);
+            },
+
+            startTimer: function() {
+                clearInterval(this.timer);
+                this.startTime = Date.now();
+                this.timer = set
