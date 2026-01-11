@@ -9,57 +9,49 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
 
-        /* RESET */
+        /* --- 1. RESET & LAYOUT --- */
         html, body {
-            width: 100%; height: 100%;
+            width: 100%; height: 100%; height: 100dvh;
             margin: 0; padding: 0;
-            overflow: hidden; /* Tetap disable scroll bar */
+            overflow: hidden;
             background-color: #0f172a;
             font-family: 'Fredoka', sans-serif;
             color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* PENTING: Jangan matikan touch-action di body agar tombol jalan */
-            user-select: none;
+            display: flex; justify-content: center; align-items: center;
+            user-select: none; -webkit-user-select: none;
         }
 
-        /* CONTAINER APLIKASI */
         #app-frame {
-            width: 100%; max-width: 480px;
-            height: 100%; position: relative;
+            width: 100%; max-width: 480px; height: 100%; position: relative;
         }
 
-        /* LAYAR (SCREEN) */
+        /* --- 2. LAYAR (SCREEN SYSTEM) --- */
         .game-screen {
             display: none !important;
             position: absolute; inset: 0;
-            flex-direction: column;
-            align-items: center; justify-content: center;
-            padding: 20px;
-            z-index: 10;
-            background-color: #0f172a; /* Pastikan background menutup layar lain */
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; z-index: 10;
+            background-color: #0f172a;
         }
-        .game-screen.active { display: flex !important; z-index: 50; }
+        .game-screen.active {
+            display: flex !important; z-index: 50;
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* CANVAS (Area Gambar) */
+        /* --- 3. CANVAS --- */
         canvas {
-            border-radius: 16px;
+            border-radius: 12px;
             background: #1e293b;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            /* HANYA matikan touch di canvas agar bisa menggambar */
-            touch-action: none; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            touch-action: none; /* Wajib agar bisa menggambar di HP */
             cursor: crosshair;
         }
 
-        /* TOMBOL (Dipaksa Interactive) */
+        /* --- 4. TOMBOL --- */
         .btn-interactive {
-            cursor: pointer;
-            position: relative;
-            z-index: 100; /* Paling atas */
-            touch-action: manipulation; /* Optimasi klik HP */
+            cursor: pointer; position: relative;
             transition: transform 0.1s;
-            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
         .btn-interactive:active { transform: scale(0.95); }
@@ -67,21 +59,11 @@
         /* UTILS */
         .text-gradient {
             background: linear-gradient(to right, #3b82f6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        
-        .bg-orb {
-            position: absolute; border-radius: 50%;
-            filter: blur(80px); opacity: 0.3; pointer-events: none; z-index: 0;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
 <body>
-
-    <div class="bg-orb bg-blue-600 w-64 h-64 top-[-50px] left-[-50px]"></div>
-    <div class="bg-orb bg-pink-600 w-64 h-64 bottom-[-50px] right-[-50px]"></div>
 
     <div id="app-frame">
 
@@ -90,53 +72,48 @@
                 <i class="fas fa-arrow-left mr-2"></i> Menu
             </a>
 
-            <div class="mb-12 text-center relative z-10">
-                <h1 class="text-6xl font-bold mb-0 leading-tight">
+            <div class="mb-12 text-center">
+                <h1 class="text-6xl font-bold leading-tight">
                     <span class="text-blue-500 block">FLOW</span>
                     <span class="text-pink-500 block">MASTER</span>
                 </h1>
-                <div class="mt-4 inline-block bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                <div class="mt-4 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 inline-block">
                     <span class="text-xs font-bold text-slate-400 tracking-widest">PUZZLE EDITION</span>
                 </div>
             </div>
 
-            <div class="w-full max-w-xs space-y-4 relative z-20">
+            <div class="w-full max-w-xs space-y-4">
                 <button onclick="window.game.start()" class="btn-interactive w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl shadow-lg border-b-4 border-blue-800 flex items-center justify-center gap-3">
                     <i class="fas fa-play"></i> MAINKAN
                 </button>
-                
                 <button onclick="window.game.showLb()" class="btn-interactive w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
-                    <i class="fas fa-trophy text-yellow-500"></i> SKOR
+                    <i class="fas fa-trophy text-yellow-500"></i> TOP SKOR
                 </button>
             </div>
-            
-            <div class="mt-8 text-slate-600 text-xs font-mono relative z-10">V10.0 • FIXED CLICK</div>
+            <div class="mt-8 text-slate-600 text-xs">V11.0 • FULL GRID RULE</div>
         </div>
-
 
         <div id="screen-game" class="game-screen">
             <div class="w-full flex justify-between items-center mb-4 px-2">
                 <button onclick="window.game.menu()" class="btn-interactive w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-xl">
                     <i class="fas fa-home"></i>
                 </button>
-                
                 <div class="flex flex-col items-center">
                     <h2 class="text-xl font-bold text-white tracking-widest">LEVEL <span id="ui-level">1</span></h2>
-                    <div class="text-xs text-blue-400 font-mono" id="ui-timer">00:00</div>
+                    <div class="text-xs text-emerald-400 font-mono" id="ui-timer">00:00</div>
                 </div>
-                
                 <button onclick="window.game.reset()" class="btn-interactive w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-xl">
                     <i class="fas fa-undo"></i>
                 </button>
             </div>
 
-            <div class="relative p-3 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-2xl">
+            <div class="relative p-2 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-2xl">
                 <canvas id="gameCanvas" width="350" height="350"></canvas>
                 
                 <div id="overlay-win" class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center hidden z-50">
                     <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 animate-bounce"></i>
-                    <h2 class="text-2xl font-bold text-white mb-2">SELESAI!</h2>
-                    <p class="text-slate-400 mb-6 text-sm">Langkah: <span id="ui-moves" class="text-white font-bold">0</span></p>
+                    <h2 class="text-2xl font-bold text-white mb-2">SEMPURNA!</h2>
+                    <p class="text-slate-400 mb-6 text-sm">Semua kotak terisi penuh.</p>
                     <button onclick="window.game.next()" class="btn-interactive bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-lg border-b-4 border-emerald-700">
                         LANJUT <i class="fas fa-arrow-right ml-2"></i>
                     </button>
@@ -144,10 +121,9 @@
             </div>
 
             <div class="mt-6 text-center text-slate-500 text-sm font-medium px-4">
-                Hubungkan titik warna yang sama.<br>Garis tidak boleh bertabrakan.
+                Hubungkan warna & penuhi seluruh kotak!
             </div>
         </div>
-
 
         <div id="screen-lb" class="game-screen">
             <h2 class="text-2xl font-bold text-yellow-500 mb-6 flex items-center gap-2">
@@ -155,11 +131,9 @@
             </h2>
             <div class="bg-slate-800 w-full rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh]">
                 <div class="grid grid-cols-3 bg-slate-900 p-4 font-bold text-xs uppercase text-slate-400">
-                    <div class="text-center">#</div>
-                    <div>Nama</div>
-                    <div class="text-right">Level</div>
+                    <div class="text-center">#</div> <div>Nama</div> <div class="text-right">Level</div>
                 </div>
-                <div id="lb-list" class="overflow-y-auto p-0 flex-1 hide-scroll"></div>
+                <div id="lb-list" class="overflow-y-auto p-0 flex-1"></div>
             </div>
             <button onclick="window.game.menu()" class="btn-interactive mt-6 px-10 py-3 bg-slate-700 rounded-full font-bold text-white shadow-lg border-b-4 border-slate-900">
                 TUTUP
@@ -169,11 +143,11 @@
     </div>
 
     <script>
-        // CONFIG
         const COLORS = {
             1: '#ef4444', 2: '#3b82f6', 3: '#22c55e', 4: '#eab308', 
             5: '#d946ef', 6: '#f97316', 7: '#06b6d4', 8: '#94a3b8'
         };
+        
         const LEVELS = [
             { size: 5, grid: [[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]] },
             { size: 5, grid: [[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]] },
@@ -182,68 +156,77 @@
             { size: 7, grid: [[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]] }
         ];
 
-        // --- GAME LOGIC CLASS ---
         class FlowGame {
             constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
                 this.state = {
                     lvlIdx: 0,
                     grid: [],
                     paths: {},
                     activeColor: null,
-                    moves: 0,
                     completed: false,
                     timer: null,
                     timeStart: 0
                 };
-                this.canvas = document.getElementById('gameCanvas');
-                this.ctx = this.canvas.getContext('2d');
                 this.cellSize = 0;
                 
-                this.initEvents();
-                this.resize();
+                // Init Events
+                this.initInput();
+                window.addEventListener('resize', () => this.resize());
             }
 
-            // NAVIGATION
-            start() { 
-                this.state.lvlIdx = 0; 
-                this.loadLevel(0); 
-                this.switch('screen-game'); 
+            // --- NAVIGASI (FIXED) ---
+            switch(id) {
+                // 1. Matikan semua layar
+                document.querySelectorAll('.game-screen').forEach(el => el.classList.remove('active'));
+                // 2. Hidupkan layar tujuan
+                const target = document.getElementById(id);
+                if(target) target.classList.add('active');
             }
-            menu() { 
+
+            start() {
+                // Pindah layar DULUAN agar canvas terlihat & punya ukuran
+                this.switch('screen-game');
+                
+                // Baru load level (kasih delay dikit agar transisi CSS aman)
+                setTimeout(() => {
+                    this.state.lvlIdx = 0;
+                    this.loadLevel(0);
+                }, 50);
+            }
+
+            menu() {
                 this.stopTimer();
-                this.switch('screen-menu'); 
+                this.switch('screen-menu');
             }
-            showLb() { 
+
+            showLb() {
                 this.renderLb();
-                this.switch('screen-lb'); 
+                this.switch('screen-lb');
             }
-            reset() { this.loadLevel(this.state.lvlIdx); }
-            next() { 
-                this.state.lvlIdx++; 
+
+            next() {
+                this.state.lvlIdx++;
                 if(this.state.lvlIdx >= LEVELS.length) {
-                    alert("TAMAT! Anda hebat!");
+                    alert("TAMAT! Anda Master Flow!");
                     this.menu();
                 } else {
                     this.loadLevel(this.state.lvlIdx);
                 }
             }
 
-            switch(id) {
-                document.querySelectorAll('.game-screen').forEach(e => e.classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-                if(id === 'screen-game') setTimeout(() => this.resize(), 50);
-            }
+            reset() { this.loadLevel(this.state.lvlIdx); }
 
-            // GAMEPLAY
+            // --- GAMEPLAY ---
             loadLevel(idx) {
                 const lvl = LEVELS[idx];
-                this.state.grid = JSON.parse(JSON.stringify(lvl.grid)); // Deep copy
+                this.state.grid = JSON.parse(JSON.stringify(lvl.grid));
                 this.state.paths = {};
                 this.state.activeColor = null;
-                this.state.moves = 0;
                 this.state.completed = false;
-                
-                // Init paths from endpoints
+
+                // Init paths
                 const size = lvl.size;
                 for(let r=0; r<size; r++) {
                     for(let c=0; c<size; c++) {
@@ -252,45 +235,52 @@
                     }
                 }
 
-                // UI
+                // UI Reset
                 document.getElementById('ui-level').innerText = idx + 1;
-                document.getElementById('ui-moves').innerText = 0;
                 document.getElementById('overlay-win').classList.add('hidden');
                 
-                this.resize();
+                // Resize & Render
+                this.resize(); 
                 this.startTimer();
-                this.saveScore(idx); // Auto save progress
+                this.saveScore(idx);
             }
 
-            // INPUT HANDLERS
-            initEvents() {
+            resize() {
+                // Hitung ukuran canvas berdasarkan layar
+                const maxWidth = Math.min(window.innerWidth - 40, 400);
+                this.canvas.width = maxWidth;
+                this.canvas.height = maxWidth;
+                this.canvas.style.width = maxWidth + 'px';
+                this.canvas.style.height = maxWidth + 'px';
+                
+                const size = LEVELS[this.state.lvlIdx]?.size || 5;
+                this.cellSize = maxWidth / size;
+                
+                if(this.state.grid.length > 0) this.draw();
+            }
+
+            // --- INPUT SYSTEM ---
+            initInput() {
+                const start = (e) => this.inputStart(e);
+                const move = (e) => this.inputMove(e);
+                const end = () => this.inputEnd();
+
                 // Mouse
-                this.canvas.addEventListener('mousedown', e => this.inputStart(e));
-                this.canvas.addEventListener('mousemove', e => this.inputMove(e));
-                window.addEventListener('mouseup', () => this.inputEnd());
-                
-                // Touch
-                this.canvas.addEventListener('touchstart', e => {
-                    e.preventDefault(); 
-                    this.inputStart(e.touches[0]);
-                }, {passive: false});
-                
-                this.canvas.addEventListener('touchmove', e => {
-                    e.preventDefault(); 
-                    this.inputMove(e.touches[0]);
-                }, {passive: false});
-                
-                window.addEventListener('touchend', () => this.inputEnd());
-                window.addEventListener('resize', () => this.resize());
+                this.canvas.addEventListener('mousedown', start);
+                this.canvas.addEventListener('mousemove', move);
+                window.addEventListener('mouseup', end);
+
+                // Touch (Prevent Default agar tidak scroll)
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e.touches[0]); }, {passive: false});
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e.touches[0]); }, {passive: false});
+                window.addEventListener('touchend', end);
             }
 
             getPos(e) {
                 const rect = this.canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                return { 
-                    c: Math.floor(x / this.cellSize), 
-                    r: Math.floor(y / this.cellSize) 
+                return {
+                    c: Math.floor((e.clientX - rect.left) / this.cellSize),
+                    r: Math.floor((e.clientY - rect.top) / this.cellSize)
                 };
             }
 
@@ -300,8 +290,8 @@
                 const size = LEVELS[this.state.lvlIdx].size;
                 if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
 
-                const baseGrid = LEVELS[this.state.lvlIdx].grid;
-                const val = baseGrid[p.r][p.c] || this.state.grid[p.r][p.c];
+                const base = LEVELS[this.state.lvlIdx].grid;
+                const val = base[p.r][p.c] || this.state.grid[p.r][p.c];
 
                 if(val > 0) {
                     this.state.activeColor = val;
@@ -317,19 +307,18 @@
                 const size = LEVELS[this.state.lvlIdx].size;
                 if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
 
-                const path = this.state.paths[this.state.activeColor];
+                const color = this.state.activeColor;
+                const path = this.state.paths[color];
                 const last = path[path.length-1];
 
-                // Jika pindah kotak & tetangga (atas/bawah/kiri/kanan)
+                // Pindah kotak & tetangga
                 if((last.r !== p.r || last.c !== p.c) && (Math.abs(last.r - p.r) + Math.abs(last.c - p.c) === 1)) {
                     
-                    const baseGrid = LEVELS[this.state.lvlIdx].grid;
-                    const targetBase = baseGrid[p.r][p.c];
+                    const base = LEVELS[this.state.lvlIdx].grid;
+                    const targetBase = base[p.r][p.c];
                     const targetCurr = this.state.grid[p.r][p.c];
-                    const color = this.state.activeColor;
 
-                    // Logika Tabrakan:
-                    // 1. Mundur (Backtrack)
+                    // Backtrack
                     const existingIdx = path.findIndex(pt => pt.r === p.r && pt.c === p.c);
                     if(existingIdx !== -1) {
                         this.state.paths[color] = path.slice(0, existingIdx+1);
@@ -338,8 +327,8 @@
                         return;
                     }
 
-                    // 2. Maju (Syarat: Kosong ATAU Endpoint Sendiri)
-                    // DILARANG: Tabrak Endpoint Lain ATAU Path Lain
+                    // Move Logic: Target Kosong ATAU Endpoint Sendiri
+                    // Tidak boleh: Nabrak warna lain (Base atau Path)
                     if((targetCurr === 0 || targetCurr === color) && (targetBase === 0 || targetBase === color)) {
                         path.push({r: p.r, c: p.c});
                         this.updateGrid();
@@ -349,52 +338,35 @@
                 }
             }
 
-            inputEnd() {
-                if(this.state.activeColor) {
-                    this.state.moves++;
-                    this.state.activeColor = null;
-                }
-            }
+            inputEnd() { this.state.activeColor = null; }
 
             updateGrid() {
                 const size = LEVELS[this.state.lvlIdx].size;
                 const base = LEVELS[this.state.lvlIdx].grid;
                 
-                // Clear dynamic paths
+                // Reset Grid ke Base
                 for(let r=0; r<size; r++) {
                     for(let c=0; c<size; c++) {
-                        if(base[r][c] === 0) this.state.grid[r][c] = 0;
+                        this.state.grid[r][c] = (base[r][c] > 0) ? 0 : 0;
                     }
                 }
                 
-                // Re-apply paths
+                // Apply Paths
                 for(const [k, path] of Object.entries(this.state.paths)) {
-                    const colorId = parseInt(k);
+                    const cId = parseInt(k);
                     path.forEach(pt => {
-                        this.state.grid[pt.r][pt.c] = colorId;
+                        // Jangan timpa endpoint base visual
+                        if(base[pt.r][pt.c] === 0) this.state.grid[pt.r][pt.c] = cId;
                     });
                 }
             }
 
-            // RENDERER
-            resize() {
-                const size = Math.min(window.innerWidth - 40, 400);
-                this.canvas.width = size;
-                this.canvas.height = size;
-                this.canvas.style.width = size + 'px';
-                this.canvas.style.height = size + 'px';
-                
-                const gridSize = LEVELS[this.state.lvlIdx]?.size || 5;
-                this.cellSize = size / gridSize;
-                
-                if(this.state.grid.length > 0) this.draw();
-            }
-
+            // --- DRAWING ---
             draw() {
                 const size = LEVELS[this.state.lvlIdx].size;
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Grid
+
+                // Grid Lines
                 this.ctx.strokeStyle = '#334155';
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
@@ -410,7 +382,7 @@
                     if(path.length < 2) continue;
                     const color = COLORS[k];
                     this.ctx.strokeStyle = color;
-                    this.ctx.lineWidth = this.cellSize * 0.4;
+                    this.ctx.lineWidth = this.cellSize * 0.45;
                     this.ctx.lineCap = 'round';
                     this.ctx.lineJoin = 'round';
                     
@@ -438,27 +410,49 @@
                             this.ctx.beginPath();
                             this.ctx.arc(cx, cy, this.cellSize * 0.3, 0, Math.PI*2);
                             this.ctx.fill();
-                            
-                            // Dot tengah (indikator)
-                            this.ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                            this.ctx.beginPath();
-                            this.ctx.arc(cx, cy, this.cellSize * 0.1, 0, Math.PI*2);
-                            this.ctx.fill();
                         }
                     }
                 }
             }
 
-            // LOGIC
+            // --- WIN LOGIC (FULL GRID) ---
             checkWin() {
-                let win = true;
                 const size = LEVELS[this.state.lvlIdx].size;
                 const base = LEVELS[this.state.lvlIdx].grid;
-                
-                // Cari warna yang diperlukan
+                let isFull = true;
+                let allConnected = true;
+
+                // 1. Cek Apakah Grid Penuh (Tidak ada 0)
+                // Gabungkan Base Grid dengan Current Grid untuk pengecekan
+                for(let r=0; r<size; r++) {
+                    for(let c=0; c<size; c++) {
+                        // Jika di base kosong, DAN di current kosong, berarti bolong
+                        if(base[r][c] === 0 && this.state.grid[r][c] === 0) {
+                            isFull = false;
+                        }
+                    }
+                }
+
+                // 2. Cek Koneksi Warna (Endpoint ke Endpoint)
                 const colors = new Set();
                 base.forEach(r => r.forEach(v => {if(v>0) colors.add(v)}));
 
                 for(let cId of colors) {
                     const path = this.state.paths[cId];
-                    if(!path || pa
+                    if(!path || path.length < 2) { allConnected = false; break; }
+
+                    // Cari Endpoint
+                    const eps = [];
+                    for(let r=0; r<size; r++) {
+                        for(let c=0; c<size; c++) {
+                            if(base[r][c] === cId) eps.push({r,c});
+                        }
+                    }
+
+                    const head = path[0];
+                    const tail = path[path.length-1];
+
+                    const match1 = (head.r===eps[0].r && head.c===eps[0].c && tail.r===eps[1].r && tail.c===eps[1].c);
+                    const match2 = (head.r===eps[1].r && head.c===eps[1].c && tail.r===eps[0].r && tail.c===eps[0].c);
+                    
+                    if(!m
