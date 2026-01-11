@@ -3,107 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Match - Fast Paced</title>
+    <title>Memory Match - Top 10 & Features</title>
     
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Load React & ReactDOM -->
+    <!-- Load React & ReactDOM (Versi Stabil) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- Load Babel untuk memproses JSX -->
+    <!-- Load Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        /* Container Perspektif 3D */
-        .perspective-1000 {
-            perspective: 1000px;
-        }
-        
-        /* Container Kartu yang Berputar */
+        .perspective-1000 { perspective: 1000px; }
         .card-inner {
             position: relative;
             width: 100%;
             height: 100%;
             text-align: center;
-            /* UPDATE: Durasi animasi dipercepat jadi 0.25s agar snappy */
             transition: transform 0.25s; 
             transform-style: preserve-3d;
         }
-
-        /* Saat di-flip, putar 180 derajat */
-        .card-inner.is-flipped {
-            transform: rotateY(180deg);
-        }
-
-        /* Sisi Depan dan Belakang */
+        .card-inner.is-flipped { transform: rotateY(180deg); }
         .card-front, .card-back {
             position: absolute;
             width: 100%;
             height: 100%;
-            -webkit-backface-visibility: hidden; /* Safari */
+            -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-
-        /* Tampilan Belakang (Tanda Tanya) */
         .card-front {
-            background-color: #334155; /* slate-700 */
-            border: 2px solid #475569; /* slate-600 */
-            color: #94a3b8; /* slate-400 */
+            background-color: #334155;
+            border: 2px solid #475569;
+            color: #94a3b8;
         }
-
-        /* Tampilan Depan (Emoji) */
         .card-back {
             background-color: white;
             color: black; 
             transform: rotateY(180deg);
-            border: 2px solid #93c5fd; /* blue-300 */
+            border: 2px solid #93c5fd;
         }
-
-        /* Animasi Masuk */
         @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
+            from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+        
+        /* Scrollbar untuk High Score */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
     </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen select-none font-sans">
+<body class="bg-slate-900 text-white min-h-screen select-none font-sans overflow-hidden">
 
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef } = React;
 
-        // --- ICONS (SVG) ---
-        const Trophy = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-        );
-        const Clock = ({ size, className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        );
-        const Play = ({ size, fill, className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill === "currentColor" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        );
-        const RotateCcw = ({ size, className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-        );
-        const Zap = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        );
-        const Heart = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-        );
+        // --- ICONS ---
+        const Trophy = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>;
+        const Clock = ({ size, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+        const Play = ({ size, fill, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill === "currentColor" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+        const RotateCcw = ({ size, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>;
+        const Zap = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+        const Heart = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
+        const XIcon = ({ size, className, onClick }) => <svg onClick={onClick} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+        const ListIcon = ({ size, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>;
+        const HomeIcon = ({ size, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+        const GithubIcon = ({ size, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 6 3 6 6-6 6-6 0 0 0-1.5-10.3c.7-2.3 0-3.5 0-3.5-.7-.2-2.3.8-3.5 1.5A12.3 12.3 0 0 0 12 3c-2 0-3.5.3-4.5.8-1.2-.7-2.8-1.7-3.5-1.5 0 0-.7 1.2 0 3.5a6 6 0 0 0-1.5 10.3c3 0 3 6 6 6v4"/></svg>;
 
-        // --- DATA EMOJI ---
         const EMOJIS = [
             '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', 
             '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦅',
@@ -113,7 +89,17 @@
             '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱', '🏓', '🏸'
         ];
 
-        // Helper: Acak Array
+        // --- SAFE STORAGE WRAPPER ---
+        // Mencegah error jika LocalStorage diblokir browser
+        const safeStorage = {
+            getItem: (key) => {
+                try { return localStorage.getItem(key); } catch (e) { return null; }
+            },
+            setItem: (key, value) => {
+                try { localStorage.setItem(key, value); } catch (e) { }
+            }
+        };
+
         const shuffleArray = (array) => {
             const newArray = [...array];
             for (let i = newArray.length - 1; i > 0; i--) {
@@ -123,15 +109,10 @@
             return newArray;
         };
 
-        // Konfigurasi Level
         const getLevelConfig = (level) => {
-            // Maksimal 18 pasang (36 kartu)
             let pairs = Math.min(18, 2 + Math.floor((level - 1) / 2));
-            
-            // Waktu
             const timePerPair = Math.max(3, 7 - (level * 0.04)); 
             const totalTime = Math.floor(pairs * timePerPair + 15); 
-
             return { pairs, totalTime };
         };
 
@@ -139,45 +120,90 @@
             const [gameState, setGameState] = useState('menu'); 
             const [level, setLevel] = useState(1);
             const [score, setScore] = useState(0);
-            const [highScore, setHighScore] = useState(0);
+            
+            const [topScores, setTopScores] = useState([]);
+            const [showHighScoresModal, setShowHighScoresModal] = useState(false);
+            const [showExitConfirm, setShowExitConfirm] = useState(false);
+
             const [timeLeft, setTimeLeft] = useState(0);
             const [cards, setCards] = useState([]);
             const [flippedIndices, setFlippedIndices] = useState([]);
             const [matchedPairs, setMatchedPairs] = useState([]);
             const [isProcessing, setIsProcessing] = useState(false);
             
-            // Refs untuk menjaga nilai terbaru di dalam setTimeout
             const matchedPairsRef = useRef(matchedPairs);
             const cardsRef = useRef(cards);
 
-            // Update refs saat state berubah
             useEffect(() => { matchedPairsRef.current = matchedPairs; }, [matchedPairs]);
             useEffect(() => { cardsRef.current = cards; }, [cards]);
 
+            // Load High Scores
             useEffect(() => {
-                const savedScore = localStorage.getItem('memoryMatchHighScore');
-                if (savedScore) setHighScore(parseInt(savedScore, 10));
+                const savedScores = safeStorage.getItem('memoryMatchTop10');
+                if (savedScores) {
+                    try { setTopScores(JSON.parse(savedScores)); } catch(e) {}
+                }
             }, []);
 
+            // --- HISTORY BACK BUTTON LOGIC ---
+            useEffect(() => {
+                const handlePopState = (event) => {
+                    if (gameState === 'playing' || gameState === 'won') {
+                        event.preventDefault();
+                        setShowExitConfirm(true);
+                        try {
+                            window.history.pushState(null, null, window.location.pathname);
+                        } catch (e) {}
+                    }
+                };
+
+                try {
+                    window.history.pushState(null, null, window.location.pathname);
+                    window.addEventListener('popstate', handlePopState);
+                } catch (e) {
+                    console.log("History API not supported/blocked");
+                }
+
+                return () => {
+                    window.removeEventListener('popstate', handlePopState);
+                };
+            }, [gameState]);
+
+            // Timer Logic
             useEffect(() => {
                 let timer;
-                if (gameState === 'playing' && timeLeft > 0) {
+                if (gameState === 'playing' && timeLeft > 0 && !showExitConfirm) {
                     timer = setInterval(() => {
                         setTimeLeft((prev) => {
                             if (prev <= 1) {
-                                setGameState('lost');
                                 return 0;
                             }
                             return prev - 1;
                         });
                     }, 1000);
+                } else if (gameState === 'playing' && timeLeft === 0) {
+                    handleGameOver();
                 }
                 return () => clearInterval(timer);
-            }, [gameState, timeLeft]);
+            }, [gameState, timeLeft, showExitConfirm]);
+
+            const saveHighScore = (finalScore) => {
+                const newScores = [...topScores, { score: finalScore, date: new Date().toLocaleDateString('id-ID') }];
+                newScores.sort((a, b) => b.score - a.score);
+                const top10 = newScores.slice(0, 10);
+                setTopScores(top10);
+                safeStorage.setItem('memoryMatchTop10', JSON.stringify(top10));
+            };
+
+            const handleGameOver = () => {
+                if (gameState !== 'lost') {
+                    setGameState('lost');
+                    saveHighScore(score);
+                }
+            };
 
             const startLevel = useCallback((currentLevel) => {
                 const { pairs, totalTime } = getLevelConfig(currentLevel);
-                
                 const selectedEmojis = shuffleArray(EMOJIS).slice(0, pairs);
                 const cardPairs = [...selectedEmojis, ...selectedEmojis];
                 const shuffledCards = shuffleArray(cardPairs);
@@ -195,7 +221,8 @@
                     gameState !== 'playing' || 
                     flippedIndices.includes(index) || 
                     matchedPairs.includes(cards[index]) ||
-                    isProcessing
+                    isProcessing ||
+                    showExitConfirm
                 ) return;
 
                 const newFlipped = [...flippedIndices, index];
@@ -206,11 +233,9 @@
                     const [firstIndex, secondIndex] = newFlipped;
                     
                     if (cards[firstIndex] === cards[secondIndex]) {
-                        // MATCH FOUND
-                        // UPDATE: Jeda dipercepat jadi 400ms agar game terasa "fast paced"
+                        // MATCH
                         setTimeout(() => {
                             const matchedCard = cards[firstIndex];
-                            
                             setMatchedPairs(prev => [...prev, matchedCard]);
                             setScore((prev) => prev + 10 + Math.ceil(timeLeft / 2));
                             setFlippedIndices([]); 
@@ -220,13 +245,11 @@
                             const totalPairsNeeded = cardsRef.current.length / 2;
 
                             if (currentMatchedCount === totalPairsNeeded) {
-                                setTimeout(() => handleLevelWin(), 300); // Win delay juga dipercepat
+                                setTimeout(() => handleLevelWin(), 300); 
                             }
                         }, 400); 
-
                     } else {
                         // NO MATCH
-                        // UPDATE: Jeda dipercepat jadi 500ms
                         setTimeout(() => {
                             setFlippedIndices([]);
                             setIsProcessing(false);
@@ -238,12 +261,9 @@
             const handleLevelWin = () => {
                 if (level >= 100) {
                     setGameState('completed');
+                    saveHighScore(score);
                 } else {
                     setGameState('won');
-                    if (score > highScore) {
-                        setHighScore(score);
-                        localStorage.setItem('memoryMatchHighScore', score);
-                    }
                 }
             };
 
@@ -258,6 +278,22 @@
                 startLevel(1);
             };
 
+            const handleExitRequest = () => {
+                setShowExitConfirm(true);
+            };
+
+            const confirmExit = () => {
+                setShowExitConfirm(false);
+                setGameState('menu');
+                if (score > 0) saveHighScore(score);
+                setScore(0);
+                setLevel(1);
+            };
+
+            const cancelExit = () => {
+                setShowExitConfirm(false);
+            };
+
             const getGridClass = (totalCards) => {
                 if (totalCards <= 12) return 'grid-cols-3 sm:grid-cols-4';
                 if (totalCards <= 20) return 'grid-cols-4 sm:grid-cols-5';
@@ -266,87 +302,177 @@
             };
 
             return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-4">
+                <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
                     
                     {/* INFO BAR */}
-                    <div className="w-full max-w-2xl flex justify-between items-center mb-6 bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700">
-                        <div className="flex flex-col items-center">
-                            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Level</span>
-                            <span className="text-2xl font-bold text-yellow-400">{level}/100</span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-2">
-                                <Clock size={16} className="text-blue-400"/>
-                                <span className={`text-2xl font-mono font-bold ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-blue-400'}`}>
-                                    {timeLeft}s
-                                </span>
+                    <div className="w-full max-w-2xl flex justify-between items-center mb-4 gap-2 z-10">
+                        <div className="flex-1 flex justify-between items-center bg-slate-800 p-3 rounded-xl shadow-lg border border-slate-700">
+                            <div className="flex flex-col items-center px-2">
+                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Lvl</span>
+                                <span className="text-xl font-bold text-yellow-400">{level}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <div className="flex items-center gap-1">
+                                    <Clock size={16} className="text-blue-400"/>
+                                    <span className={`text-xl font-mono font-bold ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-blue-400'}`}>
+                                        {timeLeft}s
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center px-2">
+                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Skor</span>
+                                <span className="text-xl font-bold text-green-400">{score}</span>
                             </div>
                         </div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Skor</span>
-                            <span className="text-2xl font-bold text-green-400">{score}</span>
-                        </div>
+
+                        {gameState !== 'menu' && (
+                            <button 
+                                onClick={handleExitRequest}
+                                className="bg-red-600 hover:bg-red-500 text-white p-3 rounded-xl shadow-lg border border-red-400 transition"
+                            >
+                                <XIcon size={24} />
+                            </button>
+                        )}
                     </div>
 
                     {/* GAME AREA */}
                     <div className="relative w-full max-w-2xl min-h-[400px] flex items-center justify-center">
                         
-                        {/* MENU OVERLAY */}
-                        {gameState === 'menu' && (
+                        {/* --- MODAL EXIT --- */}
+                        {showExitConfirm && (
+                            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm rounded-2xl animate-fade-in p-6">
+                                <div className="bg-slate-800 p-6 rounded-2xl border border-slate-600 text-center shadow-2xl w-full max-w-sm">
+                                    <h3 className="text-2xl font-bold text-white mb-4">Keluar Game?</h3>
+                                    <p className="text-slate-300 mb-6">Skor kamu saat ini ({score}) akan disimpan.</p>
+                                    <div className="flex gap-4 justify-center">
+                                        <button onClick={confirmExit} className="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-bold w-1/2">
+                                            Ya
+                                        </button>
+                                        <button onClick={cancelExit} className="bg-slate-600 hover:bg-slate-500 text-white px-6 py-2 rounded-lg font-bold w-1/2">
+                                            Tidak
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- MODAL HIGH SCORE --- */}
+                        {showHighScoresModal && (
+                            <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/98 rounded-2xl p-4 animate-fade-in border border-yellow-600/50">
+                                <div className="w-full h-full flex flex-col max-w-md mx-auto">
+                                    <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                                        <div className="flex items-center gap-2 text-yellow-500">
+                                            <Trophy />
+                                            <h2 className="text-2xl font-bold">Top 10</h2>
+                                        </div>
+                                        <button onClick={() => setShowHighScoresModal(false)} className="bg-slate-700 p-2 rounded-full hover:bg-slate-600 text-white">
+                                            <XIcon size={20} />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="flex-1 overflow-y-auto custom-scroll">
+                                        {topScores.length === 0 ? (
+                                            <div className="text-center text-slate-500 mt-10">Belum ada skor.</div>
+                                        ) : (
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="text-slate-400 text-sm border-b border-slate-700">
+                                                        <th className="py-2">#</th>
+                                                        <th className="py-2">Skor</th>
+                                                        <th className="py-2 text-right">Tgl</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {topScores.map((s, idx) => (
+                                                        <tr key={idx} className={`border-b border-slate-800 ${idx === 0 ? 'text-yellow-400 font-bold' : 'text-slate-200'}`}>
+                                                            <td className="py-3 pl-1">
+                                                                {idx + 1}
+                                                                {idx === 0 && <span className="ml-2">👑</span>}
+                                                            </td>
+                                                            <td className="py-3 text-lg">{s.score}</td>
+                                                            <td className="py-3 text-right text-xs text-slate-500">{s.date}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        )}
+                                    </div>
+                                    <button onClick={() => setShowHighScoresModal(false)} className="mt-4 w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-bold text-white transition">
+                                        Tutup
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- MENU UTAMA --- */}
+                        {gameState === 'menu' && !showHighScoresModal && (
                             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-800/95 rounded-2xl p-8 text-center border border-slate-600 animate-fade-in shadow-2xl">
                                 <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-6">
                                     Memory Match
                                 </h1>
-                                <p className="text-slate-300 mb-8 max-w-md">
-                                    Temukan pasangan kartu yang sama. Mode Cepat.
-                                </p>
-                                {highScore > 0 && (
-                                    <div className="flex items-center gap-2 mb-8 bg-slate-900 px-6 py-3 rounded-full border border-yellow-500/30">
-                                        <Trophy className="text-yellow-500" />
-                                        <span className="text-yellow-500 font-bold">Rekor: {highScore}</span>
-                                    </div>
-                                )}
-                                <button onClick={() => handleRestart()} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg shadow-blue-500/30 transition hover:scale-105">
-                                    <Play fill="currentColor" size={24} /> Mulai Main
-                                </button>
+                                <div className="flex flex-col gap-4 w-full max-w-xs">
+                                    <button onClick={() => handleRestart()} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg transition hover:scale-105">
+                                        <Play fill="currentColor" size={24} /> Mulai Main
+                                    </button>
+                                    <button onClick={() => setShowHighScoresModal(true)} className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-yellow-400 px-6 py-4 rounded-xl font-bold text-lg shadow-lg border border-slate-600 transition hover:scale-105">
+                                        <ListIcon size={24} /> Top Skor
+                                    </button>
+                                    <a href="https://brain-gym.pages.dev" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg border border-slate-600 transition hover:scale-105">
+                                        <GithubIcon size={24} /> MENU UTAMA
+                                    </a>
+                                </div>
                             </div>
                         )}
 
-                        {/* GAME OVER OVERLAY */}
+                        {/* GAME OVER */}
                         {gameState === 'lost' && (
                             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-900/95 rounded-2xl p-6 text-center animate-fade-in border border-red-500 shadow-2xl">
                                 <Zap className="text-red-400 w-16 h-16 mb-4" />
                                 <h2 className="text-4xl font-bold text-white mb-2">Waktu Habis!</h2>
-                                <p className="text-red-200 mb-6">Terhenti di Level {level}</p>
-                                <div className="text-2xl font-bold mb-8">Skor Akhir: {score}</div>
-                                <button onClick={handleRestart} className="flex items-center gap-2 bg-white text-red-900 hover:bg-gray-100 px-6 py-3 rounded-full font-bold transition shadow-lg">
-                                    <RotateCcw size={20} /> Coba Lagi
-                                </button>
+                                <p className="text-red-200 mb-6">Level {level}</p>
+                                <div className="text-3xl font-bold mb-8 text-white bg-red-800 px-6 py-2 rounded-lg inline-block">Skor: {score}</div>
+                                <div className="flex gap-4">
+                                    <button onClick={confirmExit} className="bg-red-800 hover:bg-red-700 text-white px-4 py-3 rounded-full transition shadow-lg">
+                                        <HomeIcon size={24} />
+                                    </button>
+                                    <button onClick={handleRestart} className="flex items-center gap-2 bg-white text-red-900 hover:bg-gray-100 px-8 py-3 rounded-full font-bold transition shadow-lg">
+                                        <RotateCcw size={20} /> Coba Lagi
+                                    </button>
+                                </div>
                             </div>
                         )}
 
-                        {/* LEVEL WIN OVERLAY */}
-                        {gameState === 'won' && (
+                        {/* WIN */}
+                        {gameState === 'won' && !showExitConfirm && (
                             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-green-900/95 rounded-2xl p-6 text-center animate-fade-in border border-green-500 shadow-2xl">
                                 <Trophy className="text-yellow-400 w-16 h-16 mb-4 animate-bounce" />
                                 <h2 className="text-3xl font-bold text-white mb-2">Level {level} Selesai!</h2>
-                                <p className="text-green-200 mb-6">Hebat! Lanjut ke level berikutnya?</p>
-                                <button onClick={handleNextLevel} className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-4 rounded-full font-bold text-lg transition shadow-lg shadow-yellow-500/20">
-                                    Level Berikutnya <Play size={20} fill="currentColor"/>
-                                </button>
+                                <div className="flex gap-4 mt-8">
+                                     <button onClick={confirmExit} className="bg-green-800 hover:bg-green-700 text-white px-4 py-3 rounded-full transition shadow-lg">
+                                        <HomeIcon size={24} />
+                                    </button>
+                                    <button onClick={handleNextLevel} className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-3 rounded-full font-bold text-lg transition shadow-lg shadow-yellow-500/20">
+                                        Lanjut <Play size={20} fill="currentColor"/>
+                                    </button>
+                                </div>
                             </div>
                         )}
 
-                        {/* GAME COMPLETED OVERLAY */}
+                        {/* COMPLETED */}
                         {gameState === 'completed' && (
                             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900 to-blue-900 rounded-2xl p-8 text-center border border-purple-400 animate-fade-in">
                                 <Heart className="text-pink-500 w-20 h-20 mb-4 animate-pulse" />
                                 <h1 className="text-4xl font-bold text-white mb-4">KAMU JUARA!</h1>
-                                <p className="text-purple-200 mb-8 text-lg">100 Level Telah Ditaklukkan.</p>
-                                <div className="text-3xl font-bold text-yellow-400 mb-8">Skor Total: {score}</div>
-                                <button onClick={handleRestart} className="bg-white text-purple-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition">
-                                    Main Lagi dari Awal
-                                </button>
+                                <p className="text-purple-200 mb-8 text-lg">100 Level Tamat.</p>
+                                <div className="text-3xl font-bold text-yellow-400 mb-8">Total: {score}</div>
+                                <div className="flex gap-4">
+                                    <button onClick={confirmExit} className="bg-purple-800 hover:bg-purple-700 text-white px-6 py-3 rounded-full font-bold transition">
+                                        Menu
+                                    </button>
+                                    <button onClick={handleRestart} className="bg-white text-purple-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition">
+                                        Main Lagi
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -363,14 +489,29 @@
                                         className={`relative aspect-square cursor-pointer perspective-1000 group ${isMatched ? 'invisible sm:visible sm:opacity-50' : ''}`}
                                     >
                                         <div className={`card-inner ${isFlipped ? 'is-flipped' : ''}`}>
-                                            
-                                            {/* SISI DEPAN KARTU (TANDA TANYA) */}
                                             <div className="card-front">
                                                 <div className="w-8 h-8 rounded-full bg-slate-600 opacity-50 flex items-center justify-center">
                                                     <span className="text-slate-400 text-xs font-bold">?</span>
                                                 </div>
                                             </div>
-
-                                            {/* SISI BELAKANG KARTU (EMOJI) */}
                                             <div className="card-back">
-              
+                                                <span className="text-4xl sm:text-5xl select-none leading-none">
+                                                    {emoji}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MemoryGame />);
+    </script>
+</body>
+</html>
+
