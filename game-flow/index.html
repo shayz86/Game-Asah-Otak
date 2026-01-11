@@ -3,359 +3,433 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flow Master Simple</title>
+    <title>Flow Master Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. RESET SEDERHANA --- */
-        body {
-            font-family: 'Fredoka', sans-serif;
+        /* --- 1. RESET & SYSTEM (Mesin V13) --- */
+        html, body {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%; height: 100dvh;
+            overflow: hidden;
             background-color: #0f172a; /* Slate 900 */
-            color: white;
-            margin: 0;
-            padding: 0;
-            /* PENTING: Jangan matikan touch-action di body! Biarkan normal. */
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            /* PENTING: Touch-action default di body agar tombol jalan */
             touch-action: manipulation; 
         }
 
-        /* --- 2. CANVAS KHUSUS --- */
-        #game-canvas {
-            background-color: #1e293b;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            /* HANYA matikan touch di sini agar bisa menggambar */
-            touch-action: none;
-            display: block;
-            margin: 0 auto; /* Tengah */
+        /* --- 2. LAYAR (Sistem Saklar V13) --- */
+        .screen {
+            display: none !important;
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 10;
+            background-color: #0f172a; /* Background menutup layer bawah */
+        }
+        .screen.active {
+            display: flex !important;
+            z-index: 50;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- 3. BEAUTY STYLES (Dari Kode Awal) --- */
+        /* Animasi Float untuk Logo */
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .anim-float { animation: float 3s ease-in-out infinite; }
+
+        /* Canvas Style */
+        canvas {
+            background: #1e293b;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.6);
+            /* PENTING: Matikan touch HANYA di canvas */
+            touch-action: none; 
+            cursor: crosshair;
         }
 
-        /* --- 3. HELPER --- */
-        .hidden { display: none !important; }
-        .full-screen {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        /* Tombol Keren */
+        .btn-glow {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
         }
+        .btn-glow:active { transform: scale(0.95); filter: brightness(0.9); }
+        
+        /* Dekorasi Background */
+        .bg-blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(80px); opacity: 0.3; z-index: 0; pointer-events: none;
+        }
+
+        .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="section-menu" class="full-screen p-4">
-        
-        <div class="mb-10 text-center">
-            <h1 class="text-6xl font-bold text-blue-500 mb-2">FLOW</h1>
-            <h1 class="text-6xl font-bold text-pink-500">MASTER</h1>
-            <p class="mt-4 text-slate-400">V13 - Click Fix Edition</p>
+    <div class="bg-blob bg-blue-600 w-64 h-64 top-[-50px] left-[-50px] anim-float"></div>
+    <div class="bg-blob bg-pink-600 w-64 h-64 bottom-[-50px] right-[-50px] anim-float" style="animation-delay: 1.5s;"></div>
+
+    <div id="screen-menu" class="screen active">
+        <a href="../index.html" class="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 font-semibold transition no-underline bg-slate-800/80 px-4 py-2 rounded-full z-50 shadow-lg cursor-pointer">
+            <i class="fas fa-arrow-left"></i> Menu
+        </a>
+
+        <div class="mb-12 text-center relative z-10 anim-float">
+            <h1 class="text-7xl font-bold tracking-tighter drop-shadow-2xl mb-0 leading-none">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">FLOW</span>
+            </h1>
+            <h1 class="text-7xl font-bold tracking-tighter drop-shadow-2xl leading-none">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-pink-600">MASTER</span>
+            </h1>
+            <div class="mt-6">
+                <span class="bg-slate-800/80 text-blue-300 px-4 py-1 rounded-full text-xs font-bold border border-slate-700 tracking-widest shadow-lg">PREMIUM EDITION</span>
+            </div>
         </div>
 
-        <div class="w-full max-w-xs space-y-4">
-            <button onclick="startGame()" class="w-full bg-blue-600 active:bg-blue-700 text-white py-4 rounded-xl font-bold text-xl shadow-lg border-b-4 border-blue-800 transition-transform active:scale-95">
-                MAINKAN
+        <div class="w-full max-w-xs space-y-5 relative z-20">
+            <button onclick="window.game.start()" class="btn-glow w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-indigo-800 flex items-center justify-center gap-3 cursor-pointer">
+                <i class="fas fa-play"></i> MAINKAN
             </button>
-
-            <a href="../index.html" class="block w-full text-center bg-slate-700 active:bg-slate-800 text-white py-4 rounded-xl font-bold text-lg shadow-lg border-b-4 border-slate-900 transition-transform active:scale-95">
-                MENU UTAMA
-            </a>
+            
+            <button onclick="window.game.showLb()" class="btn-glow w-full bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3 cursor-pointer">
+                <i class="fas fa-trophy text-yellow-400"></i> TOP SKOR
+            </button>
         </div>
+        
+        <div class="mt-10 text-slate-600 text-xs font-mono relative z-10">V14.0 • VISUAL RESTORED</div>
     </div>
 
 
-    <div id="section-game" class="full-screen hidden bg-slate-900">
-        
-        <div class="w-full max-w-md flex justify-between items-center px-4 mb-6">
-            <button onclick="backToMenu()" class="w-12 h-12 bg-slate-800 rounded-full text-white border border-slate-600 text-xl shadow active:scale-90">
+    <div id="screen-game" class="screen">
+        <div class="w-full max-w-md flex justify-between items-center mb-6 px-4 z-20">
+            <button onclick="window.game.menu()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg cursor-pointer">
                 <i class="fas fa-home"></i>
             </button>
-            <div class="text-center">
-                <div class="text-sm text-slate-400 font-bold">LEVEL <span id="ui-level">1</span></div>
-                <div class="text-xs text-blue-400" id="ui-msg">Tarik Garis</div>
+            
+            <div class="flex gap-3">
+                <div class="bg-slate-800/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center">
+                    <span class="text-[10px] text-slate-400 font-bold tracking-wider">LEVEL</span>
+                    <span id="ui-level" class="text-white font-bold text-lg leading-none">1</span>
+                </div>
+                <div class="bg-slate-800/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[70px]">
+                    <span class="text-[10px] text-slate-400 font-bold tracking-wider">WAKTU</span>
+                    <span id="ui-timer" class="text-emerald-400 font-bold text-lg leading-none font-mono">00:00</span>
+                </div>
+                <div class="bg-slate-800/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center">
+                    <span class="text-[10px] text-slate-400 font-bold tracking-wider">MOVES</span>
+                    <span id="ui-moves" class="text-blue-400 font-bold text-lg leading-none">0</span>
+                </div>
             </div>
-            <button onclick="resetLevel()" class="w-12 h-12 bg-slate-800 rounded-full text-white border border-slate-600 text-xl shadow active:scale-90">
+            
+            <button onclick="window.game.reset()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg cursor-pointer">
                 <i class="fas fa-undo"></i>
             </button>
         </div>
 
-        <div class="relative">
-            <canvas id="game-canvas" width="350" height="350"></canvas>
+        <div class="relative z-10 p-1 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-2xl">
+            <div class="bg-slate-900 rounded-xl p-1">
+                <canvas id="gameCanvas" width="350" height="350"></canvas>
+            </div>
+            
+            <div id="overlay-win" class="absolute inset-0 bg-slate-900/95 backdrop-blur-md rounded-xl flex flex-col items-center justify-center hidden z-50">
+                <div class="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4 anim-float">
+                    <i class="fas fa-check text-4xl text-emerald-400"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white mb-1">SELESAI!</h2>
+                <div class="flex gap-4 mt-4 text-sm text-slate-300">
+                    <div>⏱️ <span id="win-time">00:00</span></div>
+                    <div>👣 <span id="win-moves">0</span> Moves</div>
+                </div>
+                <button onclick="window.game.next()" class="mt-6 btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700 flex items-center gap-2 cursor-pointer">
+                    LEVEL BERIKUTNYA <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
         </div>
 
-        <div id="win-message" class="hidden mt-6 text-center">
-            <h2 class="text-2xl font-bold text-green-400 mb-2">SELESAI!</h2>
-            <button onclick="nextLevel()" class="bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-lg border-b-4 border-green-700 active:scale-95">
-                LEVEL LANJUT
-            </button>
+        <div class="mt-8 text-center text-slate-500 text-xs font-medium px-4 z-10 opacity-70">
+            Hubungkan semua warna. Grid harus terisi penuh!
         </div>
+    </div>
 
+
+    <div id="screen-lb" class="screen">
+        <div class="bg-slate-800 w-full max-w-md rounded-3xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh] z-20 mx-4">
+            <div class="bg-slate-900 p-5 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-yellow-500 flex items-center gap-2">
+                    <i class="fas fa-crown"></i> TOP 10 SKOR
+                </h2>
+                <button onclick="window.game.menu()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 bg-slate-800 p-3 font-bold text-[10px] uppercase text-slate-500 tracking-wider border-b border-slate-700">
+                <div class="text-center">RANK</div>
+                <div>PLAYER</div>
+                <div class="text-right">LEVEL</div>
+            </div>
+            <div id="lb-list" class="overflow-y-auto p-0 flex-1 hide-scroll bg-slate-800/50"></div>
+        </div>
     </div>
 
     <script>
-        // --- DATA LEVEL (Sederhana dulu untuk tes) ---
+        // --- 1. DATA LEVEL (ORIGINAL V1) ---
+        const CONFIG = {
+            colors: {
+                1: '#ef4444', 2: '#3b82f6', 3: '#22c55e', 4: '#eab308', 
+                5: '#d946ef', 6: '#f97316', 7: '#06b6d4', 8: '#94a3b8'
+            },
+            gridLine: '#334155',
+            bg: '#1e293b'
+        };
+
         const LEVELS = [
             { size: 5, grid: [[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]] },
             { size: 5, grid: [[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]] },
-            { size: 6, grid: [[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]] }
+            { size: 6, grid: [[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]] },
+            { size: 6, grid: [[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]] },
+            { size: 7, grid: [[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]] },
+            { size: 8, grid: [[1,0,0,0,0,0,2,0],[0,0,3,3,0,0,2,0],[0,0,4,0,0,0,0,0],[0,0,4,0,5,5,0,0],[0,0,0,0,0,0,0,0],[6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0]] }
         ];
-        
-        const COLORS = { 1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316' };
 
-        // --- GLOBAL VARS ---
-        let currentLvlIdx = 0;
-        let gridData = [];
-        let paths = {}; // { colorId: [{r,c}, ...] }
-        let activeColor = null;
-        let isWin = false;
-        
-        let canvas, ctx, cellSize;
-        const gridSize = 350; // Ukuran fix canvas
+        // --- 2. GAME ENGINE ---
+        const Game = {
+            state: {
+                lvlIdx: 0,
+                grid: [],
+                paths: {},
+                activeColor: null,
+                completed: false,
+                moves: 0,
+                timer: null,
+                startTime: 0
+            },
+            canvas: null,
+            ctx: null,
+            cellSize: 0,
 
-        // --- FUNGSI MENU (NAVIGASI) ---
-        function startGame() {
-            // Sembunyikan Menu
-            document.getElementById('section-menu').classList.add('hidden');
-            // Tampilkan Game
-            document.getElementById('section-game').classList.remove('hidden');
-            document.getElementById('section-game').style.display = 'flex'; // Paksa flex
-            
-            // Init Canvas jika belum
-            if(!canvas) initCanvas();
-            
-            // Load Level 1
-            currentLvlIdx = 0;
-            loadLevel(0);
-        }
+            // INIT
+            init: function() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.initInput();
+                window.addEventListener('resize', () => this.resize());
+            },
 
-        function backToMenu() {
-            document.getElementById('section-game').classList.add('hidden');
-            document.getElementById('section-menu').classList.remove('hidden');
-        }
+            // NAVIGATION
+            switch: function(id) {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                if(id === 'screen-game') setTimeout(() => this.resize(), 50);
+            },
 
-        // --- FUNGSI GAME ---
-        function initCanvas() {
-            canvas = document.getElementById('game-canvas');
-            ctx = canvas.getContext('2d');
-            
-            // Event Listeners (Mouse & Touch)
-            // Menggunakan addEventListener standar
-            canvas.addEventListener('mousedown', onDown);
-            canvas.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', onUp);
-            
-            canvas.addEventListener('touchstart', function(e) {
-                e.preventDefault(); // Mencegah scroll HANYA di canvas
-                onDown(e.touches[0]);
-            }, {passive: false});
-            
-            canvas.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-                onMove(e.touches[0]);
-            }, {passive: false});
-            
-            window.addEventListener('touchend', onUp);
-        }
+            start: function() {
+                this.state.lvlIdx = 0;
+                this.loadLevel(0);
+                this.switch('screen-game');
+            },
 
-        function loadLevel(idx) {
-            if(idx >= LEVELS.length) {
-                alert("Semua level selesai!");
-                backToMenu();
-                return;
-            }
-            
-            const lvl = LEVELS[idx];
-            // Deep copy grid
-            gridData = JSON.parse(JSON.stringify(lvl.grid));
-            paths = {};
-            activeColor = null;
-            isWin = false;
-            
-            // Hitung ukuran cell
-            cellSize = gridSize / lvl.size;
-            
-            // Simpan titik awal (endpoint)
-            for(let r=0; r<lvl.size; r++) {
-                for(let c=0; c<lvl.size; c++) {
-                    let v = gridData[r][c];
-                    if(v > 0) paths[v] = []; // Siapkan wadah path
+            menu: function() {
+                this.stopTimer();
+                this.switch('screen-menu');
+            },
+
+            showLb: function() {
+                this.renderLb();
+                this.switch('screen-lb');
+            },
+
+            next: function() {
+                this.state.lvlIdx++;
+                if(this.state.lvlIdx >= LEVELS.length) {
+                    alert("TAMAT! Anda Master Flow!");
+                    this.menu();
+                } else {
+                    this.loadLevel(this.state.lvlIdx);
                 }
-            }
-            
-            // Reset UI
-            document.getElementById('ui-level').innerText = idx + 1;
-            document.getElementById('win-message').classList.add('hidden');
-            document.getElementById('ui-msg').innerText = "Hubungkan warna yang sama";
-            
-            render();
-        }
+            },
 
-        function resetLevel() { loadLevel(currentLvlIdx); }
-        function nextLevel() { currentLvlIdx++; loadLevel(currentLvlIdx); }
+            reset: function() { this.loadLevel(this.state.lvlIdx); },
 
-        // --- LOGIKA INPUT ---
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            // Scaling faktor jika canvas di-resize CSS (responsif)
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            return {
-                c: Math.floor((e.clientX - rect.left) * scaleX / cellSize),
-                r: Math.floor((e.clientY - rect.top) * scaleY / cellSize)
-            };
-        }
+            // GAMEPLAY LOGIC
+            loadLevel: function(idx) {
+                const lvl = LEVELS[idx];
+                this.state.grid = JSON.parse(JSON.stringify(lvl.grid));
+                this.state.paths = {};
+                this.state.activeColor = null;
+                this.state.completed = false;
+                this.state.moves = 0;
 
-        function onDown(e) {
-            if(isWin) return;
-            const p = getPos(e);
-            const size = LEVELS[currentLvlIdx].size;
-            if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
-
-            // Cek nilai di grid dasar (Level asli)
-            const baseGrid = LEVELS[currentLvlIdx].grid;
-            const val = baseGrid[p.r][p.c] || gridData[p.r][p.c];
-
-            if(val > 0) {
-                activeColor = val;
-                paths[val] = [{r: p.r, c: p.c}]; // Reset path warna ini
-                updateGridData();
-                render();
-            }
-        }
-
-        function onMove(e) {
-            if(!activeColor || isWin) return;
-            const p = getPos(e);
-            const size = LEVELS[currentLvlIdx].size;
-            if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
-
-            const path = paths[activeColor];
-            const last = path[path.length - 1];
-
-            // Jika pindah kotak & tetangga (atas/bawah/kiri/kanan)
-            if((last.r !== p.r || last.c !== p.c) && (Math.abs(last.r - p.r) + Math.abs(last.c - p.c) === 1)) {
-                
-                const baseGrid = LEVELS[currentLvlIdx].grid;
-                const targetBase = baseGrid[p.r][p.c];
-                const targetCurr = gridData[p.r][p.c];
-
-                // Backtrack (Mundur)
-                const existingIdx = path.findIndex(pt => pt.r === p.r && pt.c === p.c);
-                if(existingIdx !== -1) {
-                    paths[activeColor] = path.slice(0, existingIdx + 1);
-                    updateGridData();
-                    render();
-                    return;
-                }
-
-                // Maju (Syarat: Kosong ATAU Endpoint Sendiri)
-                if((targetCurr === 0 || targetCurr === activeColor) && (targetBase === 0 || targetBase === activeColor)) {
-                    path.push({r: p.r, c: p.c});
-                    updateGridData();
-                    render();
-                    checkWin();
-                }
-            }
-        }
-
-        function onUp() { activeColor = null; }
-
-        function updateGridData() {
-            const size = LEVELS[currentLvlIdx].size;
-            const base = LEVELS[currentLvlIdx].grid;
-            
-            // Bersihkan grid dinamis
-            for(let r=0; r<size; r++) {
-                for(let c=0; c<size; c++) {
-                    if(base[r][c] === 0) gridData[r][c] = 0;
-                }
-            }
-            
-            // Tulis ulang path ke grid
-            for(let k in paths) {
-                let pid = parseInt(k);
-                paths[k].forEach(pt => {
-                    gridData[pt.r][pt.c] = pid;
-                });
-            }
-        }
-
-        // --- RENDER ---
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const size = LEVELS[currentLvlIdx].size;
-
-            // 1. Grid Lines
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            for(let i=0; i<=size; i++) {
-                let p = i * cellSize;
-                ctx.moveTo(p, 0); ctx.lineTo(p, 350);
-                ctx.moveTo(0, p); ctx.lineTo(350, p);
-            }
-            ctx.stroke();
-
-            // 2. Paths
-            for(let k in paths) {
-                let path = paths[k];
-                if(path.length < 2) continue;
-                
-                ctx.strokeStyle = COLORS[k];
-                ctx.lineWidth = cellSize * 0.4;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                
-                ctx.beginPath();
-                let start = path[0];
-                ctx.moveTo(start.c * cellSize + cellSize/2, start.r * cellSize + cellSize/2);
-                for(let i=1; i<path.length; i++) {
-                    let pt = path[i];
-                    ctx.lineTo(pt.c * cellSize + cellSize/2, pt.r * cellSize + cellSize/2);
-                }
-                ctx.stroke();
-            }
-
-            // 3. Endpoints (Dots)
-            const base = LEVELS[currentLvlIdx].grid;
-            for(let r=0; r<size; r++) {
-                for(let c=0; c<size; c++) {
-                    let v = base[r][c];
-                    if(v > 0) {
-                        ctx.fillStyle = COLORS[v];
-                        let cx = c * cellSize + cellSize/2;
-                        let cy = r * cellSize + cellSize/2;
-                        
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, cellSize * 0.3, 0, Math.PI*2);
-                        ctx.fill();
+                // Init paths
+                const size = lvl.size;
+                for(let r=0; r<size; r++) {
+                    for(let c=0; c<size; c++) {
+                        const v = this.state.grid[r][c];
+                        if(v > 0) this.state.paths[v] = [];
                     }
                 }
-            }
-        }
 
-        // --- CEK MENANG ---
-        function checkWin() {
-            const size = LEVELS[currentLvlIdx].size;
-            const base = LEVELS[currentLvlIdx].grid;
-            
-            // 1. Cek Full Grid (Tidak ada 0)
-            for(let r=0; r<size; r++) {
-                for(let c=0; c<size; c++) {
-                    if(gridData[r][c] === 0) return; // Masih ada bolong
+                // UI Reset
+                document.getElementById('ui-level').innerText = idx + 1;
+                document.getElementById('ui-moves').innerText = "0";
+                document.getElementById('ui-timer').innerText = "00:00";
+                document.getElementById('overlay-win').classList.add('hidden');
+                
+                this.resize();
+                this.startTimer();
+            },
+
+            resize: function() {
+                if(!this.canvas) return;
+                const maxWidth = Math.min(window.innerWidth - 40, 380); // Ukuran optimal
+                this.canvas.width = maxWidth;
+                this.canvas.height = maxWidth;
+                this.canvas.style.width = maxWidth + 'px';
+                this.canvas.style.height = maxWidth + 'px';
+                
+                const size = LEVELS[this.state.lvlIdx]?.size || 5;
+                this.cellSize = maxWidth / size;
+                
+                if(this.state.grid.length > 0) this.draw();
+            },
+
+            // TIMER & MOVES
+            startTimer: function() {
+                this.stopTimer();
+                this.state.startTime = Date.now();
+                this.state.timer = setInterval(() => {
+                    const d = Math.floor((Date.now() - this.state.startTime) / 1000);
+                    const m = Math.floor(d/60).toString().padStart(2,'0');
+                    const s = (d%60).toString().padStart(2,'0');
+                    document.getElementById('ui-timer').innerText = `${m}:${s}`;
+                }, 1000);
+            },
+            stopTimer: function() { if(this.state.timer) clearInterval(this.state.timer); },
+
+            // INPUT HANDLING
+            initInput: function() {
+                const start = (e) => this.inputStart(e);
+                const move = (e) => this.inputMove(e);
+                const end = () => this.inputEnd();
+
+                // Mouse
+                this.canvas.addEventListener('mousedown', start);
+                this.canvas.addEventListener('mousemove', move);
+                window.addEventListener('mouseup', end);
+
+                // Touch (Safe Mode)
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e.touches[0]); }, {passive: false});
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e.touches[0]); }, {passive: false});
+                window.addEventListener('touchend', end);
+            },
+
+            getPos: function(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                return {
+                    c: Math.floor((e.clientX - rect.left) / this.cellSize),
+                    r: Math.floor((e.clientY - rect.top) / this.cellSize)
+                };
+            },
+
+            inputStart: function(e) {
+                if(this.state.completed) return;
+                const p = this.getPos(e);
+                const size = LEVELS[this.state.lvlIdx].size;
+                if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
+
+                const base = LEVELS[this.state.lvlIdx].grid;
+                const val = base[p.r][p.c] || this.state.grid[p.r][p.c];
+
+                if(val > 0) {
+                    this.state.activeColor = val;
+                    this.state.paths[val] = [{r: p.r, c: p.c}];
+                    this.updateGrid();
+                    this.draw();
                 }
-            }
-            
-            // 2. Cek Koneksi (Opsional tapi bagus)
-            // Asumsi: Jika grid penuh dan aturan tabrakan jalan, kemungkinan besar sudah benar
-            
-            isWin = true;
-            document.getElementById('ui-msg').innerText = "LEVEL SELESAI!";
-            document.getElementById('win-message').classList.remove('hidden');
-        }
+            },
 
-    </script>
-</body>
-</html>
+            inputMove: function(e) {
+                if(!this.state.activeColor || this.state.completed) return;
+                const p = this.getPos(e);
+                const size = LEVELS[this.state.lvlIdx].size;
+                if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
+
+                const color = this.state.activeColor;
+                const path = this.state.paths[color];
+                const last = path[path.length-1];
+
+                if((last.r !== p.r || last.c !== p.c) && (Math.abs(last.r - p.r) + Math.abs(last.c - p.c) === 1)) {
+                    const base = LEVELS[this.state.lvlIdx].grid;
+                    const targetBase = base[p.r][p.c];
+                    const targetCurr = this.state.grid[p.r][p.c];
+
+                    // Backtrack
+                    const existingIdx = path.findIndex(pt => pt.r === p.r && pt.c === p.c);
+                    if(existingIdx !== -1) {
+                        this.state.paths[color] = path.slice(0, existingIdx+1);
+                        this.updateGrid();
+                        this.draw();
+                        return;
+                    }
+
+                    // Move
+                    if((targetCurr === 0 || targetCurr === color) && (targetBase === 0 || targetBase === color)) {
+                        path.push({r: p.r, c: p.c});
+                        this.updateGrid();
+                        this.draw();
+                        this.checkWin();
+                    }
+                }
+            },
+
+            inputEnd: function() {
+                if(this.state.activeColor) {
+                    this.state.moves++;
+                    document.getElementById('ui-moves').innerText = this.state.moves;
+                    this.state.activeColor = null;
+                }
+            },
+
+            updateGrid: function() {
+                const size = LEVELS[this.state.lvlIdx].size;
+                const base = LEVELS[this.state.lvlIdx].grid;
+                for(let r=0; r<size; r++) {
+                    for(let c=0; c<size; c++) {
+                        this.state.grid[r][c] = (base[r][c] > 0) ? 0 : 0;
+                    }
+                }
+                for(const [k, path] of Object.entries(this.state.paths)) {
+                    const cId = parseInt(k);
+                    path.forEach(pt => {
+                        if(base[pt.r][pt.c] === 0) this.state.grid[pt.r][pt.c] = cId;
+                    });
+                }
+            },
+
+            draw: function() {
+                const size = LEVELS[this.state.lvlIdx].size;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Grid
+                this.ctx.strokeStyle = CONFIG.gridLine;
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                for(let i=0; i<=size; i++) {
+                    const p = i * this.cellSize;
+                    this.ctx.moveTo(p, 0); this.ctx.lineTo(p, this.canvas.height);
+                    this.ctx.moveTo(0, p); this.ctx.lineTo(this.canvas.width, p);
+                }
+                this.ctx.stroke();
+
+                // Paths
+                for(const [k, path] of Object.entries(this.state.paths)) {
+                    if(path.length < 2) continue;
+                    const color = CONFIG.colors[k];
+                    this.ctx.strokeStyle = color;
+                    this.ct
