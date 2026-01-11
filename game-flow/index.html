@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flow Master Premium</title>
+    <title>Flow Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* 1. LAYOUT & RESET */
+        /* RESET */
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%; height: 100dvh;
             background-color: #0f172a; color: white; font-family: 'Fredoka', sans-serif;
@@ -17,145 +17,110 @@
             touch-action: manipulation; display: flex; justify-content: center; align-items: center;
         }
 
-        #app-frame {
-            width: 100%; max-width: 480px; height: 100%; position: relative;
-            background: radial-gradient(circle at top, #1e293b, #0f172a);
-        }
+        #app-frame { width: 100%; max-width: 480px; height: 100%; position: relative; background: #0f172a; }
 
-        /* 2. SCREENS (V17 System - Terbukti Jalan) */
+        /* SCREENS */
         .screen {
-            display: none !important; position: absolute; inset: 0;
+            position: absolute; inset: 0; display: none; /* Default Hidden */
             flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; z-index: 10; background-color: #0f172a;
+            padding: 20px; z-index: 10; background: #0f172a;
         }
-        #screen-menu { display: flex; z-index: 50; } /* Menu muncul duluan */
-        .screen.active { display: flex !important; z-index: 60; animation: fade 0.2s ease-out; }
-        @keyframes fade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        
+        /* MENU WAJIB MUNCUL DULUAN */
+        #screen-menu { display: flex; z-index: 50; }
+        
+        .screen.active { display: flex !important; z-index: 60; }
 
-        /* 3. GAME COMPONENTS */
+        /* CANVAS */
         canvas {
             background: #1e293b; border-radius: 16px;
-            box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.6);
-            border: 2px solid #334155;
-            touch-action: none; /* Wajib untuk menggambar */
-            cursor: crosshair;
+            box-shadow: 0 10px 40px -5px rgba(0,0,0,0.5);
+            border: 2px solid #334155; touch-action: none; cursor: crosshair;
         }
 
-        .btn-glow {
-            transition: transform 0.1s; cursor: pointer; position: relative;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-glow:active { transform: scale(0.92); filter: brightness(1.1); }
+        /* BUTTONS */
+        .btn-glow { position: relative; overflow: hidden; transition: transform 0.1s; cursor: pointer; }
+        .btn-glow:active { transform: scale(0.95); filter: brightness(1.1); }
 
-        .anim-float { animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        
-        /* Modal Win */
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(8px);
+        /* DEBUG BOX */
+        #error-log {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: red; color: white;
+            font-size: 10px; padding: 2px; text-align: center; z-index: 9999; display: none;
         }
     </style>
 </head>
 <body>
 
+    <div id="error-log"></div>
+
     <div id="app-frame">
 
         <div id="screen-menu" class="screen">
-            <a href="../index.html" class="absolute top-6 left-6 bg-slate-800/80 px-4 py-2 rounded-full text-slate-300 font-bold text-sm no-underline btn-glow border border-slate-700 z-50">
-                <i class="fas fa-arrow-left mr-2"></i> Menu
-            </a>
+            <a href="../index.html" class="absolute top-6 left-6 bg-slate-800/80 px-4 py-2 rounded-full text-slate-300 font-bold text-sm no-underline btn-glow z-50">Menu</a>
 
-            <div class="mb-12 text-center anim-float">
-                <h1 class="text-7xl font-bold tracking-tighter drop-shadow-2xl mb-0 leading-none">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">FLOW</span>
-                </h1>
-                <h1 class="text-7xl font-bold tracking-tighter drop-shadow-2xl leading-none">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">MASTER</span>
-                </h1>
-                <div class="mt-6">
-                    <span class="bg-slate-800 px-4 py-1 rounded-full text-xs font-bold border border-slate-700 text-slate-400 tracking-widest">LOGIC FIX v21</span>
-                </div>
+            <div class="mb-12 text-center">
+                <h1 class="text-7xl font-bold tracking-tighter mb-0 text-blue-500">FLOW</h1>
+                <h1 class="text-7xl font-bold tracking-tighter text-pink-500">MASTER</h1>
+                <div class="mt-4 bg-slate-800 px-4 py-1 rounded-full text-xs font-bold border border-slate-700 text-slate-400">V22 • STABLE</div>
             </div>
 
             <div class="w-full max-w-xs space-y-5">
-                <button onclick="startGame()" ontouchstart="startGame()" class="btn-glow w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-indigo-900 flex items-center justify-center gap-3">
+                <button onclick="startGame()" ontouchstart="startGame()" class="btn-glow w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-blue-800 flex items-center justify-center gap-3">
                     <i class="fas fa-play"></i> MAINKAN
                 </button>
-                <button onclick="showLeaderboard()" ontouchstart="showLeaderboard()" class="btn-glow w-full bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
-                    <i class="fas fa-trophy text-yellow-400"></i> TOP SKOR
+                <button onclick="showLeaderboard()" ontouchstart="showLeaderboard()" class="btn-glow w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
+                    <i class="fas fa-trophy"></i> SKOR
                 </button>
             </div>
         </div>
 
         <div id="screen-game" class="screen">
             <div class="w-full max-w-md flex justify-between items-center mb-6 px-4 z-20">
-                <button onclick="goHome()" ontouchstart="goHome()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg">
-                    <i class="fas fa-home"></i>
-                </button>
-                
-                <div class="flex gap-3">
-                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[60px]">
-                        <span class="text-[9px] text-slate-400 font-bold">LEVEL</span>
-                        <span id="ui-level" class="text-white font-bold text-lg leading-none">1</span>
-                    </div>
-                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[70px]">
-                        <span class="text-[9px] text-slate-400 font-bold">WAKTU</span>
-                        <span id="ui-timer" class="text-emerald-400 font-bold text-lg leading-none font-mono">00:00</span>
-                    </div>
-                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[60px]">
-                        <span class="text-[9px] text-slate-400 font-bold">MOVES</span>
-                        <span id="ui-moves" class="text-blue-400 font-bold text-lg leading-none">0</span>
-                    </div>
+                <button onclick="goHome()" ontouchstart="goHome()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 text-lg"><i class="fas fa-home"></i></button>
+                <div class="flex gap-3 text-center">
+                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700"><div class="text-[9px] text-slate-400">LEVEL</div><div id="ui-level" class="font-bold">1</div></div>
+                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 min-w-[70px]"><div class="text-[9px] text-slate-400">WAKTU</div><div id="ui-timer" class="font-bold text-emerald-400 font-mono">00:00</div></div>
                 </div>
-                
-                <button onclick="resetLevel()" ontouchstart="resetLevel()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg">
-                    <i class="fas fa-undo"></i>
-                </button>
+                <button onclick="resetLevel()" ontouchstart="resetLevel()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 text-lg"><i class="fas fa-undo"></i></button>
             </div>
 
-            <div class="relative p-2 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-2xl">
-                <div class="bg-slate-900 rounded-xl overflow-hidden relative">
-                    <canvas id="gameCanvas" width="350" height="350"></canvas>
-                    
-                    <div id="win-overlay" class="absolute inset-0 glass-panel flex flex-col items-center justify-center hidden z-50">
-                        <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 anim-float"></i>
-                        <h2 class="text-3xl font-bold text-white mb-2">SEMPURNA!</h2>
-                        <p class="text-slate-400 mb-6 text-xs text-center px-8">Semua warna terhubung &<br>semua kotak terisi.</p>
-                        <button onclick="nextLevel()" ontouchstart="nextLevel()" class="btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700 flex items-center gap-2">
-                            LEVEL BERIKUTNYA <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
+            <div class="relative p-2 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-2xl">
+                <canvas id="gameCanvas" width="350" height="350"></canvas>
+                
+                <div id="win-overlay" class="absolute inset-0 bg-slate-900/95 backdrop-blur-md flex flex-col items-center justify-center hidden z-50 rounded-xl">
+                    <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 animate-bounce"></i>
+                    <h2 class="text-3xl font-bold text-white mb-2">SEMPURNA!</h2>
+                    <p class="text-slate-400 mb-6 text-xs text-center">Semua terhubung & penuh.</p>
+                    <button onclick="nextLevel()" ontouchstart="nextLevel()" class="btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700">LANJUT <i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
-
-            <div class="mt-8 text-center text-slate-500 text-xs font-medium px-4 opacity-70">
-                Hubungkan warna yang sama. Penuhi seluruh kotak!
-            </div>
+            
+            <div class="mt-6 text-center text-slate-500 text-xs px-4">Hubungkan warna. Wajib isi semua kotak!</div>
         </div>
 
         <div id="screen-lb" class="screen">
             <div class="bg-slate-800 w-full max-w-md rounded-3xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh] mx-4">
                 <div class="bg-slate-900 p-5 border-b border-slate-700 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-yellow-500 flex items-center gap-2">
-                        <i class="fas fa-crown"></i> TOP SKOR
-                    </h2>
-                    <button onclick="goHome()" ontouchstart="goHome()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition btn-glow">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <h2 class="text-xl font-bold text-yellow-500"><i class="fas fa-crown"></i> TOP SKOR</h2>
+                    <button onclick="goHome()" ontouchstart="goHome()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex justify-center items-center btn-glow"><i class="fas fa-times"></i></button>
                 </div>
-                <div id="lb-list" class="overflow-y-auto p-0 flex-1 hide-scroll bg-slate-800/50"></div>
+                <div id="lb-list" class="overflow-y-auto p-0 flex-1"></div>
             </div>
         </div>
 
     </div>
 
     <script>
-        const COLORS = { 1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8' };
-        
-        const LEVELS = [
+        // ERROR TRAP
+        window.onerror = function(msg, url, line) {
+            var e = document.getElementById('error-log');
+            e.style.display = 'block';
+            e.innerHTML = "ERR: " + msg + " (" + line + ")";
+        };
+
+        // --- DATA ---
+        var COLORS = { 1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8' };
+        var LEVELS = [
             {size:5, grid:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
             {size:5, grid:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
             {size:6, grid:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]},
@@ -163,24 +128,32 @@
             {size:7, grid:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}
         ];
 
-        // GLOBAL VARIABLES
-        var state = { level: 0, grid: [], paths: {}, active: null, done: false, moves: 0, timer: null, timeStart: 0 };
+        // --- GLOBAL VARS (V19 STYLE - PROVEN) ---
+        var currentLevel = 0;
+        var grid = [];
+        var paths = {};
+        var activeColor = null;
+        var completed = false;
+        var timer = null;
+        var startTime = 0;
         var canvas, ctx, cellSize, gridSize;
 
-        // --- NAVIGATION (SYSTEM V19 - FIXED) ---
+        // --- NAVIGATION ---
         function switchScreen(id) {
-            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            var screens = document.querySelectorAll('.screen');
+            for(var i=0; i<screens.length; i++) screens[i].classList.remove('active');
             document.getElementById(id).classList.add('active');
+            if(id === 'screen-game') setTimeout(resize, 50);
         }
 
         function startGame() {
-            state.level = 0;
+            currentLevel = 0;
             switchScreen('screen-game');
-            setTimeout(function() { loadLevel(0); }, 50); // Delay dikit biar canvas ready
+            setTimeout(function(){ loadLevel(0); }, 100);
         }
 
         function goHome() {
-            stopTimer();
+            clearInterval(timer);
             switchScreen('screen-menu');
         }
 
@@ -189,47 +162,43 @@
             switchScreen('screen-lb');
         }
 
-        function resetLevel() { loadLevel(state.level); }
+        function resetLevel() { loadLevel(currentLevel); }
 
         function nextLevel() {
-            state.level++;
-            if(state.level >= LEVELS.length) {
-                alert("SELAMAT! ANDA MASTER!");
+            currentLevel++;
+            if(currentLevel >= LEVELS.length) {
+                alert("TAMAT! ANDA MASTER!");
                 goHome();
             } else {
-                loadLevel(state.level);
+                loadLevel(currentLevel);
             }
         }
 
-        // --- GAME LOGIC ---
+        // --- GAMEPLAY ---
         function loadLevel(idx) {
             var lvl = LEVELS[idx];
             gridSize = lvl.size;
-            
-            // Deep Copy Grid
-            state.grid = JSON.parse(JSON.stringify(lvl.grid));
-            state.paths = {};
-            state.active = null;
-            state.done = false;
-            state.moves = 0;
+            grid = JSON.parse(JSON.stringify(lvl.grid));
+            paths = {};
+            activeColor = null;
+            completed = false;
 
             // Init Paths
             for(var r=0; r<gridSize; r++) {
                 for(var c=0; c<gridSize; c++) {
-                    var v = state.grid[r][c];
-                    if(v > 0) state.paths[v] = [];
+                    var v = grid[r][c];
+                    if(v > 0) paths[v] = [];
                 }
             }
 
             document.getElementById('ui-level').innerText = idx + 1;
-            document.getElementById('ui-moves').innerText = "0";
             document.getElementById('ui-timer').innerText = "00:00";
             document.getElementById('win-overlay').classList.add('hidden');
             
             initCanvas();
             resize();
             startTimer();
-            saveScore(idx);
+            saveData(idx);
         }
 
         function initCanvas() {
@@ -237,19 +206,15 @@
             canvas = document.getElementById('gameCanvas');
             ctx = canvas.getContext('2d');
             
-            // Input Handlers
-            var start = function(e) { handleInputStart(e); };
-            var move = function(e) { handleInputMove(e); };
-            var end = function(e) { handleInputEnd(e); };
-
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mousemove', move);
-            window.addEventListener('mouseup', end);
-
-            // Touch with preventDefault to stop scrolling
-            canvas.addEventListener('touchstart', function(e) { e.preventDefault(); start(e.touches[0]); }, {passive: false});
-            canvas.addEventListener('touchmove', function(e) { e.preventDefault(); move(e.touches[0]); }, {passive: false});
-            window.addEventListener('touchend', end);
+            // Mouse
+            canvas.addEventListener('mousedown', function(e){ onDown(e); });
+            canvas.addEventListener('mousemove', function(e){ onMove(e); });
+            window.addEventListener('mouseup', function(){ onUp(); });
+            
+            // Touch
+            canvas.addEventListener('touchstart', function(e){ e.preventDefault(); onDown(e.touches[0]); }, {passive: false});
+            canvas.addEventListener('touchmove', function(e){ e.preventDefault(); onMove(e.touches[0]); }, {passive: false});
+            window.addEventListener('touchend', function(){ onUp(); });
             
             window.addEventListener('resize', resize);
         }
@@ -263,7 +228,7 @@
             draw();
         }
 
-        // --- INPUT & MOVEMENT (CORE LOGIC FIX) ---
+        // --- INPUT & LOGIC (CUTTING ENABLED) ---
         function getPos(e) {
             var r = canvas.getBoundingClientRect();
             return {
@@ -272,27 +237,32 @@
             };
         }
 
-        function handleInputStart(e) {
-            if(state.done) return;
+        function onDown(e) {
+            if(completed) return;
             var p = getPos(e);
             if(p.r<0 || p.r>=gridSize || p.c<0 || p.c>=gridSize) return;
 
-            var val = state.grid[p.r][p.c];
-            var base = LEVELS[state.level].grid[p.r][p.c];
+            var val = grid[p.r][p.c]; // Nilai di grid saat ini
+            var base = LEVELS[currentLevel].grid[p.r][p.c]; // Nilai di level asli
 
             if(val > 0) {
-                state.active = val;
-                // Jika klik endpoint, reset path
+                activeColor = val;
+                
+                // Jika klik ENDPOINT ASLI -> Reset jalur
                 if(base > 0) {
-                    state.paths[val] = [{r:p.r, c:p.c}];
+                    paths[val] = [{r:p.r, c:p.c}];
                     updateGrid();
-                } else {
-                    // Jika klik tengah jalur, potong dari situ (Resume)
-                    var path = state.paths[val];
+                } 
+                // Jika klik JALUR SENDIRI -> Potong jalur (Resume)
+                else {
+                    var path = paths[val];
                     var idx = -1;
-                    for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) idx=i;
+                    // Cari index di path
+                    for(var i=0; i<path.length; i++) {
+                        if(path[i].r === p.r && path[i].c === p.c) { idx = i; break; }
+                    }
                     if(idx !== -1) {
-                        state.paths[val] = path.slice(0, idx+1);
+                        paths[val] = path.slice(0, idx+1);
                         updateGrid();
                     }
                 }
@@ -300,41 +270,46 @@
             }
         }
 
-        function handleInputMove(e) {
-            if(!state.active || state.done) return;
+        function onMove(e) {
+            if(!activeColor || completed) return;
             var p = getPos(e);
             if(p.r<0 || p.r>=gridSize || p.c<0 || p.c>=gridSize) return;
 
-            var path = state.paths[state.active];
+            var path = paths[activeColor];
             var last = path[path.length-1];
 
             // Cek Tetangga
             if((last.r!==p.r || last.c!==p.c) && (Math.abs(last.r-p.r)+Math.abs(last.c-p.c)===1)) {
                 
-                var targetBase = LEVELS[state.level].grid[p.r][p.c]; // Apakah ini endpoint orang lain?
-                var targetCurr = state.grid[p.r][p.c]; // Warna apa di situ sekarang?
+                var targetBase = LEVELS[currentLevel].grid[p.r][p.c];
+                var targetCurr = grid[p.r][p.c];
 
-                // 1. BACKTRACK (Mundur ke jalur sendiri)
-                var selfIdx = -1;
-                for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) selfIdx=i;
-                if(selfIdx !== -1) {
-                    state.paths[state.active] = path.slice(0, selfIdx+1);
+                // 1. BACKTRACK (Mundur)
+                var idx = -1;
+                for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) idx=i;
+                if(idx !== -1) {
+                    paths[activeColor] = path.slice(0, idx+1);
                     updateGrid(); draw(); return;
                 }
 
-                // 2. VALIDASI GERAK
-                // Boleh masuk jika: 
-                // - Kosong (0)
-                // - Endpoint sendiri (targetBase == active)
-                // - Jalur orang lain (targetCurr != active) -> INI FITUR "CUTTING" / POTONG JALUR
-                
-                // DILARANG jika: Nabrak Endpoint Orang Lain
-                if(targetBase > 0 && targetBase !== state.active) return; // Tabrak tembok base
+                // 2. VALIDASI MAJU
+                // Dilarang tabrak Endpoint Orang Lain
+                if(targetBase > 0 && targetBase !== activeColor) return;
 
-                // EXECUTE MOVE
-                // Jika menabrak jalur orang lain, potong jalur mereka
-                if(targetCurr > 0 && targetCurr !== state.active) {
-                    cutPath(targetCurr, p.r, p.c);
+                // 3. FITUR CUTTING (Potong Jalur Orang Lain)
+                if(targetCurr > 0 && targetCurr !== activeColor) {
+                    // Cari jalur siapa ini
+                    var owner = targetCurr;
+                    var ownerPath = paths[owner];
+                    // Cari index tabrakan
+                    var cutIdx = -1;
+                    for(var j=0; j<ownerPath.length; j++) {
+                        if(ownerPath[j].r === p.r && ownerPath[j].c === p.c) { cutIdx = j; break; }
+                    }
+                    if(cutIdx !== -1) {
+                        paths[owner] = ownerPath.slice(0, cutIdx); // Potong
+                        // Grid akan direfresh total di updateGrid()
+                    }
                 }
 
                 path.push({r:p.r, c:p.c});
@@ -344,40 +319,23 @@
             }
         }
 
-        function handleInputEnd() {
-            if(state.active) {
-                state.moves++;
-                document.getElementById('ui-moves').innerText = state.moves;
-                state.active = null;
-            }
-        }
-
-        // --- CORE HELPER: CUT PATH ---
-        function cutPath(colorId, r, c) {
-            var p = state.paths[colorId];
-            var cutIdx = -1;
-            // Cari titik potong
-            for(var i=0; i<p.length; i++) {
-                if(p[i].r === r && p[i].c === c) { cutIdx = i; break; }
-            }
-            if(cutIdx !== -1) {
-                // Potong jalur lawan sampai sebelum titik tabrak
-                state.paths[colorId] = p.slice(0, cutIdx); 
-                // Grid akan diupdate total di updateGrid()
-            }
-        }
+        function onUp() { activeColor = null; }
 
         function updateGrid() {
-            var base = LEVELS[state.level].grid;
-            // Reset grid ke base endpoints
-            for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
-                state.grid[r][c] = (base[r][c] > 0) ? base[r][c] : 0;
+            var base = LEVELS[currentLevel].grid;
+            // 1. Reset ke Base
+            for(var r=0; r<gridSize; r++) {
+                for(var c=0; c<gridSize; c++) {
+                    grid[r][c] = (base[r][c] > 0) ? base[r][c] : 0;
+                }
             }
-            // Gambar ulang semua jalur
-            for(var k in state.paths) {
+            // 2. Tulis Jalur Baru
+            for(var k in paths) {
                 var id = parseInt(k);
-                var p = state.paths[k];
-                for(var i=0; i<p.length; i++) state.grid[p[i].r][p[i].c] = id;
+                var p = paths[k];
+                for(var i=0; i<p.length; i++) {
+                    grid[p[i].r][p[i].c] = id;
+                }
             }
         }
 
@@ -395,15 +353,13 @@
             ctx.stroke();
 
             // Paths
-            for(var k in state.paths) {
-                var p = state.paths[k];
+            for(var k in paths) {
+                var p = paths[k];
                 if(p.length<2) continue;
-                var color = COLORS[k];
-                ctx.strokeStyle = color;
+                ctx.strokeStyle = COLORS[k];
                 ctx.lineWidth = cellSize*0.45;
                 ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                ctx.shadowBlur = 15; ctx.shadowColor = color;
-                
+                ctx.shadowBlur = 10; ctx.shadowColor = COLORS[k]; // GLOW
                 ctx.beginPath();
                 ctx.moveTo(p[0].c*cellSize+cellSize/2, p[0].r*cellSize+cellSize/2);
                 for(var j=1; j<p.length; j++) ctx.lineTo(p[j].c*cellSize+cellSize/2, p[j].r*cellSize+cellSize/2);
@@ -412,7 +368,7 @@
             }
 
             // Dots
-            var base = LEVELS[state.level].grid;
+            var base = LEVELS[currentLevel].grid;
             for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
                 var v = base[r][c];
                 if(v > 0) {
@@ -425,19 +381,77 @@
             }
         }
 
-        // --- CHECK WIN (STRICT) ---
+        // --- WIN LOGIC (STRICT) ---
         function checkWin() {
-            var base = LEVELS[state.level].grid;
-            
-            // 1. Cek Grid Penuh (Tidak ada 0)
+            // 1. Cek Full
             for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
-                if(state.grid[r][c] === 0) return; // Belum penuh
+                if(grid[r][c] === 0) return; // Ada yang kosong
             }
 
-            // 2. Cek Semua Warna Terhubung (Start -> End)
-            var colorsNeeded = {};
-            for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) if(base[r][c]>0) colorsNeeded[base[r][c]]=true;
+            // 2. Cek Koneksi (Ujung ke Ujung)
+            var base = LEVELS[currentLevel].grid;
+            var needed = {};
+            for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) if(base[r][c]>0) needed[base[r][c]] = true;
 
-            for(var k in colorsNeeded) {
-                var path = state.paths[k];
-      
+            for(var k in needed) {
+                var p = paths[k];
+                if(!p || p.length < 2) return; // Jalur putus/pendek
+
+                // Cari 2 endpoint di level
+                var eps = [];
+                for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
+                    if(base[r][c] == k) eps.push({r:r, c:c});
+                }
+
+                var h = p[0];
+                var t = p[p.length-1];
+
+                // Cek apakah jalur menyentuh kedua endpoint
+                var match = (h.r==eps[0].r && h.c==eps[0].c && t.r==eps[1].r && t.c==eps[1].c) ||
+                            (h.r==eps[1].r && h.c==eps[1].c && t.r==eps[0].r && t.c==eps[0].c);
+                
+                if(!match) return;
+            }
+
+            completed = true;
+            clearInterval(timer);
+            document.getElementById('win-overlay').classList.remove('hidden');
+            saveData(currentLevel+1);
+        }
+
+        // --- UTILS ---
+        function startTimer() {
+            clearInterval(timer);
+            startTime = Date.now();
+            timer = setInterval(function(){
+                var d = Math.floor((Date.now()-startTime)/1000);
+                var m = Math.floor(d/60).toString().padStart(2,'0');
+                var s = (d%60).toString().padStart(2,'0');
+                document.getElementById('ui-timer').innerText = m+":"+s;
+            }, 1000);
+        }
+
+        function saveData(lvl) {
+            var s = JSON.parse(localStorage.getItem('flowV22')||"[]");
+            var f = false;
+            for(var i=0; i<s.length; i++) if(s[i].n==='YOU') { s[i].l = Math.max(s[i].l, lvl); f=true; }
+            if(!f) s.push({n:'YOU', l:lvl});
+            localStorage.setItem('flowV22', JSON.stringify(s));
+        }
+
+        function renderLb() {
+            var s = JSON.parse(localStorage.getItem('flowV22')||"[]");
+            if(s.length===0) s=[{n:'PRO', l:50}];
+            s.sort(function(a,b){return b.l-a.l});
+            var l = document.getElementById('lb-list');
+            l.innerHTML = '';
+            for(var i=0; i<s.length; i++) {
+                var d = document.createElement('div');
+                d.className = "flex justify-between p-3 border-b border-slate-700 text-xs text-slate-300";
+                d.innerHTML = '<span class="w-8 font-bold text-yellow-500">#'+(i+1)+'</span><span class="flex-1">'+s[i].n+'</span><span class="text-blue-400 font-mono">Lvl '+s[i].l+'</span>';
+                l.appendChild(d);
+            }
+        }
+    </script>
+</body>
+</html>
