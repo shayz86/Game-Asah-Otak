@@ -9,12 +9,12 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; touch-action: none; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* Z-INDEX SANGAT PENTING */
         #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
         
-        /* Overlay harus z-index paling tinggi agar bisa diklik */
-        #overlay { position: absolute; inset: 0; z-index: 999; display: flex; }
+        /* Overlay Z-Index Super Tinggi & Flex */
+        #overlay { position: absolute; inset: 0; z-index: 9999; display: flex; background-color: rgba(0,0,0,0.9); }
+        .hidden { display: none !important; } /* Force Hide Class */
 
         .interactive { pointer-events: auto; cursor: pointer; }
         
@@ -38,23 +38,21 @@
                 <p id="theme-name" class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Tema: Tutorial</p>
             </div>
             <div class="flex flex-col gap-2 items-end pointer-events-none">
-                <button id="reset-btn" class="interactive bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-xs font-bold transition backdrop-blur-sm border border-red-400/30">
+                <button onclick="resetCurrentLevel()" class="interactive bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-xs font-bold transition backdrop-blur-sm border border-red-400/30">
                     ULANG (R)
                 </button>
-                <button id="cam-reset-btn" class="interactive bg-gray-700/50 hover:bg-gray-600 text-white px-3 py-1 rounded-lg shadow text-[10px] transition border border-gray-600/30 backdrop-blur-sm">
+                <button onclick="resetCamera()" class="interactive bg-gray-700/50 hover:bg-gray-600 text-white px-3 py-1 rounded-lg shadow text-[10px] transition border border-gray-600/30 backdrop-blur-sm">
                     RESET KAMERA
                 </button>
             </div>
         </div>
-
         <div class="text-center pb-4 opacity-50 pointer-events-none">
             <p class="text-[10px] text-gray-400 uppercase tracking-widest">Geser area kosong untuk putar kamera</p>
         </div>
     </div>
 
-    <div id="overlay" class="items-center justify-center interactive bg-black/90 backdrop-blur-sm transition-opacity duration-300">
+    <div id="overlay" class="items-center justify-center interactive transition-opacity duration-300">
         <div class="instruction-card p-8 rounded-3xl max-w-sm text-center text-white w-full mx-4 relative overflow-hidden">
-            
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
 
             <h2 id="overlay-title" class="text-4xl font-black mb-2 text-white mt-4">Mulai Misi</h2>
@@ -75,25 +73,37 @@
                 </div>
             </div>
 
-            <button id="start-btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 ring-1 ring-white/20 mb-4 cursor-pointer z-50">
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 px-8 rounded-xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 ring-1 ring-white/20 mb-4 cursor-pointer z-50">
                 MULAI MAIN
             </button>
 
             <a href="../index.html" class="block w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-3 px-8 rounded-xl border border-gray-700 transition-colors text-xs tracking-wider no-underline cursor-pointer z-50">
                 🏠 KEMBALI KE MENU UTAMA
             </a>
-
         </div>
     </div>
 
     <div id="game-container"></div>
 
     <script>
-        // --- KONFIGURASI ---
+        // --- VARIABEL GLOBAL ---
+        // Ditaruh di luar agar bisa diakses oleh HTML onclick
+        let isGameActive = false;
+        let currentLevelIndex = 0;
+        let scene, camera, renderer, playerMesh;
+        let tileMeshes = [];
+        let levels = [];
+        let currentMap = [];
+        let playerPos = { x: 0, z: 0 };
+        let isMoving = false;
+        let cameraAngle = 0;
+        let cameraZoom = 14;
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+
+        // Konfigurasi
         const TILE_SIZE = 1.2;
         const TOTAL_LEVELS = 50;
-        
-        // --- DATA ---
         const THEMES = [
             { name: "Neon City", bg: 0x0f172a, tile: 0x334155, on: 0xfacc15, player: 0x38bdf8, pEmit: 0x0ea5e9, fog: 0x0f172a },
             { name: "Mars Base", bg: 0x2a0a0a, tile: 0x552222, on: 0xff5500, player: 0xffaa00, pEmit: 0xff4400, fog: 0x2a0a0a },
@@ -101,33 +111,93 @@
             { name: "Deep Ocean", bg: 0x0c0a2a, tile: 0x1e1b4b, on: 0x818cf8, player: 0xf472b6, pEmit: 0xe879f9, fog: 0x0c0a2a },
             { name: "Void Core", bg: 0x000000, tile: 0x262626, on: 0xffffff, player: 0xff0055, pEmit: 0xff0055, fog: 0x000000 }
         ];
-
         let currentTheme = THEMES[0];
-        const staticLevels = [
-            { map: [[1,1,1],[1,1,1],[1,1,1]], start: {x:1, z:1} },
-            { map: [[1,1,1],[0,1,0],[0,1,0],[0,1,0]], start: {x:1, z:3} },
-            { map: [[1,0,1,1,1],[1,1,1,0,1],[0,0,1,1,1]], start: {x:0, z:0} },
-            { map: [[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,1,1,1]], start: {x:0, z:0} },
-            { map: [[1,1,1,0,1],[1,0,1,0,1],[1,0,1,1,1],[1,0,0,0,0],[1,1,1,1,1]], start: {x:0, z:0} }
-        ];
-        let levels = [...staticLevels];
 
-        // --- THREEJS VARS ---
-        let scene, camera, renderer, playerMesh;
-        let tileMeshes = [];
-        let currentLevelIndex = 0;
-        let currentMap = [];
-        let playerPos = { x: 0, z: 0 };
-        let isMoving = false;
-        let isGameActive = false;
-        let cameraAngle = 0;
-        let cameraZoom = 14;
-        let isDragging = false;
-        let prevMouse = { x: 0, y: 0 };
+        // --- FUNGSI UI UTAMA (Global) ---
+        function startGame() {
+            // Paksa sembunyikan overlay dengan manipulasi CSS langsung
+            document.getElementById('overlay').classList.add('hidden');
+            isGameActive = true;
+            
+            // Pastikan level dimuat ulang agar bersih
+            loadLevel(currentLevelIndex);
+        }
 
-        // --- CORE FUNCTIONS ---
+        function showOverlay(title, desc, btnText, nextAction) {
+            const overlay = document.getElementById('overlay');
+            const titleEl = document.getElementById('overlay-title');
+            const descEl = document.getElementById('overlay-desc');
+            const btnEl = document.querySelector('#overlay button'); // Cari tombol start di dalam overlay
 
-        function generateProceduralLevels() {
+            titleEl.innerText = title;
+            descEl.innerText = desc;
+            btnEl.innerText = btnText;
+            
+            // Ubah fungsi onclick tombol start
+            btnEl.onclick = function() {
+                nextAction();
+            };
+
+            overlay.classList.remove('hidden');
+        }
+
+        function resetCurrentLevel() {
+            if(isGameActive) loadLevel(currentLevelIndex);
+        }
+
+        function resetCamera() {
+            cameraAngle = 0; 
+            updateCameraPosition();
+        }
+
+        // --- GAME ENGINE ---
+        
+        function init() {
+            // Setup ThreeJS
+            const container = document.getElementById('game-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambient);
+            const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+            sun.position.set(10, 20, 10);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 1024;
+            sun.shadow.mapSize.height = 1024;
+            scene.add(sun);
+
+            // Generate Levels
+            generateLevels();
+            
+            // Load Level 1 tapi pause game
+            loadLevel(0);
+            isGameActive = false; // Tunggu tombol start ditekan
+
+            // Listeners
+            window.addEventListener('resize', onWindowResize, false);
+            document.addEventListener('keydown', onKeyDown, false);
+            setupInputHandlers();
+            animate();
+        }
+
+        function generateLevels() {
+            // Static tutorial levels
+            levels = [
+                { map: [[1,1,1],[1,1,1],[1,1,1]], start: {x:1, z:1} },
+                { map: [[1,1,1],[0,1,0],[0,1,0],[0,1,0]], start: {x:1, z:3} },
+                { map: [[1,0,1,1,1],[1,1,1,0,1],[0,0,1,1,1]], start: {x:0, z:0} },
+                { map: [[1,1,1,1],[1,0,0,1],[1,0,0,1],[1,1,1,1]], start: {x:0, z:0} },
+                { map: [[1,1,1,0,1],[1,0,1,0,1],[1,0,1,1,1],[1,0,0,0,0],[1,1,1,1,1]], start: {x:0, z:0} }
+            ];
+
+            // Procedural levels
             for (let i = 5; i < TOTAL_LEVELS; i++) {
                 const size = Math.min(9, 4 + Math.floor(i / 8)); 
                 const minPath = 8 + i + Math.floor(i * 0.4); 
@@ -160,53 +230,6 @@
             }
         }
 
-        function initGame() {
-            // Cek apakah ThreeJS sudah load
-            if (typeof THREE === 'undefined') {
-                console.error("Three.js belum termuat!");
-                setTimeout(initGame, 500); // Coba lagi dalam 0.5 detik
-                return;
-            }
-
-            const container = document.getElementById('game-container');
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-
-            const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-            scene.add(ambient);
-            const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-            sun.position.set(10, 20, 10);
-            sun.castShadow = true;
-            sun.shadow.mapSize.width = 1024;
-            sun.shadow.mapSize.height = 1024;
-            scene.add(sun);
-            
-            window.addEventListener('resize', onWindowResize, false);
-            document.addEventListener('keydown', onKeyDown, false);
-            setupInputHandlers();
-            
-            generateProceduralLevels();
-            loadLevel(0); // Load level pertama
-            animate();
-        }
-
-        function applyTheme(idx) {
-            const themeIndex = Math.floor(idx / 10);
-            const theme = THEMES[Math.min(themeIndex, THEMES.length - 1)];
-            currentTheme = theme;
-            scene.background = new THREE.Color(theme.bg);
-            scene.fog = new THREE.Fog(theme.fog, 10, 40);
-            document.getElementById('theme-name').innerText = `TEMA: ${theme.name}`;
-            document.getElementById('theme-name').style.color = '#' + theme.on.toString(16);
-        }
-
         function loadLevel(idx) {
             if(playerMesh) scene.remove(playerMesh);
             tileMeshes.forEach(m => scene.remove(m));
@@ -215,8 +238,17 @@
             const levelData = levels[idx];
             currentMap = JSON.parse(JSON.stringify(levelData.map));
             playerPos = { ...levelData.start };
-            applyTheme(idx);
+            
+            // Apply Theme
+            const themeIndex = Math.floor(idx / 10);
+            const theme = THEMES[Math.min(themeIndex, THEMES.length - 1)];
+            currentTheme = theme;
+            scene.background = new THREE.Color(theme.bg);
+            scene.fog = new THREE.Fog(theme.fog, 10, 40);
+            document.getElementById('theme-name').innerText = `TEMA: ${theme.name}`;
+            document.getElementById('theme-name').style.color = '#' + theme.on.toString(16);
 
+            // Build Map
             const h = currentMap.length; 
             const w = currentMap[0].length;
             const offX = (w*TILE_SIZE)/2 - (TILE_SIZE/2);
@@ -237,6 +269,7 @@
                 }
             }
 
+            // Player
             const pGeo = new THREE.SphereGeometry(TILE_SIZE*0.4, 32, 32);
             const pMat = new THREE.MeshStandardMaterial({ color: currentTheme.player, emissive: currentTheme.pEmit, emissiveIntensity: 0.7, roughness:0.1 });
             playerMesh = new THREE.Mesh(pGeo, pMat);
@@ -258,9 +291,10 @@
         function getTileMesh(gx, gz) { return tileMeshes.find(t => t.userData.gridX === gx && t.userData.gridZ === gz); }
         
         function toggleTile(tile, skipAnim=false) {
-            if(!tile) return;
+            if (!tile) return;
             tile.userData.state = !tile.userData.state;
             const isOn = tile.userData.state;
+            
             tile.material.color.setHex(isOn ? currentTheme.on : currentTheme.tile);
             tile.material.emissive.setHex(isOn ? currentTheme.on : 0x000000);
             tile.material.emissiveIntensity = isOn ? 0.6 : 0;
@@ -283,18 +317,18 @@
                 setTimeout(() => {
                     const isNotLast = currentLevelIndex < TOTAL_LEVELS - 1;
                     const title = isNotLast ? "LEVEL SELESAI!" : "MISI UTAMA SELESAI!";
-                    const desc = isNotLast ? `Siap untuk Level ${currentLevelIndex+2}?` : "Luar Biasa! 50 Level Selesai.";
+                    const desc = isNotLast ? `Siap untuk Level ${currentLevelIndex+2}?` : "Selamat! Anda Tamat.";
                     const btn = isNotLast ? "LANJUT" : "MAIN ULANG";
                     
                     showOverlay(title, desc, btn, () => {
                         currentLevelIndex = isNotLast ? currentLevelIndex + 1 : 0;
-                        loadLevel(currentLevelIndex);
-                        hideOverlay();
-                        isGameActive = true;
+                        startGame(); // Pakai fungsi start game untuk hide overlay
                     });
                 }, 400);
             }
         }
+
+        // --- CONTROLS ---
 
         function getRelativeDir(input) {
             let theta = cameraAngle % (Math.PI*2);
@@ -319,6 +353,7 @@
             const nz = playerPos.z + dir.z;
 
             if(nz<0 || nz>=currentMap.length || nx<0 || nx>=currentMap[0].length || currentMap[nz][nx]===0) {
+                // Shake
                 const start = playerMesh.position.clone();
                 let i=0;
                 const shake = () => {
@@ -350,7 +385,7 @@
         }
 
         function onKeyDown(e) {
-            if(e.key.toLowerCase()==='r') { if(isGameActive) loadLevel(currentLevelIndex); return; }
+            if(e.key.toLowerCase()==='r') { resetCurrentLevel(); return; }
             if(!isGameActive) return;
             switch(e.key) {
                 case 'ArrowUp': case 'w': move('up'); break;
@@ -388,31 +423,7 @@
                     else move(dy>0?'down':'up');
                 }
             }, {passive:false});
-
-            document.getElementById('cam-reset-btn').addEventListener('click', () => { cameraAngle=0; updateCameraPosition(); });
-            document.getElementById('reset-btn').addEventListener('click', () => { if(isGameActive) loadLevel(currentLevelIndex); });
         }
 
         function updateCameraPosition() {
-            camera.position.set(Math.sin(cameraAngle)*cameraZoom, cameraZoom*0.8, Math.cos(cameraAngle)*cameraZoom);
-            camera.lookAt(0,0,0);
-        }
-        function onWindowResize() {
-            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-        function animate() {
-            requestAnimationFrame(animate);
-            if(!isMoving && playerMesh) playerMesh.position.y = (TILE_SIZE*0.5)+Math.sin(Date.now()*0.002)*0.05;
-            renderer.render(scene, camera);
-        }
-
-        // --- UI & GAME FLOW CONTROLS ---
-        
-        const overlay = document.getElementById('overlay');
-        const startBtn = document.getElementById('start-btn');
-        
-        function showOverlay(title, desc, btnText, cb) {
-            overlay.style.display = 'flex';
-            document.getElementById('overlay-title').innerText = title;
-            document.getElementById('overlay-desc').inne
+            camera.position.set(Math.sin(cameraAngle)*cameraZoom, 
