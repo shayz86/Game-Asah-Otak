@@ -484,4 +484,175 @@
     }
 
     function findCardLocation(id) {
-        for(let i=0; i<4; i++) if (freeCells[i] && freeCells[i].id === id) return { type: 'freecell', index: i, card: freeCells[
+        for(let i=0; i<4; i++) if (freeCells[i] && freeCells[i].id === id) return { type: 'freecell', index: i, card: freeCells[i] };
+        for(let i=0; i<8; i++) {
+            let idx = tableau[i].findIndex(c => c.id === id);
+            if (idx !== -1) return { type: 'tableau', pileIndex: i, pile: tableau[i], cardIndex: idx };
+        }
+        return null;
+    }
+
+    function countMoveCapacity() {
+        let emptyFC = 0; for(let c of freeCells) if(c === null) emptyFC++;
+        let emptyTab = 0; for(let t of tableau) if(t.length === 0) emptyTab++;
+        return { emptyFC, emptyTab };
+    }
+
+    function tryAutoMove(card) {
+        let suitIdx = SUITS.indexOf(card.suit);
+        let fPile = foundations[suitIdx];
+        let valid = (fPile.length === 0 && card.value === 1) || (fPile.length > 0 && fPile[fPile.length-1].value === card.value - 1);
+        
+        if (valid) {
+            let loc = findCardLocation(card.id);
+            if (loc.type === 'freecell' || (loc.type === 'tableau' && loc.cardIndex === loc.pile.length - 1)) {
+                saveState();
+                if (loc.type === 'freecell') freeCells[loc.index] = null;
+                else tableau[loc.pileIndex].pop();
+                foundations[suitIdx].push(card);
+                moveCount++;
+                renderGame();
+            }
+        }
+    }
+
+    function startDrag(e) {
+        e.preventDefault();
+        let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        
+        let loc = findCardLocation(e.currentTarget.dataset.cid);
+        if (!loc) return;
+
+        let cardsToMove = [];
+        if (loc.type === 'freecell') {
+            cardsToMove = [loc.card];
+        } else {
+            let pile = loc.pile;
+            let startIdx = loc.cardIndex;
+            cardsToMove = pile.slice(startIdx);
+            
+            for (let i = 0; i < cardsToMove.length - 1; i++) {
+                if (cardsToMove[i].color === cardsToMove[i+1].color || cardsToMove[i].value !== cardsToMove[i+1].value + 1) return;
+            }
+        }
+
+        const ghost = document.createElement('div');
+        ghost.style.position = 'fixed'; ghost.style.zIndex = '9999'; ghost.style.pointerEvents = 'none';
+        ghost.style.left = e.currentTarget.getBoundingClientRect().left + 'px';
+        ghost.style.top = e.currentTarget.getBoundingClientRect().top + 'px';
+        
+        cardsToMove.forEach((c, i) => {
+            let el = createCardElement(c, false);
+            el.style.position = 'absolute'; el.style.top = (i * 28) + 'px';
+            ghost.appendChild(el);
+        });
+        document.body.appendChild(ghost);
+
+        dragData = {
+            cards: cardsToMove, origin: loc, ghost: ghost,
+            dx: clientX - e.currentTarget.getBoundingClientRect().left,
+            dy: clientY - e.currentTarget.getBoundingClientRect().top
+        };
+
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('touchmove', onDragMove, {passive: false});
+        document.addEventListener('mouseup', onDragEnd);
+        document.addEventListener('touchend', onDragEnd);
+    }
+
+    function onDragMove(e) {
+        if (!dragData) return;
+        let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        let y = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        dragData.ghost.style.left = (x - dragData.dx) + 'px';
+        dragData.ghost.style.top = (y - dragData.dy) + 'px';
+    }
+
+    function onDragEnd(e) {
+        if (!dragData) return;
+        let x = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+        let y = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+        
+        dragData.ghost.remove();
+        let dropEl = document.elementFromPoint(x, y);
+        let zone = dropEl?.closest('.slot, .pile');
+        let success = false, errorMsg = "";
+
+        if (zone) {
+            let movingCards = dragData.cards;
+            let topCard = movingCards[0];
+
+            if (zone.classList.contains('freecell')) {
+                if (movingCards.length > 1) errorMsg = "Hanya bisa 1 kartu di Free Cell";
+                else {
+                    let idx = parseInt(zone.dataset.index);
+                    if (freeCells[idx] === null) {
+                        saveState(); removeFromOrigin(dragData.origin); freeCells[idx] = topCard; success = true;
+                    } else errorMsg = "Free Cell penuh";
+                }
+            }
+            else if (zone.classList.contains('foundation')) {
+                if (movingCards.length > 1) errorMsg = "Hanya bisa 1 kartu ke Fondasi";
+                else {
+                    let fIdx = parseInt(zone.dataset.index);
+                    if (SUITS.indexOf(topCard.suit) === fIdx) {
+                        let fPile = foundations[fIdx];
+                        if ((fPile.length === 0 && topCard.value === 1) || (fPile.length > 0 && fPile[fPile.length-1].value === topCard.value - 1)) {
+                            saveState(); removeFromOrigin(dragData.origin); foundations[fIdx].push(topCard); success = true;
+                        } else errorMsg = "Harus urut As-King";
+                    } else errorMsg = "Salah Kembang";
+                }
+            }
+            else if (zone.classList.contains('pile')) {
+                let tIdx = parseInt(zone.id.split('-')[1]);
+                let targetPile = tableau[tIdx];
+                let validPlacement = targetPile.length === 0 || (targetPile[targetPile.length - 1].color !== topCard.color && targetPile[targetPile.length - 1].value === topCard.value + 1);
+
+                if (validPlacement) {
+                    let cap = countMoveCapacity();
+                    let emptyTabsAvailable = cap.emptyTab - (targetPile.length === 0 ? 1 : 0);
+                    let maxMove = (1 + cap.emptyFC) * Math.pow(2, emptyTabsAvailable);
+
+                    if (movingCards.length <= maxMove) {
+                        saveState(); removeFromOrigin(dragData.origin); tableau[tIdx].push(...movingCards); success = true;
+                    } else errorMsg = `Max pindah: ${maxMove} kartu`;
+                } else if (targetPile.length > 0) errorMsg = "Harus beda warna & urut turun";
+            }
+        }
+
+        if (success) { moveCount++; renderGame(); }
+        else if (errorMsg) showToast(errorMsg);
+
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('touchmove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        document.removeEventListener('touchend', onDragEnd);
+        dragData = null;
+    }
+
+    function removeFromOrigin(loc) {
+        if (loc.type === 'freecell') freeCells[loc.index] = null;
+        else tableau[loc.pileIndex].splice(loc.cardIndex, tableau[loc.pileIndex].length - loc.cardIndex);
+    }
+
+    function checkWin() {
+        let total = 0; for (let f of foundations) total += f.length;
+        if (total === 52) {
+            document.getElementById('win-score').innerText = moveCount;
+            const isRecord = saveScore(moveCount);
+            document.getElementById('new-record-msg').style.display = isRecord ? 'block' : 'none';
+            document.getElementById('win-modal').style.display = 'flex';
+        }
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show';
+        setTimeout(() => { t.className = t.className.replace('show', ''); }, 3000);
+    }
+
+    function showHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+    function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
+</script>
+</body>
+</html>
