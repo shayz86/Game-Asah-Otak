@@ -6,445 +6,400 @@
     <title>Flow Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* RESET & LAYOUT */
-        html, body {
-            margin: 0; padding: 0; width: 100%; height: 100%; height: 100dvh;
-            background-color: #0f172a; color: white; font-family: 'Fredoka', sans-serif;
-            overflow: hidden; user-select: none; -webkit-user-select: none;
-            touch-action: manipulation; display: flex; justify-content: center; align-items: center;
+        /* CSS INTERNAL (Agar tampilan muncul walau internet lambat) */
+        body {
+            background-color: #0f172a;
+            color: white;
+            font-family: sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden;
+            touch-action: none; /* Mencegah scroll/zoom */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        #app {
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: radial-gradient(circle at top, #1e293b, #0f172a);
         }
 
-        #app-frame { width: 100%; max-width: 480px; height: 100%; position: relative; background: #0f172a; }
-
-        /* SCREENS */
         .screen {
-            position: absolute; inset: 0; display: none;
+            position: absolute; inset: 0;
+            display: none; /* Hidden default */
             flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; z-index: 10; background: #0f172a;
+            z-index: 10;
         }
-        #screen-menu { display: flex; z-index: 50; }
-        .screen.active { display: flex !important; z-index: 60; }
+        
+        /* MENU WAJIB FLEX AGAR MUNCUL DULUAN */
+        #menu { display: flex; z-index: 50; }
+        
+        .active { display: flex !important; z-index: 60; }
 
-        /* CANVAS */
         canvas {
-            background: #1e293b; border-radius: 16px;
-            box-shadow: 0 10px 40px -5px rgba(0,0,0,0.5);
-            border: 2px solid #334155; touch-action: none; cursor: crosshair;
+            background: #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid #334155;
+            cursor: crosshair;
         }
 
-        /* BUTTONS */
-        .btn-glow { position: relative; overflow: hidden; transition: transform 0.1s; cursor: pointer; }
-        .btn-glow:active { transform: scale(0.95); filter: brightness(1.1); }
-
-        /* OVERLAYS */
-        .overlay {
-            position: absolute; inset: 0; background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(5px); z-index: 100;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 16px;
+        .btn {
+            background: linear-gradient(to right, #2563eb, #4f46e5);
+            padding: 15px; width: 280px;
+            border-radius: 12px;
+            text-align: center; font-weight: bold; font-size: 18px;
+            margin-bottom: 15px; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-bottom: 4px solid #1e3a8a;
         }
-        .overlay.show { display: flex; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popIn { from{transform:scale(0.8);opacity:0;} to{transform:scale(1);opacity:1;} }
+        .btn:active { transform: translateY(2px); border-bottom: 0; }
+        
+        .btn-sec { background: #334155; border-bottom: 4px solid #0f172a; }
 
-        /* DEBUG BOX (PENTING UNTUK DIAGNOSA) */
-        #debug-log {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: red; color: white;
-            font-size: 10px; padding: 2px; text-align: center; z-index: 9999; display: none;
+        #error-box {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: red; color: white; font-size: 10px;
+            display: none; z-index: 9999; text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div id="debug-log"></div>
+    <div id="error-box"></div>
 
-    <div id="app-frame">
-
-        <div id="screen-menu" class="screen">
-            <a href="../index.html" class="absolute top-6 left-6 bg-slate-800/80 px-4 py-2 rounded-full text-slate-300 font-bold text-sm no-underline btn-glow z-50 border border-slate-700">Menu</a>
-
-            <div class="mb-12 text-center">
-                <h1 class="text-7xl font-bold tracking-tighter mb-0 text-blue-500">FLOW</h1>
-                <h1 class="text-7xl font-bold tracking-tighter text-pink-500">MASTER</h1>
-                <div class="mt-4 bg-slate-800 px-4 py-1 rounded-full text-xs font-bold border border-slate-700 text-slate-400">V25 • FINAL LOGIC</div>
-            </div>
-
-            <div class="w-full max-w-xs space-y-5">
-                <button onclick="startGame()" ontouchstart="startGame()" class="btn-glow w-full bg-blue-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-blue-800 flex items-center justify-center gap-3">
-                    <i class="fas fa-play"></i> MAINKAN
-                </button>
-                <button onclick="showLeaderboard()" ontouchstart="showLeaderboard()" class="btn-glow w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
-                    <i class="fas fa-trophy"></i> SKOR
-                </button>
-            </div>
+    <div id="app">
+        
+        <div id="menu" class="screen">
+            <h1 class="text-6xl font-bold text-blue-500 mb-2">FLOW</h1>
+            <h1 class="text-6xl font-bold text-pink-500 mb-8">MASTER</h1>
+            
+            <div onclick="APP.start()" class="btn">MAINKAN</div>
+            <div onclick="APP.leaderboard()" class="btn btn-sec">SKOR</div>
+            <a href="../index.html" class="btn btn-sec" style="display:block; text-decoration:none; line-height:20px;">KEMBALI</a>
+            
+            <div class="mt-8 text-slate-500 text-xs">V26 • FRESH DATA</div>
         </div>
 
-        <div id="screen-game" class="screen">
-            <div class="w-full max-w-md flex justify-between items-center mb-6 px-4 z-20">
-                <button onclick="goHome()" ontouchstart="goHome()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 text-lg"><i class="fas fa-home"></i></button>
-                <div class="flex gap-3 text-center">
-                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700"><div class="text-[9px] text-slate-400">LEVEL</div><div id="ui-level" class="font-bold">1</div></div>
-                    <div class="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700 min-w-[70px]"><div class="text-[9px] text-slate-400">WAKTU</div><div id="ui-timer" class="font-bold text-emerald-400 font-mono">00:00</div></div>
+        <div id="game" class="screen">
+            <div class="w-full max-w-sm flex justify-between items-center mb-4 px-4">
+                <div onclick="APP.home()" class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center border border-slate-500">🏠</div>
+                <div class="text-center">
+                    <div class="text-xs text-slate-400">LEVEL <span id="disp-lvl" class="text-white font-bold">1</span></div>
+                    <div id="disp-time" class="text-emerald-400 font-mono font-bold">00:00</div>
                 </div>
-                <button onclick="resetLevel()" ontouchstart="resetLevel()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 text-lg"><i class="fas fa-undo"></i></button>
+                <div onclick="APP.reset()" class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center border border-slate-500">↺</div>
             </div>
 
-            <div class="relative p-2 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-2xl">
-                <canvas id="gameCanvas" width="350" height="350"></canvas>
-                
-                <div id="overlay-win" class="overlay">
-                    <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 animate-pulse"></i>
-                    <h2 class="text-3xl font-bold text-white mb-2">SEMPURNA!</h2>
-                    <button onclick="nextLevel()" ontouchstart="nextLevel()" class="btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700">LANJUT <i class="fas fa-arrow-right"></i></button>
-                </div>
+            <canvas id="cvs" width="350" height="350"></canvas>
 
-                <div id="overlay-lose" class="overlay">
-                    <i class="fas fa-times-circle text-6xl text-red-500 mb-4 animate-pulse"></i>
-                    <h2 class="text-3xl font-bold text-red-500 mb-2">WAKTU HABIS!</h2>
-                    <div class="flex flex-col gap-3 w-full max-w-[200px]">
-                        <button onclick="resetLevel()" ontouchstart="resetLevel()" class="btn-glow w-full bg-white text-slate-900 py-3 rounded-xl font-bold shadow-lg">COBA LAGI</button>
-                        <button onclick="goHome()" ontouchstart="goHome()" class="btn-glow w-full bg-slate-800 text-slate-400 py-3 rounded-xl font-bold border border-slate-700">MENU</button>
-                    </div>
-                </div>
+            <div id="win-modal" class="absolute inset-0 bg-slate-900/95 flex-col items-center justify-center hidden z-50 rounded-xl">
+                <h2 class="text-3xl text-emerald-400 font-bold mb-2">SELESAI!</h2>
+                <p class="text-slate-400 mb-6 text-sm">Semua kotak terisi penuh.</p>
+                <div onclick="APP.next()" class="btn bg-emerald-600 border-emerald-800">LANJUT ▶</div>
+            </div>
+
+            <div id="lose-modal" class="absolute inset-0 bg-slate-900/95 flex-col items-center justify-center hidden z-50 rounded-xl">
+                <h2 class="text-3xl text-red-500 font-bold mb-4">WAKTU HABIS!</h2>
+                <div onclick="APP.reset()" class="btn bg-white text-slate-900 mb-2">ULANGI</div>
+                <div onclick="APP.home()" class="btn btn-sec">MENU</div>
             </div>
             
-            <div class="mt-6 text-center text-slate-500 text-xs px-4">Tarik garis. Tabrak garis lain untuk memotongnya.</div>
+            <div class="mt-4 text-center text-slate-500 text-xs px-8">
+                Hubungkan warna. Grid wajib penuh!
+            </div>
         </div>
 
-        <div id="screen-lb" class="screen">
-            <div class="bg-slate-800 w-full max-w-md rounded-3xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh] mx-4">
-                <div class="bg-slate-900 p-5 border-b border-slate-700 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-yellow-500"><i class="fas fa-crown"></i> TOP SKOR</h2>
-                    <button onclick="goHome()" ontouchstart="goHome()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex justify-center items-center btn-glow"><i class="fas fa-times"></i></button>
-                </div>
-                <div id="lb-list" class="overflow-y-auto p-0 flex-1"></div>
-            </div>
+        <div id="lb" class="screen">
+            <h2 class="text-2xl text-yellow-400 font-bold mb-4">🏆 TOP SKOR</h2>
+            <div class="bg-slate-800 w-80 h-1/2 rounded-xl p-4 overflow-y-auto mb-4" id="lb-list"></div>
+            <div onclick="APP.home()" class="btn btn-sec">TUTUP</div>
         </div>
 
     </div>
 
     <script>
-        // ERROR HANDLING
+        // Error Handler
         window.onerror = function(msg, url, line) {
-            var el = document.getElementById('debug-log');
-            el.style.display = 'block';
-            el.innerHTML = "ERR: " + msg + " line " + line;
+            var e = document.getElementById('error-box');
+            e.style.display = 'block';
+            e.innerHTML = "ERR: " + msg + " (" + line + ")";
         };
 
-        // CONFIG
-        var COLORS = { 1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8' };
-        
-        // LEVEL DATA
-        var LEVELS = [
-            {time: 20, size:5, grid:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
-            {time: 30, size:5, grid:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
-            {time: 40, size:6, grid:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]},
-            {time: 45, size:6, grid:[[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]]},
-            {time: 60, size:7, grid:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}
+        // DATA
+        var C = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8'};
+        var L = [
+            {t:20, s:5, g:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
+            {t:30, s:5, g:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
+            {t:40, s:6, g:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]},
+            {t:60, s:7, g:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}
         ];
 
-        // GLOBAL VARS
-        var currentLevel = 0;
-        var grid = [];
-        var paths = {};
-        var activeColor = null;
-        var isLocked = false; 
-        var timer = null;
-        var timeLeft = 0;
-        var canvas, ctx, cellSize, gridSize;
+        // APP ENGINE
+        var APP = {
+            cvs: null, ctx: null,
+            lvl: 0, grid: [], paths: {},
+            act: null, lock: false,
+            timer: null, left: 0, cell: 0,
 
-        // --- NAVIGATION ---
-        function switchScreen(id) {
-            var screens = document.querySelectorAll('.screen');
-            for(var i=0; i<screens.length; i++) screens[i].classList.remove('active');
-            document.getElementById(id).classList.add('active');
-        }
-
-        function startGame() {
-            try {
-                currentLevel = 0;
-                switchScreen('screen-game');
-                setTimeout(function(){ loadLevel(0); }, 50);
-            } catch(e) { alert("Start Error: " + e.message); }
-        }
-
-        function goHome() {
-            clearInterval(timer);
-            switchScreen('screen-menu');
-        }
-
-        function showLeaderboard() {
-            renderLb();
-            switchScreen('screen-lb');
-        }
-
-        function resetLevel() { loadLevel(currentLevel); }
-
-        function nextLevel() {
-            currentLevel++;
-            if(currentLevel >= LEVELS.length) {
-                alert("TAMAT! ANDA JUARA!");
-                goHome();
-            } else {
-                loadLevel(currentLevel);
-            }
-        }
-
-        // --- GAME LOGIC ---
-        function loadLevel(idx) {
-            var lvl = LEVELS[idx];
-            gridSize = lvl.size;
-            grid = JSON.parse(JSON.stringify(lvl.grid));
-            paths = {};
-            activeColor = null;
-            isLocked = false;
-            timeLeft = lvl.time;
-
-            // Init Paths
-            for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
-                var v = grid[r][c];
-                if(v > 0) paths[v] = [];
-            }
-
-            // UI RESET
-            document.getElementById('ui-level').innerText = idx + 1;
-            document.getElementById('overlay-win').classList.remove('show');
-            document.getElementById('overlay-lose').classList.remove('show');
-            document.getElementById('overlay-win').style.display = 'none'; 
-            document.getElementById('overlay-lose').style.display = 'none';
-            
-            initCanvas();
-            resize();
-            startTimer();
-        }
-
-        function initCanvas() {
-            if(canvas) return;
-            canvas = document.getElementById('gameCanvas');
-            ctx = canvas.getContext('2d');
-            
-            var start = function(e) { handleInputStart(e); };
-            var move = function(e) { handleInputMove(e); };
-            var end = function(e) { handleInputEnd(e); };
-
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mousemove', move);
-            window.addEventListener('mouseup', end);
-
-            canvas.addEventListener('touchstart', function(e) { e.preventDefault(); start(e.touches[0]); }, {passive: false});
-            canvas.addEventListener('touchmove', function(e) { e.preventDefault(); move(e.touches[0]); }, {passive: false});
-            window.addEventListener('touchend', end);
-            
-            window.addEventListener('resize', resize);
-        }
-
-        function resize() {
-            if(!canvas) return;
-            var w = Math.min(window.innerWidth - 40, 380);
-            canvas.width = w; canvas.height = w;
-            canvas.style.width = w+'px'; canvas.style.height = w+'px';
-            cellSize = w / gridSize;
-            draw();
-        }
-
-        // --- INPUT & LOGIC ---
-        function getPos(e) {
-            var r = canvas.getBoundingClientRect();
-            return {
-                c: Math.floor((e.clientX - r.left) / cellSize),
-                r: Math.floor((e.clientY - r.top) / cellSize)
-            };
-        }
-
-        function handleInputStart(e) {
-            if(isLocked) return;
-            var p = getPos(e);
-            if(p.r<0 || p.r>=gridSize || p.c<0 || p.c>=gridSize) return;
-
-            var val = grid[p.r][p.c];
-            var base = LEVELS[currentLevel].grid[p.r][p.c];
-
-            if(val > 0) {
-                activeColor = val;
+            init: function() {
+                this.cvs = document.getElementById('cvs');
+                this.ctx = this.cvs.getContext('2d');
                 
-                // Klik Endpoint -> Reset
-                if(base > 0) {
-                    paths[val] = [{r:p.r, c:p.c}];
-                    updateGrid();
-                } else {
-                    // Klik Jalur -> Potong
-                    var path = paths[val];
-                    var idx = -1;
-                    for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) idx=i;
-                    if(idx !== -1) {
-                        paths[val] = path.slice(0, idx+1);
-                        updateGrid();
+                // Input Events (Mouse & Touch)
+                var self = this;
+                var start = function(e) { self.down(e); };
+                var move = function(e) { self.move(e); };
+                var end = function(e) { self.up(); };
+
+                this.cvs.addEventListener('mousedown', start);
+                this.cvs.addEventListener('mousemove', move);
+                window.addEventListener('mouseup', end);
+                
+                this.cvs.addEventListener('touchstart', function(e){ e.preventDefault(); start(e.touches[0]); }, {passive:false});
+                this.cvs.addEventListener('touchmove', function(e){ e.preventDefault(); move(e.touches[0]); }, {passive:false});
+                window.addEventListener('touchend', end);
+            },
+
+            // NAV
+            show: function(id) {
+                document.getElementById('menu').style.display = 'none';
+                document.getElementById('game').style.display = 'none';
+                document.getElementById('lb').style.display = 'none';
+                document.getElementById(id).style.display = 'flex';
+                if(id==='game') setTimeout(function(){ APP.resize(); }, 50);
+            },
+            
+            start: function() { this.lvl=0; this.load(0); this.show('game'); },
+            home: function() { clearInterval(this.timer); this.show('menu'); },
+            leaderboard: function() { this.renderLb(); this.show('lb'); },
+            reset: function() { this.load(this.lvl); },
+            next: function() {
+                this.lvl++;
+                if(this.lvl >= L.length) { alert("TAMAT!"); this.home(); }
+                else this.load(this.lvl);
+            },
+
+            // LOGIC
+            load: function(idx) {
+                var d = L[idx];
+                this.grid = JSON.parse(JSON.stringify(d.g));
+                this.paths = {};
+                this.act = null; 
+                this.lock = false;
+                this.left = d.t;
+
+                // Init Endpoints
+                for(var r=0; r<d.s; r++) for(var c=0; c<d.s; c++) {
+                    var v = this.grid[r][c];
+                    if(v>0) this.paths[v] = [];
+                }
+
+                document.getElementById('disp-lvl').innerText = idx+1;
+                document.getElementById('win-modal').style.display = 'none';
+                document.getElementById('lose-modal').style.display = 'none';
+                
+                this.resize();
+                this.runTimer();
+            },
+
+            resize: function() {
+                var w = Math.min(window.innerWidth - 40, 350);
+                this.cvs.width = w; this.cvs.height = w;
+                this.cvs.style.width = w+'px'; this.cvs.style.height = w+'px';
+                this.cell = w / L[this.lvl].s;
+                this.draw();
+            },
+
+            // INPUT
+            getPos: function(e) {
+                var r = this.cvs.getBoundingClientRect();
+                return {
+                    c: Math.floor((e.clientX - r.left) / this.cell),
+                    r: Math.floor((e.clientY - r.top) / this.cell)
+                };
+            },
+
+            down: function(e) {
+                if(this.lock) return;
+                var p = this.getPos(e);
+                var s = L[this.lvl].s;
+                if(p.r<0||p.r>=s||p.c<0||p.c>=s) return;
+
+                var val = this.grid[p.r][p.c];
+                var base = L[this.lvl].g[p.r][p.c];
+
+                if(val > 0) {
+                    this.act = val;
+                    if(base > 0) {
+                        this.paths[val] = [{r:p.r, c:p.c}];
+                        this.updGrid();
+                    } else {
+                        // Cut path
+                        var path = this.paths[val];
+                        var idx = -1;
+                        for(var i=0; i<path.length; i++) if(path[i].r==p.r && path[i].c==p.c) idx=i;
+                        if(idx!=-1) {
+                            this.paths[val] = path.slice(0, idx+1);
+                            this.updGrid();
+                        }
+                    }
+                    this.draw();
+                }
+            },
+
+            move: function(e) {
+                if(!this.act || this.lock) return;
+                var p = this.getPos(e);
+                var s = L[this.lvl].s;
+                if(p.r<0||p.r>=s||p.c<0||p.c>=s) return;
+
+                var path = this.paths[this.act];
+                var last = path[path.length-1];
+
+                if((last.r!=p.r || last.c!=p.c) && (Math.abs(last.r-p.r)+Math.abs(last.c-p.c)==1)) {
+                    var tb = L[this.lvl].g[p.r][p.c]; // Target Base
+                    var tc = this.grid[p.r][p.c]; // Target Current
+
+                    // Backtrack
+                    var selfIdx = -1;
+                    for(var i=0; i<path.length; i++) if(path[i].r==p.r && path[i].c==p.c) selfIdx=i;
+                    if(selfIdx!=-1) {
+                        this.paths[this.act] = path.slice(0, selfIdx+1);
+                        this.updGrid(); this.draw(); return;
+                    }
+
+                    // Dead End Check
+                    var standBase = L[this.lvl].g[last.r][last.c];
+                    if(standBase === this.act && path.length > 1) return;
+
+                    // Block Base
+                    if(tb > 0 && tb !== this.act) return;
+
+                    // Cut Others
+                    if(tc > 0 && tc !== this.act) {
+                        var vicP = this.paths[tc];
+                        var cutIdx = -1;
+                        for(var j=0; j<vicP.length; j++) if(vicP[j].r==p.r && vicP[j].c==p.c) cutIdx=j;
+                        if(cutIdx!=-1) this.paths[tc] = vicP.slice(0, cutIdx);
+                    }
+
+                    path.push({r:p.r, c:p.c});
+                    this.updGrid(); this.draw();
+                    this.check();
+                }
+            },
+
+            up: function() { this.act = null; },
+
+            updGrid: function() {
+                var s = L[this.lvl].s;
+                var b = L[this.lvl].g;
+                for(var r=0; r<s; r++) for(var c=0; c<s; c++) this.grid[r][c] = (b[r][c]>0)?b[r][c]:0;
+                for(var k in this.paths) {
+                    var id = parseInt(k);
+                    var p = this.paths[k];
+                    for(var i=0; i<p.length; i++) this.grid[p[i].r][p[i].c] = id;
+                }
+            },
+
+            draw: function() {
+                this.ctx.clearRect(0,0,350,350);
+                var s = L[this.lvl].s;
+                
+                // Grid
+                this.ctx.strokeStyle = '#334155'; this.ctx.lineWidth = 1; this.ctx.beginPath();
+                for(var i=0; i<=s; i++) {
+                    var p=i*this.cell;
+                    this.ctx.moveTo(p,0); this.ctx.lineTo(p,350);
+                    this.ctx.moveTo(0,p); this.ctx.lineTo(350,p);
+                }
+                this.ctx.stroke();
+
+                // Path
+                for(var k in this.paths) {
+                    var p = this.paths[k]; if(p.length<2) continue;
+                    this.ctx.strokeStyle = C[k]; this.ctx.lineWidth = this.cell*0.45;
+                    this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
+                    this.ctx.shadowBlur=10; this.ctx.shadowColor=C[k];
+                    this.ctx.beginPath(); this.ctx.moveTo(p[0].c*this.cell+this.cell/2, p[0].r*this.cell+this.cell/2);
+                    for(var j=1; j<p.length; j++) this.ctx.lineTo(p[j].c*this.cell+this.cell/2, p[j].r*this.cell+this.cell/2);
+                    this.ctx.stroke(); this.ctx.shadowBlur=0;
+                }
+
+                // Dot
+                var b = L[this.lvl].g;
+                for(var r=0; r<s; r++) for(var c=0; c<s; c++) {
+                    var v = b[r][c];
+                    if(v>0) {
+                        this.ctx.fillStyle = C[v];
+                        var cx=c*this.cell+this.cell/2, cy=r*this.cell+this.cell/2;
+                        this.ctx.beginPath(); this.ctx.arc(cx,cy,this.cell*0.3,0,Math.PI*2); this.ctx.fill();
+                        this.ctx.fillStyle='rgba(255,255,255,0.4)'; 
+                        this.ctx.beginPath(); this.ctx.arc(cx,cy,this.cell*0.1,0,Math.PI*2); this.ctx.fill();
                     }
                 }
-                draw();
-            }
-        }
+            },
 
-        function handleInputMove(e) {
-            if(!activeColor || isLocked) return;
-            var p = getPos(e);
-            if(p.r<0 || p.r>=gridSize || p.c<0 || p.c>=gridSize) return;
-
-            var path = paths[activeColor];
-            var last = path[path.length-1];
-
-            // Pindah kotak & Tetangga
-            if((last.r!==p.r || last.c!==p.c) && (Math.abs(last.r-p.r)+Math.abs(last.c-p.c)===1)) {
+            check: function() {
+                var s = L[this.lvl].s;
+                var b = L[this.lvl].g;
+                // Full Check
+                for(var r=0; r<s; r++) for(var c=0; c<s; c++) if(this.grid[r][c]===0) return;
+                // Connection Check
+                for(var k in this.paths) {
+                    var p = this.paths[k];
+                    if(p.length<2) return;
+                    var h=p[0], t=p[p.length-1];
+                    if(b[h.r][h.c]!=k || b[t.r][t.c]!=k) return;
+                }
                 
-                var targetBase = LEVELS[currentLevel].grid[p.r][p.c];
-                var targetCurr = grid[p.r][p.c];
+                this.lock = true; clearInterval(this.timer);
+                document.getElementById('win-modal').style.display = 'flex';
+                this.save(this.lvl+1);
+            },
 
-                // 1. BACKTRACK
-                var selfIdx = -1;
-                for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) selfIdx=i;
-                if(selfIdx !== -1) {
-                    paths[activeColor] = path.slice(0, selfIdx+1);
-                    updateGrid(); draw(); return;
-                }
-
-                // 2. DEAD END CHECK (Fix for "Tembus" Issue)
-                var currentStandingBase = LEVELS[currentLevel].grid[last.r][last.c];
-                if(currentStandingBase === activeColor && path.length > 1) {
-                    return; // Sudah sampai tujuan, jangan gerak lagi
-                }
-
-                // 3. TABRAK BASE
-                if(targetBase > 0 && targetBase !== activeColor) return;
-
-                // 4. CUTTING (Potong Lawan)
-                if(targetCurr > 0 && targetCurr !== activeColor) {
-                    var victimPath = paths[targetCurr];
-                    var cutIdx = -1;
-                    for(var j=0; j<victimPath.length; j++) {
-                        if(victimPath[j].r === p.r && victimPath[j].c === p.c) { cutIdx = j; break; }
+            runTimer: function() {
+                clearInterval(this.timer);
+                var el = document.getElementById('disp-time');
+                el.style.color = '#34d399';
+                this.timer = setInterval(function(){
+                    APP.left--;
+                    var m = Math.floor(APP.left/60).toString().padStart(2,'0');
+                    var s = (APP.left%60).toString().padStart(2,'0');
+                    el.innerText = m+":"+s;
+                    if(APP.left<=10) el.style.color = '#f87171';
+                    if(APP.left<=0) {
+                        clearInterval(APP.timer);
+                        APP.lock = true;
+                        document.getElementById('lose-modal').style.display = 'flex';
                     }
-                    if(cutIdx !== -1) paths[targetCurr] = victimPath.slice(0, cutIdx);
+                }, 1000);
+            },
+
+            save: function(lvl) {
+                var s = JSON.parse(localStorage.getItem('flowV26_Fresh')||"[]");
+                var f=false;
+                for(var i=0; i<s.length; i++) if(s[i].n==='YOU') { s[i].l = Math.max(s[i].l, lvl); f=true; }
+                if(!f) s.push({n:'YOU', l:lvl});
+                localStorage.setItem('flowV26_Fresh', JSON.stringify(s));
+            },
+
+            renderLb: function() {
+                var s = JSON.parse(localStorage.getItem('flowV26_Fresh')||"[]");
+                if(s.length===0) s=[{n:'PRO', l:50}];
+                s.sort(function(a,b){return b.l-a.l});
+                var h = '';
+                for(var i=0; i<s.length; i++) {
+                    h += '<div class="flex justify-between p-2 border-b border-slate-600 text-sm text-slate-300"><span>#'+(i+1)+' '+s[i].n+'</span><span class="text-blue-400">Lvl '+s[i].l+'</span></div>';
                 }
-
-                // Move
-                path.push({r:p.r, c:p.c});
-                updateGrid(); 
-                draw();
-                checkWin();
+                document.getElementById('lb-list').innerHTML = h;
             }
-        }
+        };
 
-        function handleInputEnd() { activeColor = null; }
-
-        function updateGrid() {
-            var base = LEVELS[currentLevel].grid;
-            for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
-                grid[r][c] = (base[r][c] > 0) ? base[r][c] : 0;
-            }
-            for(var k in paths) {
-                var id = parseInt(k);
-                var p = paths[k];
-                for(var i=0; i<p.length; i++) grid[p[i].r][p[i].c] = id;
-            }
-        }
-
-        function draw() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            // Grid
-            ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.beginPath();
-            for(var i=0; i<=gridSize; i++) {
-                var p=i*cellSize; ctx.moveTo(p,0); ctx.lineTo(p,canvas.height); ctx.moveTo(0,p); ctx.lineTo(canvas.width,p);
-            }
-            ctx.stroke();
-            // Paths
-            for(var k in paths) {
-                var p = paths[k]; if(p.length<2) continue;
-                ctx.strokeStyle = COLORS[k]; ctx.lineWidth = cellSize*0.45;
-                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                ctx.shadowBlur = 10; ctx.shadowColor = COLORS[k];
-                ctx.beginPath(); ctx.moveTo(p[0].c*cellSize+cellSize/2, p[0].r*cellSize+cellSize/2);
-                for(var j=1; j<p.length; j++) ctx.lineTo(p[j].c*cellSize+cellSize/2, p[j].r*cellSize+cellSize/2);
-                ctx.stroke(); ctx.shadowBlur = 0;
-            }
-            // Endpoints
-            var base = LEVELS[currentLevel].grid;
-            for(var r=0; r<gridSize; r++) for(var c=0; c<gridSize; c++) {
-                var v = base[r][c];
-                if(v > 0) {
-                    ctx.fillStyle = COLORS[v]; var cx=c*cellSize+cellSize/2, cy=r*cellSize+cellSize/2;
-                    ctx.beginPath(); ctx.arc(cx, cy, cellSize*0.3, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(cx, cy, cellSize*0.1, 0, Math.PI*2); ctx.fill();
-                }
-            }
-        }
-
-        function checkWin() {
-            var size = gridSize;
-            var base = LEVELS[currentLevel].grid;
-            
-            // 1. Cek Penuh
-            for(var r=0; r<size; r++) for(var c=0; c<size; c++) if(grid[r][c] === 0) return;
-
-            // 2. Cek Koneksi
-            for(var k in paths) {
-                var p = paths[k];
-                if(p.length < 2) return;
-                var h = p[0]; var t = p[p.length-1];
-                if(base[h.r][h.c] != k || base[t.r][t.c] != k) return;
-            }
-
-            // MENANG
-            isLocked = true;
-            clearInterval(timer);
-            var el = document.getElementById('overlay-win');
-            el.style.display = 'flex';
-            el.classList.add('show');
-            saveScore(currentLevel+1);
-        }
-
-        function gameOver() {
-            isLocked = true;
-            clearInterval(timer);
-            var el = document.getElementById('overlay-lose');
-            el.style.display = 'flex';
-            el.classList.add('show');
-        }
-
-        function startTimer() {
-            clearInterval(timer);
-            updateTimerDisplay();
-            timer = setInterval(function(){
-                timeLeft--;
-                updateTimerDisplay();
-                if(timeLeft <= 0) gameOver();
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            var m = Math.floor(timeLeft/60).toString().padStart(2,'0');
-            var s = (timeLeft%60).toString().padStart(2,'0');
-            var el = document.getElementById('ui-timer');
-            el.innerText = m+":"+s;
-            if(timeLeft <= 10) el.style.color = '#f87171';
-            else el.style.color = '#34d399';
-        }
-
-        function saveScore(lvl) {
-            var s = JSON.parse(localStorage.getItem('flowV25')||"[]");
-            var f = false;
-            for(var i=0; i<s.length; i++) if(s[i].n==='YOU') { s[i].l = Math.max(s[i].l, lvl); f=true; }
-            if(!f) s.push({n:'YOU', l:lvl});
-            localStorage.setItem('flowV25', JSON.stringify(s));
-        }
-
-        function renderLb() {
-            var s = JSON.parse(localStorage.getItem('flowV25')||"[]");
-            if(s.length===0) s=[{n:'PRO', l:50}];
-            s.sort(function(a,b){return b.l-a.l});
-            var l = document.getElementById('lb-list');
-            l.innerHTML = '';
-            for(var i=0; i<s.length; i++) {
-                var d = document.createElement('div');
-   
+        window.onload = function() { APP.init(); };
+    </script>
+</body>
+</html>
