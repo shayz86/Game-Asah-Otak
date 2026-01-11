@@ -3,67 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flow Master</title>
+    <title>Flow Master 50</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        /* CSS INTERNAL (Agar tampilan muncul walau internet lambat) */
+        /* CSS SAFETY (Sama seperti V26) */
         body {
-            background-color: #0f172a;
-            color: white;
-            font-family: sans-serif;
-            margin: 0; padding: 0;
-            overflow: hidden;
-            touch-action: none; /* Mencegah scroll/zoom */
-            user-select: none;
-            -webkit-user-select: none;
+            background-color: #0f172a; color: white; font-family: sans-serif;
+            margin: 0; padding: 0; overflow: hidden;
+            touch-action: none; user-select: none; -webkit-user-select: none;
         }
-        
         #app {
-            width: 100vw; height: 100vh;
-            display: flex; justify-content: center; align-items: center;
+            width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center;
             background: radial-gradient(circle at top, #1e293b, #0f172a);
         }
-
         .screen {
-            position: absolute; inset: 0;
-            display: none; /* Hidden default */
-            flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10;
+            position: absolute; inset: 0; display: none;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 10;
         }
-        
-        /* MENU WAJIB FLEX AGAR MUNCUL DULUAN */
         #menu { display: flex; z-index: 50; }
-        
         .active { display: flex !important; z-index: 60; }
 
         canvas {
-            background: #1e293b;
-            border-radius: 12px;
+            background: #1e293b; border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 2px solid #334155;
-            cursor: crosshair;
+            border: 2px solid #334155; cursor: crosshair;
         }
 
         .btn {
             background: linear-gradient(to right, #2563eb, #4f46e5);
-            padding: 15px; width: 280px;
-            border-radius: 12px;
+            padding: 15px; width: 280px; border-radius: 12px;
             text-align: center; font-weight: bold; font-size: 18px;
             margin-bottom: 15px; cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            border-bottom: 4px solid #1e3a8a;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); border-bottom: 4px solid #1e3a8a;
         }
         .btn:active { transform: translateY(2px); border-bottom: 0; }
-        
         .btn-sec { background: #334155; border-bottom: 4px solid #0f172a; }
 
         #error-box {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background: red; color: white; font-size: 10px;
-            display: none; z-index: 9999; text-align: center;
+            background: red; color: white; font-size: 10px; display: none; z-index: 9999; text-align: center;
         }
+        
+        .warn-text { color: #ef4444 !important; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
     </style>
 </head>
 <body>
@@ -71,33 +55,29 @@
     <div id="error-box"></div>
 
     <div id="app">
-        
         <div id="menu" class="screen">
             <h1 class="text-6xl font-bold text-blue-500 mb-2">FLOW</h1>
             <h1 class="text-6xl font-bold text-pink-500 mb-8">MASTER</h1>
-            
             <div onclick="APP.start()" class="btn">MAINKAN</div>
             <div onclick="APP.leaderboard()" class="btn btn-sec">SKOR</div>
             <a href="../index.html" class="btn btn-sec" style="display:block; text-decoration:none; line-height:20px;">KEMBALI</a>
-            
-            <div class="mt-8 text-slate-500 text-xs">V26 • FRESH DATA</div>
+            <div class="mt-8 text-slate-500 text-xs">FULL 50 LEVELS</div>
         </div>
 
         <div id="game" class="screen">
             <div class="w-full max-w-sm flex justify-between items-center mb-4 px-4">
-                <div onclick="APP.home()" class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center border border-slate-500">🏠</div>
+                <div onclick="APP.home()" class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center border border-slate-500 cursor-pointer">🏠</div>
                 <div class="text-center">
-                    <div class="text-xs text-slate-400">LEVEL <span id="disp-lvl" class="text-white font-bold">1</span></div>
+                    <div class="text-xs text-slate-400">LEVEL <span id="disp-lvl" class="text-white font-bold">1</span>/50</div>
                     <div id="disp-time" class="text-emerald-400 font-mono font-bold">00:00</div>
                 </div>
-                <div onclick="APP.reset()" class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center border border-slate-500">↺</div>
+                <div onclick="APP.reset()" class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center border border-slate-500 cursor-pointer">↺</div>
             </div>
 
             <canvas id="cvs" width="350" height="350"></canvas>
 
             <div id="win-modal" class="absolute inset-0 bg-slate-900/95 flex-col items-center justify-center hidden z-50 rounded-xl">
-                <h2 class="text-3xl text-emerald-400 font-bold mb-2">SELESAI!</h2>
-                <p class="text-slate-400 mb-6 text-sm">Semua kotak terisi penuh.</p>
+                <h2 class="text-3xl text-emerald-400 font-bold mb-2">SEMPURNA!</h2>
                 <div onclick="APP.next()" class="btn bg-emerald-600 border-emerald-800">LANJUT ▶</div>
             </div>
 
@@ -117,27 +97,56 @@
             <div class="bg-slate-800 w-80 h-1/2 rounded-xl p-4 overflow-y-auto mb-4" id="lb-list"></div>
             <div onclick="APP.home()" class="btn btn-sec">TUTUP</div>
         </div>
-
     </div>
 
     <script>
-        // Error Handler
-        window.onerror = function(msg, url, line) {
-            var e = document.getElementById('error-box');
-            e.style.display = 'block';
-            e.innerHTML = "ERR: " + msg + " (" + line + ")";
-        };
+        window.onerror = function(m,u,l){ document.getElementById('error-box').style.display='block'; document.getElementById('error-box').innerText="ERR:"+m+" ("+l+")"; };
 
-        // DATA
-        var C = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8'};
-        var L = [
-            {t:20, s:5, g:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
-            {t:30, s:5, g:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
-            {t:40, s:6, g:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]},
-            {t:60, s:7, g:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}
+        var C = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8', 9:'#fff', 10:'#555'};
+        
+        // --- LEVEL GENERATOR (50 Levels) ---
+        // Base Patterns
+        var BASE = [
+            {s:5, g:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
+            {s:5, g:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
+            {s:6, g:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]},
+            {s:6, g:[[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]]},
+            {s:7, g:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]},
+            {s:8, g:[[1,0,0,0,0,0,2,0],[0,0,3,3,0,0,2,0],[0,0,4,0,0,0,0,0],[0,0,4,0,5,5,0,0],[0,0,0,0,0,0,0,0],[6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0]]},
+            {s:9, g:[[1,0,0,0,2,0,0,0,3],[0,0,0,0,2,0,0,0,3],[0,0,4,4,0,5,5,0,0],[0,0,0,0,0,0,0,0,0],[0,0,6,6,0,7,7,0,0],[0,0,0,0,0,0,0,0,0],[0,8,8,0,9,9,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0]]}
         ];
 
-        // APP ENGINE
+        // Generate 50 Levels
+        var LEVELS = [];
+        for(var i=0; i<50; i++) {
+            // Pilih base pattern secara berulang
+            var baseIdx = i % BASE.length;
+            var pattern = JSON.parse(JSON.stringify(BASE[baseIdx]));
+            
+            // Tambahkan variasi rotasi agar tidak bosan
+            var rotations = i % 4;
+            for(var r=0; r<rotations; r++) pattern.g = rotate(pattern.g);
+            
+            // Waktu bertambah seiring level (mulai 20s, tambah 2s per level)
+            var time = 20 + (i * 2); 
+            if(time > 120) time = 120; // Max 2 menit
+
+            LEVELS.push({ t: time, s: pattern.s, g: pattern.g });
+        }
+
+        // Helper Rotasi
+        function rotate(matrix) {
+            var N = matrix.length;
+            var res = new Array(N).fill(0).map(function(){ return new Array(N).fill(0); });
+            for (var r = 0; r < N; r++) {
+                for (var c = 0; c < N; c++) {
+                    res[c][N - 1 - r] = matrix[r][c];
+                }
+            }
+            return res;
+        }
+
+        // APP LOGIC
         var APP = {
             cvs: null, ctx: null,
             lvl: 0, grid: [], paths: {},
@@ -147,8 +156,6 @@
             init: function() {
                 this.cvs = document.getElementById('cvs');
                 this.ctx = this.cvs.getContext('2d');
-                
-                // Input Events (Mouse & Touch)
                 var self = this;
                 var start = function(e) { self.down(e); };
                 var move = function(e) { self.move(e); };
@@ -157,13 +164,11 @@
                 this.cvs.addEventListener('mousedown', start);
                 this.cvs.addEventListener('mousemove', move);
                 window.addEventListener('mouseup', end);
-                
                 this.cvs.addEventListener('touchstart', function(e){ e.preventDefault(); start(e.touches[0]); }, {passive:false});
                 this.cvs.addEventListener('touchmove', function(e){ e.preventDefault(); move(e.touches[0]); }, {passive:false});
                 window.addEventListener('touchend', end);
             },
 
-            // NAV
             show: function(id) {
                 document.getElementById('menu').style.display = 'none';
                 document.getElementById('game').style.display = 'none';
@@ -178,20 +183,18 @@
             reset: function() { this.load(this.lvl); },
             next: function() {
                 this.lvl++;
-                if(this.lvl >= L.length) { alert("TAMAT!"); this.home(); }
+                if(this.lvl >= LEVELS.length) { alert("SELAMAT! ANDA MASTER 50 LEVEL!"); this.home(); }
                 else this.load(this.lvl);
             },
 
-            // LOGIC
             load: function(idx) {
-                var d = L[idx];
+                var d = LEVELS[idx];
                 this.grid = JSON.parse(JSON.stringify(d.g));
                 this.paths = {};
                 this.act = null; 
                 this.lock = false;
                 this.left = d.t;
 
-                // Init Endpoints
                 for(var r=0; r<d.s; r++) for(var c=0; c<d.s; c++) {
                     var v = this.grid[r][c];
                     if(v>0) this.paths[v] = [];
@@ -209,11 +212,10 @@
                 var w = Math.min(window.innerWidth - 40, 350);
                 this.cvs.width = w; this.cvs.height = w;
                 this.cvs.style.width = w+'px'; this.cvs.style.height = w+'px';
-                this.cell = w / L[this.lvl].s;
+                this.cell = w / LEVELS[this.lvl].s;
                 this.draw();
             },
 
-            // INPUT
             getPos: function(e) {
                 var r = this.cvs.getBoundingClientRect();
                 return {
@@ -225,11 +227,11 @@
             down: function(e) {
                 if(this.lock) return;
                 var p = this.getPos(e);
-                var s = L[this.lvl].s;
+                var s = LEVELS[this.lvl].s;
                 if(p.r<0||p.r>=s||p.c<0||p.c>=s) return;
 
                 var val = this.grid[p.r][p.c];
-                var base = L[this.lvl].g[p.r][p.c];
+                var base = LEVELS[this.lvl].g[p.r][p.c];
 
                 if(val > 0) {
                     this.act = val;
@@ -237,7 +239,6 @@
                         this.paths[val] = [{r:p.r, c:p.c}];
                         this.updGrid();
                     } else {
-                        // Cut path
                         var path = this.paths[val];
                         var idx = -1;
                         for(var i=0; i<path.length; i++) if(path[i].r==p.r && path[i].c==p.c) idx=i;
@@ -253,15 +254,15 @@
             move: function(e) {
                 if(!this.act || this.lock) return;
                 var p = this.getPos(e);
-                var s = L[this.lvl].s;
+                var s = LEVELS[this.lvl].s;
                 if(p.r<0||p.r>=s||p.c<0||p.c>=s) return;
 
                 var path = this.paths[this.act];
                 var last = path[path.length-1];
 
                 if((last.r!=p.r || last.c!=p.c) && (Math.abs(last.r-p.r)+Math.abs(last.c-p.c)==1)) {
-                    var tb = L[this.lvl].g[p.r][p.c]; // Target Base
-                    var tc = this.grid[p.r][p.c]; // Target Current
+                    var tb = LEVELS[this.lvl].g[p.r][p.c];
+                    var tc = this.grid[p.r][p.c];
 
                     // Backtrack
                     var selfIdx = -1;
@@ -271,8 +272,8 @@
                         this.updGrid(); this.draw(); return;
                     }
 
-                    // Dead End Check
-                    var standBase = L[this.lvl].g[last.r][last.c];
+                    // Dead End (Cegah Tembus)
+                    var standBase = LEVELS[this.lvl].g[last.r][last.c];
                     if(standBase === this.act && path.length > 1) return;
 
                     // Block Base
@@ -295,8 +296,8 @@
             up: function() { this.act = null; },
 
             updGrid: function() {
-                var s = L[this.lvl].s;
-                var b = L[this.lvl].g;
+                var s = LEVELS[this.lvl].s;
+                var b = LEVELS[this.lvl].g;
                 for(var r=0; r<s; r++) for(var c=0; c<s; c++) this.grid[r][c] = (b[r][c]>0)?b[r][c]:0;
                 for(var k in this.paths) {
                     var id = parseInt(k);
@@ -307,7 +308,7 @@
 
             draw: function() {
                 this.ctx.clearRect(0,0,350,350);
-                var s = L[this.lvl].s;
+                var s = LEVELS[this.lvl].s;
                 
                 // Grid
                 this.ctx.strokeStyle = '#334155'; this.ctx.lineWidth = 1; this.ctx.beginPath();
@@ -330,7 +331,7 @@
                 }
 
                 // Dot
-                var b = L[this.lvl].g;
+                var b = LEVELS[this.lvl].g;
                 for(var r=0; r<s; r++) for(var c=0; c<s; c++) {
                     var v = b[r][c];
                     if(v>0) {
@@ -344,8 +345,8 @@
             },
 
             check: function() {
-                var s = L[this.lvl].s;
-                var b = L[this.lvl].g;
+                var s = LEVELS[this.lvl].s;
+                var b = LEVELS[this.lvl].g;
                 // Full Check
                 for(var r=0; r<s; r++) for(var c=0; c<s; c++) if(this.grid[r][c]===0) return;
                 // Connection Check
@@ -364,13 +365,14 @@
             runTimer: function() {
                 clearInterval(this.timer);
                 var el = document.getElementById('disp-time');
-                el.style.color = '#34d399';
+                el.classList.remove('warn-text');
+                
                 this.timer = setInterval(function(){
                     APP.left--;
                     var m = Math.floor(APP.left/60).toString().padStart(2,'0');
                     var s = (APP.left%60).toString().padStart(2,'0');
                     el.innerText = m+":"+s;
-                    if(APP.left<=10) el.style.color = '#f87171';
+                    if(APP.left<=10) el.classList.add('warn-text');
                     if(APP.left<=0) {
                         clearInterval(APP.timer);
                         APP.lock = true;
@@ -380,15 +382,15 @@
             },
 
             save: function(lvl) {
-                var s = JSON.parse(localStorage.getItem('flowV26_Fresh')||"[]");
+                var s = JSON.parse(localStorage.getItem('flowV27_50')||"[]");
                 var f=false;
                 for(var i=0; i<s.length; i++) if(s[i].n==='YOU') { s[i].l = Math.max(s[i].l, lvl); f=true; }
                 if(!f) s.push({n:'YOU', l:lvl});
-                localStorage.setItem('flowV26_Fresh', JSON.stringify(s));
+                localStorage.setItem('flowV27_50', JSON.stringify(s));
             },
 
             renderLb: function() {
-                var s = JSON.parse(localStorage.getItem('flowV26_Fresh')||"[]");
+                var s = JSON.parse(localStorage.getItem('flowV27_50')||"[]");
                 if(s.length===0) s=[{n:'PRO', l:50}];
                 s.sort(function(a,b){return b.l-a.l});
                 var h = '';
