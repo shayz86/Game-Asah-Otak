@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flow Master 50</title>
+    <title>Flow Master 50 - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        /* CSS SAFETY */
         body {
             background-color: #0f172a; color: white; font-family: sans-serif;
             margin: 0; padding: 0; overflow: hidden;
@@ -23,8 +22,7 @@
             flex-direction: column; align-items: center; justify-content: center; z-index: 10;
         }
         #menu { display: flex; z-index: 50; }
-        .active { display: flex !important; z-index: 60; }
-
+        
         canvas {
             background: #1e293b; border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -45,7 +43,6 @@
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: red; color: white; font-size: 10px; display: none; z-index: 9999; text-align: center;
         }
-        
         .warn-text { color: #ef4444 !important; animation: pulse 1s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
     </style>
@@ -59,9 +56,8 @@
             <h1 class="text-6xl font-bold text-blue-500 mb-2">FLOW</h1>
             <h1 class="text-6xl font-bold text-pink-500 mb-8">MASTER</h1>
             <div onclick="APP.start()" class="btn">MAINKAN</div>
-            <div onclick="APP.leaderboard()" class="btn btn-sec">SKOR</div>
-            <a href="../index.html" class="btn btn-sec" style="display:block; text-decoration:none; line-height:20px;">KEMBALI</a>
-            <div class="mt-8 text-slate-500 text-xs">FULL 50 LEVELS</div>
+            <div onclick="APP.leaderboard()" class="btn btn-sec">SKOR TERTINGGI</div>
+            <a href="../index.html" class="btn btn-sec" style="display:block; text-decoration:none; line-height:20px;">KELUAR</a>
         </div>
 
         <div id="game" class="screen">
@@ -77,20 +73,18 @@
             <canvas id="cvs" width="350" height="350"></canvas>
 
             <div id="win-modal" class="absolute inset-0 bg-slate-900/95 flex-col items-center justify-center hidden z-50 rounded-xl">
-                <h2 class="text-3xl text-emerald-400 font-bold mb-2">SEMPURNA!</h2>
-                <div onclick="APP.next()" class="btn bg-emerald-600 border-emerald-800">LANJUT ▶</div>
+                <h2 class="text-3xl text-emerald-400 font-bold mb-2">SELESAI!</h2>
+                <div onclick="APP.next()" class="btn bg-emerald-600 border-emerald-800">LEVEL BERIKUTNYA ▶</div>
             </div>
 
             <div id="lose-modal" class="absolute inset-0 bg-slate-900/95 flex-col items-center justify-center hidden z-50 rounded-xl">
-                <h2 class="text-3xl text-red-500 font-bold mb-4">GAME OVER!</h2>
-                
-                <div onclick="APP.start()" class="btn bg-white text-slate-900 mb-2">MAIN LAGI (DARI AWAL)</div>
-                
+                <h2 class="text-3xl text-red-500 font-bold mb-4">WAKTU HABIS!</h2>
+                <div onclick="APP.start()" class="btn bg-white text-slate-900 mb-2">ULANG DARI LEVEL 1</div>
                 <div onclick="APP.home()" class="btn btn-sec">MENU UTAMA</div>
             </div>
             
             <div class="mt-4 text-center text-slate-500 text-xs px-8">
-                Hubungkan warna. Grid wajib penuh!
+                Tarik garis antar warna yang sama. Penuhi semua kotak!
             </div>
         </div>
 
@@ -104,70 +98,111 @@
     <script>
         window.onerror = function(m,u,l){ document.getElementById('error-box').style.display='block'; document.getElementById('error-box').innerText="ERR:"+m+" ("+l+")"; };
 
-        var C = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8', 9:'#fff', 10:'#555'};
+        var C = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8', 9:'#fff', 10:'#64748b'};
         
-        // --- LEVEL GENERATOR (50 Levels - FIXED LOGIC) ---
-        // Base Patterns (Indeks 0-6)
+        // --- EXPANDED PATTERN LIBRARY (Lebih Banyak Variasi) ---
         var BASE = [
-            {s:5, g:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]}, // Idx 0 (5x5)
-            {s:5, g:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]}, // Idx 1 (5x5)
-            {s:6, g:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]}, // Idx 2 (6x6)
-            {s:6, g:[[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]]}, // Idx 3 (6x6)
-            {s:7, g:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}, // Idx 4 (7x7)
-            {s:8, g:[[1,0,0,0,0,0,2,0],[0,0,3,3,0,0,2,0],[0,0,4,0,0,0,0,0],[0,0,4,0,5,5,0,0],[0,0,0,0,0,0,0,0],[6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0]]}, // Idx 5 (8x8)
-            {s:9, g:[[1,0,0,0,2,0,0,0,3],[0,0,0,0,2,0,0,0,3],[0,0,4,4,0,5,5,0,0],[0,0,0,0,0,0,0,0,0],[0,0,6,6,0,7,7,0,0],[0,0,0,0,0,0,0,0,0],[0,8,8,0,9,9,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0]]}  // Idx 6 (9x9)
+            // 5x5 PATTERNS (Easy - Levels 1-10)
+            {s:5, g:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]}, // 0: Classic
+            {s:5, g:[[1,1,0,0,0],[2,0,0,3,0],[2,0,0,3,0],[4,0,5,5,0],[4,0,0,0,0]]}, // 1: Zigzag
+            {s:5, g:[[0,0,1,0,0],[0,2,1,0,3],[0,2,0,0,3],[0,4,5,5,0],[0,4,0,0,0]]}, // 2: Center heavy
+            {s:5, g:[[1,0,0,0,2],[1,0,3,3,2],[4,0,0,0,5],[4,0,0,0,5],[0,0,0,0,0]]}, // 3: U-Turn
+
+            // 6x6 PATTERNS (Medium - Levels 11-20)
+            {s:6, g:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]}, // 4
+            {s:6, g:[[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]]}, // 5
+            {s:6, g:[[1,0,0,0,0,2],[1,0,3,4,0,2],[0,0,3,4,0,0],[5,0,0,0,0,6],[5,0,0,0,0,6],[0,0,0,0,0,0]]}, // 6
+
+            // 7x7 PATTERNS (Hard - Levels 21-30)
+            {s:7, g:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}, // 7
+            {s:7, g:[[1,0,2,0,0,0,3],[1,0,2,0,4,0,3],[0,0,0,0,4,0,0],[5,0,6,0,0,0,7],[5,0,6,0,0,0,7],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]}, // 8
+
+            // 8x8 PATTERNS (Expert - Levels 31-40)
+            {s:8, g:[[1,0,0,0,0,0,2,0],[0,0,3,3,0,0,2,0],[0,0,4,0,0,0,0,0],[0,0,4,0,5,5,0,0],[0,0,0,0,0,0,0,0],[6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0]]}, // 9
+            
+            // 9x9 PATTERNS (Master - Levels 41-50)
+            {s:9, g:[[1,0,0,0,2,0,0,0,3],[0,0,0,0,2,0,0,0,3],[0,0,4,4,0,5,5,0,0],[0,0,0,0,0,0,0,0,0],[0,0,6,6,0,7,7,0,0],[0,0,0,0,0,0,0,0,0],[0,8,8,0,9,9,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0]]} // 10
         ];
 
-        // Generate 50 Levels dengan Logika Tiering
+        // --- LEVEL GENERATOR WITH VARIETY ---
         var LEVELS = [];
         for(var i=0; i<50; i++) {
-            var baseIdx = 0;
-
-            // LOGIKA BARU: Pilih map berdasarkan progress level agar makin sulit
-            if (i < 10) {
-                // Level 1-10: Gunakan map 5x5 (Base index 0 atau 1)
-                baseIdx = i % 2; 
-            } else if (i < 20) {
-                // Level 11-20: Gunakan map 6x6 (Base index 2 atau 3)
-                baseIdx = 2 + (i % 2);
-            } else if (i < 30) {
-                // Level 21-30: Gunakan map 7x7 (Base index 4)
-                baseIdx = 4;
-            } else if (i < 40) {
-                // Level 31-40: Gunakan map 8x8 (Base index 5)
-                baseIdx = 5;
-            } else {
-                // Level 41-50: Gunakan map 9x9 (Base index 6)
-                baseIdx = 6;
-            }
-
-            var pattern = JSON.parse(JSON.stringify(BASE[baseIdx]));
+            var pool = [];
+            var size = 5;
             
-            // Tambahkan variasi rotasi agar tidak bosan (Random rotasi)
-            var rotations = (i + Math.floor(Math.random() * 3)) % 4;
-            for(var r=0; r<rotations; r++) pattern.g = rotate(pattern.g);
-            
-            // Waktu bertambah seiring level
-            // Base 20 detik + (level * 2.5) -> Lebih menantang di level atas
-            var time = Math.floor(20 + (i * 2.5)); 
-            if(time > 150) time = 150; // Max waktu 2.5 menit
+            // Tiering System
+            if(i < 10) { pool=[0,1,2,3]; size=5; }       // Lvl 1-10: 4 Variasi 5x5
+            else if(i < 20) { pool=[4,5,6]; size=6; }    // Lvl 11-20: 3 Variasi 6x6
+            else if(i < 30) { pool=[7,8]; size=7; }      // Lvl 21-30: 2 Variasi 7x7
+            else if(i < 40) { pool=[9]; size=8; }        // Lvl 31-40: 8x8
+            else { pool=[10]; size=9; }                  // Lvl 41-50: 9x9
+
+            // Pilih pattern dari pool secara acak tapi deterministik berdasarkan level
+            var pIdx = pool[i % pool.length];
+            var pattern = JSON.parse(JSON.stringify(BASE[pIdx]));
+
+            // 1. ROTASI (0, 90, 180, 270 derajat)
+            var rot = (i * 3) % 4; 
+            for(var r=0; r<rot; r++) pattern.g = rotateGrid(pattern.g);
+
+            // 2. MIRROR/FLIP (Bikin map terasa baru)
+            if(i % 3 === 0) pattern.g = flipGrid(pattern.g);
+
+            // 3. COLOR SHUFFLE (Ganti identitas warna agar tidak monoton)
+            // Ini membuat pola yang sama terlihat sangat berbeda
+            pattern.g = shuffleColors(pattern.g, (i * 7));
+
+            // Time Calculation
+            var time = 25 + (i * 3); 
+            if(time > 180) time = 180;
 
             LEVELS.push({ t: time, s: pattern.s, g: pattern.g });
         }
 
-        // Helper Rotasi
-        function rotate(matrix) {
+        // --- UTILS FOR VARIETY ---
+        function rotateGrid(m) {
+            var N = m.length;
+            var res = new Array(N).fill(0).map(function(){return new Array(N).fill(0)});
+            for(var r=0; r<N; r++) for(var c=0; c<N; c++) res[c][N-1-r] = m[r][c];
+            return res;
+        }
+
+        function flipGrid(m) {
+            return m.map(row => row.reverse());
+        }
+
+        function shuffleColors(matrix, seed) {
+            // Temukan semua ID warna yang ada (1, 2, 3...)
+            var ids = new Set();
+            matrix.forEach(r => r.forEach(c => { if(c>0) ids.add(c); }));
+            var arr = Array.from(ids);
+            
+            // Acak mapping warna berdasarkan "seed" (level index)
+            // Simple pseudo-random shuffle
+            var map = {};
+            var shuffled = [].concat(arr);
+            for (var i = shuffled.length - 1; i > 0; i--) {
+                var j = (seed + i) % (i + 1);
+                var temp = shuffled[i];
+                shuffled[i] = shuffled[j];
+                shuffled[j] = temp;
+            }
+
+            for(var i=0; i<arr.length; i++) map[arr[i]] = shuffled[i];
+
+            // Terapkan mapping baru ke matrix
             var N = matrix.length;
-            var res = new Array(N).fill(0).map(function(){ return new Array(N).fill(0); });
-            for (var r = 0; r < N; r++) {
-                for (var c = 0; c < N; c++) {
-                    res[c][N - 1 - r] = matrix[r][c];
+            var res = new Array(N).fill(0).map(function(){return new Array(N).fill(0)});
+            for(var r=0; r<N; r++) {
+                for(var c=0; c<N; c++) {
+                    if(matrix[r][c] > 0) res[r][c] = map[matrix[r][c]];
+                    else res[r][c] = 0;
                 }
             }
             return res;
         }
 
-        // APP LOGIC
+        // --- APP ENGINE ---
         var APP = {
             cvs: null, ctx: null,
             lvl: 0, grid: [], paths: {},
@@ -204,7 +239,7 @@
             reset: function() { this.load(this.lvl); },
             next: function() {
                 this.lvl++;
-                if(this.lvl >= LEVELS.length) { alert("SELAMAT! ANDA MASTER 50 LEVEL!"); this.home(); }
+                if(this.lvl >= LEVELS.length) { alert("SELAMAT! ANDA MENYELESAIKAN SEMUA 50 LEVEL!"); this.home(); }
                 else this.load(this.lvl);
             },
 
@@ -285,7 +320,7 @@
                     var tb = LEVELS[this.lvl].g[p.r][p.c];
                     var tc = this.grid[p.r][p.c];
 
-                    // Backtrack
+                    // Self collision check (Backtrack)
                     var selfIdx = -1;
                     for(var i=0; i<path.length; i++) if(path[i].r==p.r && path[i].c==p.c) selfIdx=i;
                     if(selfIdx!=-1) {
@@ -293,14 +328,14 @@
                         this.updGrid(); this.draw(); return;
                     }
 
-                    // Dead End (Cegah Tembus)
+                    // Tembus tembok base lain
                     var standBase = LEVELS[this.lvl].g[last.r][last.c];
-                    if(standBase === this.act && path.length > 1) return;
+                    if(standBase === this.act && path.length > 1) return; // Tidak bisa balik ke base sendiri
 
-                    // Block Base
+                    // Tabrak base warna lain
                     if(tb > 0 && tb !== this.act) return;
 
-                    // Cut Others
+                    // Potong jalur orang lain
                     if(tc > 0 && tc !== this.act) {
                         var vicP = this.paths[tc];
                         var cutIdx = -1;
@@ -319,7 +354,9 @@
             updGrid: function() {
                 var s = LEVELS[this.lvl].s;
                 var b = LEVELS[this.lvl].g;
+                // Reset grid to base or 0
                 for(var r=0; r<s; r++) for(var c=0; c<s; c++) this.grid[r][c] = (b[r][c]>0)?b[r][c]:0;
+                // Draw paths on grid
                 for(var k in this.paths) {
                     var id = parseInt(k);
                     var p = this.paths[k];
@@ -331,7 +368,7 @@
                 this.ctx.clearRect(0,0,350,350);
                 var s = LEVELS[this.lvl].s;
                 
-                // Grid
+                // Grid Lines
                 this.ctx.strokeStyle = '#334155'; this.ctx.lineWidth = 1; this.ctx.beginPath();
                 for(var i=0; i<=s; i++) {
                     var p=i*this.cell;
@@ -340,27 +377,32 @@
                 }
                 this.ctx.stroke();
 
-                // Path
+                // Draw Paths
                 for(var k in this.paths) {
                     var p = this.paths[k]; if(p.length<2) continue;
-                    this.ctx.strokeStyle = C[k]; this.ctx.lineWidth = this.cell*0.45;
+                    this.ctx.strokeStyle = C[k]; this.ctx.lineWidth = this.cell*0.5;
                     this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
-                    this.ctx.shadowBlur=10; this.ctx.shadowColor=C[k];
-                    this.ctx.beginPath(); this.ctx.moveTo(p[0].c*this.cell+this.cell/2, p[0].r*this.cell+this.cell/2);
+                    this.ctx.shadowBlur=15; this.ctx.shadowColor=C[k];
+                    this.ctx.beginPath(); 
+                    this.ctx.moveTo(p[0].c*this.cell+this.cell/2, p[0].r*this.cell+this.cell/2);
                     for(var j=1; j<p.length; j++) this.ctx.lineTo(p[j].c*this.cell+this.cell/2, p[j].r*this.cell+this.cell/2);
                     this.ctx.stroke(); this.ctx.shadowBlur=0;
                 }
 
-                // Dot
+                // Draw Dots (Base)
                 var b = LEVELS[this.lvl].g;
                 for(var r=0; r<s; r++) for(var c=0; c<s; c++) {
                     var v = b[r][c];
                     if(v>0) {
                         this.ctx.fillStyle = C[v];
                         var cx=c*this.cell+this.cell/2, cy=r*this.cell+this.cell/2;
-                        this.ctx.beginPath(); this.ctx.arc(cx,cy,this.cell*0.3,0,Math.PI*2); this.ctx.fill();
-                        this.ctx.fillStyle='rgba(255,255,255,0.4)'; 
-                        this.ctx.beginPath(); this.ctx.arc(cx,cy,this.cell*0.1,0,Math.PI*2); this.ctx.fill();
+                        // Outer glow
+                        this.ctx.shadowBlur=10; this.ctx.shadowColor=C[v];
+                        this.ctx.beginPath(); this.ctx.arc(cx,cy,this.cell*0.35,0,Math.PI*2); this.ctx.fill();
+                        this.ctx.shadowBlur=0;
+                        // Inner white
+                        this.ctx.fillStyle='rgba(255,255,255,0.8)'; 
+                        this.ctx.beginPath(); this.ctx.arc(cx,cy,this.cell*0.12,0,Math.PI*2); this.ctx.fill();
                     }
                 }
             },
@@ -368,13 +410,16 @@
             check: function() {
                 var s = LEVELS[this.lvl].s;
                 var b = LEVELS[this.lvl].g;
-                // Full Check
+                
+                // 1. Cek semua grid terisi
                 for(var r=0; r<s; r++) for(var c=0; c<s; c++) if(this.grid[r][c]===0) return;
-                // Connection Check
+                
+                // 2. Cek koneksi endpoint
                 for(var k in this.paths) {
                     var p = this.paths[k];
                     if(p.length<2) return;
                     var h=p[0], t=p[p.length-1];
+                    // Kepala dan Ekor path harus berada di Base yang warnanya sama
                     if(b[h.r][h.c]!=k || b[t.r][t.c]!=k) return;
                 }
                 
@@ -386,43 +431,4 @@
             runTimer: function() {
                 clearInterval(this.timer);
                 var el = document.getElementById('disp-time');
-                el.classList.remove('warn-text');
-                
-                this.timer = setInterval(function(){
-                    APP.left--;
-                    var m = Math.floor(APP.left/60).toString().padStart(2,'0');
-                    var s = (APP.left%60).toString().padStart(2,'0');
-                    el.innerText = m+":"+s;
-                    if(APP.left<=10) el.classList.add('warn-text');
-                    if(APP.left<=0) {
-                        clearInterval(APP.timer);
-                        APP.lock = true;
-                        document.getElementById('lose-modal').style.display = 'flex';
-                    }
-                }, 1000);
-            },
-
-            save: function(lvl) {
-                var s = JSON.parse(localStorage.getItem('flowV27_50')||"[]");
-                var f=false;
-                for(var i=0; i<s.length; i++) if(s[i].n==='YOU') { s[i].l = Math.max(s[i].l, lvl); f=true; }
-                if(!f) s.push({n:'YOU', l:lvl});
-                localStorage.setItem('flowV27_50', JSON.stringify(s));
-            },
-
-            renderLb: function() {
-                var s = JSON.parse(localStorage.getItem('flowV27_50')||"[]");
-                if(s.length===0) s=[{n:'PRO', l:50}];
-                s.sort(function(a,b){return b.l-a.l});
-                var h = '';
-                for(var i=0; i<s.length; i++) {
-                    h += '<div class="flex justify-between p-2 border-b border-slate-600 text-sm text-slate-300"><span>#'+(i+1)+' '+s[i].n+'</span><span class="text-blue-400">Lvl '+s[i].l+'</span></div>';
-                }
-                document.getElementById('lb-list').innerHTML = h;
-            }
-        };
-
-        window.onload = function() { APP.init(); };
-    </script>
-</body>
-</html>
+                el.clas
