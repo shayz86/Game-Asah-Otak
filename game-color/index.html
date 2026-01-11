@@ -13,7 +13,7 @@
             font-family: 'Fredoka', sans-serif;
             background-color: #0B1120; /* Deep Navy Background */
             color: white;
-            touch-action: manipulation;
+            touch-action: manipulation; /* Anti-zoom double tap */
             user-select: none;
             overflow: hidden;
             height: 100vh;
@@ -21,27 +21,19 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Gradient Background Premium */
-        .bg-premium {
-            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
-        }
-
-        /* Animasi */
+        /* Animasi Pop */
         .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
         
-        .shake { animation: shake 0.4s ease-in-out; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-
-        /* Custom Scrollbar */
+        /* Hide Scrollbar */
         .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body id="main-body" class="w-full flex items-center justify-center bg-premium relative">
+<body id="main-body" class="w-full h-full relative overflow-hidden bg-[#0B1120]">
 
     <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 text-center bg-[#0B1120]">
         
-        <div class="mb-10 animate-fade-in-down">
+        <div class="mb-10">
             <h1 class="text-5xl md:text-6xl font-bold mb-2 leading-tight">
                 <span class="text-pink-500">KEKACAUAN</span><br>
                 <span class="text-yellow-400">WARNA</span>
@@ -60,12 +52,12 @@
             </div>
             <div class="pt-3 border-t border-gray-600 mt-2">
                  <p class="text-yellow-400 text-xs font-bold flex items-center gap-2">
-                    🎲 Warna & Tema berubah tiap 50 poin!
+                    🎲 Warna berubah tiap 50 poin!
                  </p>
             </div>
         </div>
 
-        <button id="btn-start-game" class="w-full max-w-xs py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full font-bold text-xl shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:scale-105 active:scale-95 transition-transform text-white border border-white/10">
+        <button id="btn-start" class="w-full max-w-xs py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full font-bold text-xl shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:scale-105 active:scale-95 transition-transform text-white border border-white/10">
             MULAI GAME
         </button>
 
@@ -73,12 +65,12 @@
             🏠 Menu Utama
         </a>
 
-        <button id="btn-show-leaderboard" class="mt-4 text-gray-500 hover:text-white text-xs underline">
+        <button id="btn-open-lb" class="mt-4 text-gray-500 hover:text-white text-xs underline px-4 py-2">
             🏆 Lihat Top 10 Skor
         </button>
     </div>
 
-    <div id="game-ui" class="hidden w-full max-w-md h-full flex flex-col p-6 pb-8 relative">
+    <div id="game-ui" class="hidden absolute inset-0 z-40 w-full h-full flex-col p-6 pb-8 bg-[#0B1120]">
         
         <div class="flex justify-between items-center mb-6">
             <div class="bg-[#1e293b] px-5 py-2 rounded-full border border-slate-700 shadow-lg flex items-center gap-2">
@@ -94,23 +86,18 @@
 
         <div class="flex-1 flex flex-col items-center justify-center -mt-10">
             <div id="instruction-container" class="mb-8">
-                <span id="instruction-text" class="px-8 py-3 bg-[#0f172a] rounded-full text-lg font-bold border border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)] tracking-wide">
-                    Pilih WARNA TINTA
-                </span>
+                <span id="instruction-text" class="px-8 py-3 bg-[#0f172a] rounded-full text-lg font-bold border border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)] tracking-wide">...</span>
             </div>
             
             <div id="challenge-word-container" class="w-full text-center h-24 flex items-center justify-center">
-                <h1 id="challenge-word" class="text-6xl md:text-7xl font-bold tracking-wider drop-shadow-2xl">
-                    KUNING
-                </h1>
+                <h1 id="challenge-word" class="text-6xl md:text-7xl font-bold tracking-wider drop-shadow-2xl">...</h1>
             </div>
         </div>
 
-        <div id="buttons-container" class="grid grid-cols-2 gap-4 mt-auto">
-            </div>
+        <div id="buttons-container" class="grid grid-cols-2 gap-4 mt-auto"></div>
     </div>
 
-    <div id="game-over-screen" class="hidden absolute inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center p-6 text-center">
+    <div id="game-over-screen" class="hidden absolute inset-0 z-[60] bg-black/95 flex-col items-center justify-center p-6 text-center">
         <h2 class="text-4xl font-bold text-red-500 mb-2">Waktu Habis!</h2>
         
         <div class="bg-[#1e293b] rounded-2xl p-8 w-full max-w-xs mb-8 border border-slate-700 shadow-2xl mt-4">
@@ -133,7 +120,7 @@
         </div>
     </div>
 
-    <div id="leaderboard-screen" class="hidden absolute inset-0 z-[70] bg-[#0B1120] flex flex-col items-center justify-center p-6">
+    <div id="leaderboard-screen" class="hidden absolute inset-0 z-[70] bg-[#0B1120] flex-col items-center justify-center p-6">
         <h2 class="text-3xl font-bold text-yellow-400 mb-8 tracking-wide">🏆 TOP 10 SKOR</h2>
         <div class="bg-[#1e293b] w-full max-w-md rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh]">
             <div class="grid grid-cols-3 bg-slate-800 p-4 font-bold text-xs uppercase text-slate-400 tracking-wider">
@@ -143,248 +130,241 @@
             </div>
             <div id="leaderboard-list" class="overflow-y-auto hide-scroll p-0 flex-1"></div>
         </div>
-        <button id="btn-close-leaderboard" class="mt-8 px-10 py-3 bg-slate-700 hover:bg-slate-600 rounded-full font-bold text-white transition border border-slate-600">TUTUP</button>
+        <button id="btn-close-lb" class="mt-8 px-10 py-3 bg-slate-700 hover:bg-slate-600 rounded-full font-bold text-white transition border border-slate-600">TUTUP</button>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- CONFIG ---
-            const COLORS = {
-                merah:  { hex: '#ef4444', label: 'MERAH',  border: 'border-red-500', text: 'text-red-500', bg: 'hover:bg-red-500/10' },
-                biru:   { hex: '#3b82f6', label: 'BIRU',   border: 'border-blue-500', text: 'text-blue-500', bg: 'hover:bg-blue-500/10' },
-                hijau:  { hex: '#22c55e', label: 'HIJAU',  border: 'border-green-500', text: 'text-green-500', bg: 'hover:bg-green-500/10' },
-                kuning: { hex: '#eab308', label: 'KUNING', border: 'border-yellow-400', text: 'text-yellow-400', bg: 'hover:bg-yellow-500/10' },
-                ungu:   { hex: '#a855f7', label: 'UNGU',   border: 'border-purple-500', text: 'text-purple-500', bg: 'hover:bg-purple-500/10' },
-                oranye: { hex: '#f97316', label: 'ORANYE', border: 'border-orange-500', text: 'text-orange-500', bg: 'hover:bg-orange-500/10' },
-                pink:   { hex: '#ec4899', label: 'PINK',   border: 'border-pink-500', text: 'text-pink-500', bg: 'hover:bg-pink-500/10' },
-                cyan:   { hex: '#06b6d4', label: 'CYAN',   border: 'border-cyan-400', text: 'text-cyan-400', bg: 'hover:bg-cyan-500/10' }
-            };
+        // CONFIG
+        const COLORS = {
+            merah:  { hex: '#ef4444', label: 'MERAH',  border: 'border-red-500', text: 'text-red-500', bg: 'hover:bg-red-500/10' },
+            biru:   { hex: '#3b82f6', label: 'BIRU',   border: 'border-blue-500', text: 'text-blue-500', bg: 'hover:bg-blue-500/10' },
+            hijau:  { hex: '#22c55e', label: 'HIJAU',  border: 'border-green-500', text: 'text-green-500', bg: 'hover:bg-green-500/10' },
+            kuning: { hex: '#eab308', label: 'KUNING', border: 'border-yellow-400', text: 'text-yellow-400', bg: 'hover:bg-yellow-500/10' },
+            ungu:   { hex: '#a855f7', label: 'UNGU',   border: 'border-purple-500', text: 'text-purple-500', bg: 'hover:bg-purple-500/10' },
+            oranye: { hex: '#f97316', label: 'ORANYE', border: 'border-orange-500', text: 'text-orange-500', bg: 'hover:bg-orange-500/10' },
+            pink:   { hex: '#ec4899', label: 'PINK',   border: 'border-pink-500', text: 'text-pink-500', bg: 'hover:bg-pink-500/10' },
+            cyan:   { hex: '#06b6d4', label: 'CYAN',   border: 'border-cyan-400', text: 'text-cyan-400', bg: 'hover:bg-cyan-500/10' }
+        };
+        const STORAGE_KEY = 'colorChaos_Score';
 
-            const STORAGE_KEY = 'colorChaos_vFINAL';
+        // STATE
+        let score = 0, timerInterval, isGameOver = false;
+        let activeKeys = [], currentWordKey = '', currentColorKey = '', currentRule = 'color';
+        let maxTime = 3000;
+
+        // ELEMENTS
+        const els = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-ui'),
+            over: document.getElementById('game-over-screen'),
+            lb: document.getElementById('leaderboard-screen'),
+            score: document.getElementById('score-display'),
+            finalScore: document.getElementById('final-score'),
+            timer: document.getElementById('timer-bar'),
+            instruction: document.getElementById('instruction-text'),
+            word: document.getElementById('challenge-word'),
+            wordCont: document.getElementById('challenge-word-container'),
+            buttons: document.getElementById('buttons-container')
+        };
+
+        // --- INIT & NAVIGATION ---
+        function init() {
+            // Pasang event listener manual agar aman
+            document.getElementById('btn-start').onclick = startGame;
+            document.getElementById('btn-retry').onclick = startGame;
+            document.getElementById('btn-open-lb').onclick = showLeaderboard;
+            document.getElementById('btn-close-lb').onclick = closeLeaderboard;
+            document.getElementById('btn-save-record').onclick = saveRecord;
+        }
+
+        function showScreen(screenId) {
+            // Sembunyikan semua dengan menghapus 'flex' dan menambah 'hidden'
+            ['start', 'game', 'over', 'lb'].forEach(k => {
+                els[k].classList.add('hidden');
+                els[k].classList.remove('flex');
+            });
             
-            // --- STATE ---
-            let score = 0;
-            let timerInterval;
-            let isGameOver = false;
-            let currentRule = 'color';
-            let activeKeys = [];
-            let currentWordKey = '';
-            let currentColorKey = '';
-            let maxTime = 3000;
+            // Tampilkan yang diminta
+            const el = els[screenId];
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
 
-            // --- DOM ---
-            const els = {
-                start: document.getElementById('start-screen'),
-                game: document.getElementById('game-ui'),
-                over: document.getElementById('game-over-screen'),
-                leaderboard: document.getElementById('leaderboard-screen'),
-                score: document.getElementById('score-display'),
-                finalScore: document.getElementById('final-score'),
-                timer: document.getElementById('timer-bar'),
-                instruction: document.getElementById('instruction-text'),
-                instContainer: document.getElementById('instruction-container'),
-                word: document.getElementById('challenge-word'),
-                wordCont: document.getElementById('challenge-word-container'),
-                buttons: document.getElementById('buttons-container'),
-                body: document.getElementById('main-body')
-            };
+        // --- GAME LOGIC ---
+        function startGame() {
+            score = 0;
+            maxTime = 3000;
+            isGameOver = false;
+            showScreen('game');
+            updateUI();
+            randomizeContext();
+            nextRound();
+        }
 
-            // --- LISTENERS ---
-            const bindClick = (id, fn) => {
-                const el = document.getElementById(id);
-                if(el) {
-                    el.addEventListener('click', fn);
-                    el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, {passive: false});
+        function randomizeContext() {
+            const keys = Object.keys(COLORS).sort(() => 0.5 - Math.random()).slice(0, 4);
+            activeKeys = keys;
+            renderButtons(keys);
+        }
+
+        function renderButtons(keys) {
+            els.buttons.innerHTML = '';
+            keys.forEach(key => {
+                const data = COLORS[key];
+                const btn = document.createElement('button');
+                btn.className = `w-full h-20 bg-[#1e293b] ${data.border} border-b-4 rounded-xl active:scale-95 active:border-b-0 active:mt-1 transition-all flex items-center justify-center shadow-lg group relative overflow-hidden`;
+                
+                btn.innerHTML = `
+                    <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${data.text.replace('text', 'bg')}"></div>
+                    <span class="${data.text} font-bold text-2xl tracking-widest pointer-events-none">${data.label}</span>
+                `;
+                
+                // Gunakan onclick biasa yang lebih stabil
+                btn.onclick = () => handleAnswer(key);
+                
+                els.buttons.appendChild(btn);
+            });
+        }
+
+        function nextRound() {
+            if(isGameOver) return;
+            if(score > 0 && score % 50 === 0) randomizeContext();
+
+            currentRule = Math.random() > 0.5 ? 'color' : 'text';
+            currentWordKey = activeKeys[Math.floor(Math.random() * activeKeys.length)];
+            
+            if(Math.random() > 0.2) {
+                const conflicts = activeKeys.filter(k => k !== currentWordKey);
+                currentColorKey = conflicts[Math.floor(Math.random() * conflicts.length)];
+            } else {
+                currentColorKey = currentWordKey;
+            }
+
+            renderQuestion();
+            startTimer();
+        }
+
+        function renderQuestion() {
+            if (currentRule === 'color') {
+                els.instruction.innerHTML = 'Pilih <span class="text-white border-b-2 border-purple-500">WARNA TINTA</span>';
+                els.instruction.className = "px-6 py-3 bg-[#0f172a] rounded-full text-md md:text-lg font-bold border border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)] block text-center transition-all";
+            } else {
+                els.instruction.innerHTML = 'Baca <span class="text-white border-b-2 border-cyan-400">TULISAN KATA</span>';
+                els.instruction.className = "px-6 py-3 bg-[#0f172a] rounded-full text-md md:text-lg font-bold border border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)] block text-center transition-all";
+            }
+
+            els.word.innerText = COLORS[currentWordKey].label;
+            els.word.style.color = COLORS[currentColorKey].hex;
+            
+            els.wordCont.classList.remove('pop-in');
+            void els.wordCont.offsetWidth;
+            els.wordCont.classList.add('pop-in');
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            let timeLimit = Math.max(1200, maxTime - (score * 5)); 
+            let endTime = Date.now() + timeLimit;
+            els.timer.className = "h-full bg-gradient-to-r from-green-400 to-yellow-400 w-full rounded-full";
+
+            timerInterval = setInterval(() => {
+                let left = endTime - Date.now();
+                if (left <= 0) {
+                    gameOver();
+                } else {
+                    let pct = (left / timeLimit) * 100;
+                    els.timer.style.width = pct + "%";
+                    if(pct < 30) els.timer.className = "h-full w-full bg-red-500 rounded-full shadow-[0_0_10px_red]";
                 }
-            };
+            }, 16);
+        }
 
-            bindClick('btn-start-game', startGame);
-            bindClick('btn-retry', startGame);
-            bindClick('btn-show-leaderboard', showLeaderboard);
-            bindClick('btn-close-leaderboard', closeLeaderboard);
-            bindClick('btn-save-record', saveRecord);
-
-            // --- LOGIC ---
-            function startGame() {
-                score = 0;
-                maxTime = 3000;
-                isGameOver = false;
-                showScreen('game');
-                updateScoreUI();
-                randomizeContext();
+        function handleAnswer(key) {
+            if(isGameOver) return;
+            const correctKey = currentRule === 'color' ? currentColorKey : currentWordKey;
+            
+            if (key === correctKey) {
+                score += 10;
+                updateUI();
                 nextRound();
+            } else {
+                gameOver();
             }
+        }
 
-            function randomizeContext() {
-                // Background tetap konsisten Navy/Dark seperti Foto 1 & 2
-                // Kita hanya ubah sedikit nuansa jika mau, tapi tetap gelap
-                els.body.className = `w-full flex items-center justify-center bg-[#0B1120] relative`; 
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(timerInterval);
+            els.finalScore.innerText = score;
+            showScreen('over');
 
-                // Pilih 4 warna acak
-                const keys = Object.keys(COLORS).sort(() => 0.5 - Math.random()).slice(0, 4);
-                activeKeys = keys;
-                renderButtons(keys);
+            const scores = getScores();
+            const minScore = scores.length < 10 ? 0 : scores[scores.length-1].score;
+            
+            const recSec = document.getElementById('new-record-section');
+            const stdBtn = document.getElementById('standard-buttons');
+
+            if (score > 0 && (scores.length < 10 || score > minScore)) {
+                recSec.classList.remove('hidden');
+                stdBtn.classList.add('hidden');
+                document.getElementById('player-name-input').value = "";
+            } else {
+                recSec.classList.add('hidden');
+                stdBtn.classList.remove('hidden');
             }
+        }
 
-            function renderButtons(keys) {
-                els.buttons.innerHTML = '';
-                keys.forEach(key => {
-                    const data = COLORS[key];
-                    const btn = document.createElement('button');
+        function saveRecord() {
+            const name = document.getElementById('player-name-input').value.toUpperCase().substring(0,10) || "PLAYER";
+            let scores = getScores();
+            scores.push({name, score});
+            scores.sort((a,b) => b.score - a.score);
+            scores = scores.slice(0, 10);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+            
+            document.getElementById('new-record-section').classList.add('hidden');
+            document.getElementById('standard-buttons').classList.remove('hidden');
+            showLeaderboard();
+        }
+
+        function getScores() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        }
+
+        function showLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = "";
+            const scores = getScores();
+            
+            if(scores.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-500 p-8 italic">Belum ada skor</div>';
+            } else {
+                scores.forEach((s, i) => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between p-4 border-b border-slate-700 text-sm hover:bg-white/5 transition";
                     
-                    // Style Tombol mirip Foto 2: Gelap dengan Border Bawah Tebal Berwarna
-                    btn.className = `w-full h-20 bg-[#1e293b] ${data.border} border-b-4 rounded-xl active:scale-95 active:border-b-0 active:mt-1 transition-all flex items-center justify-center shadow-lg group relative overflow-hidden`;
-                    
-                    btn.innerHTML = `
-                        <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${data.text.replace('text', 'bg')}"></div>
-                        <span class="${data.text} font-bold text-2xl tracking-widest pointer-events-none drop-shadow-sm">${data.label}</span>
-                    `;
-                    
-                    // Universal Input Handler
-                    const hit = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAnswer(key);
-                    };
-                    btn.addEventListener('touchstart', hit, {passive: false});
-                    btn.addEventListener('click', hit);
-                    
-                    els.buttons.appendChild(btn);
+                    let rankStyle = "text-slate-400";
+                    if(i===0) rankStyle = "text-yellow-400 font-bold scale-110";
+                    if(i===1) rankStyle = "text-gray-300 font-bold";
+                    if(i===2) rankStyle = "text-orange-400 font-bold";
+
+                    row.innerHTML = `<span class="w-8 ${rankStyle}">${i+1}.</span><span class="flex-1 font-bold text-white tracking-wide">${s.name}</span><span class="text-cyan-400 font-mono text-base">${s.score}</span>`;
+                    list.appendChild(row);
                 });
             }
+            showScreen('lb');
+        }
 
-            function nextRound() {
-                if (isGameOver) return;
+        function closeLeaderboard() {
+            if(isGameOver) showScreen('over');
+            else showScreen('start');
+        }
 
-                if(score > 0 && score % 50 === 0) randomizeContext();
+        function updateUI() { els.score.innerText = score; }
 
-                currentRule = Math.random() > 0.5 ? 'color' : 'text';
-                currentWordKey = activeKeys[Math.floor(Math.random() * activeKeys.length)];
-                
-                if (Math.random() > 0.2) {
-                    const conflicts = activeKeys.filter(k => k !== currentWordKey);
-                    currentColorKey = conflicts[Math.floor(Math.random() * conflicts.length)];
-                } else {
-                    currentColorKey = currentWordKey;
-                }
+        // Start Everything
+        init();
 
-                renderQuestion();
-                startTimer();
-            }
-
-            function renderQuestion() {
-                // Instruksi Style Pill Neon (Foto 2)
-                if (currentRule === 'color') {
-                    els.instruction.innerHTML = 'Pilih <span class="text-white border-b-2 border-purple-500">WARNA TINTA</span>';
-                    els.instruction.className = "px-6 py-3 bg-[#0f172a] rounded-full text-md md:text-lg font-bold border border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)] block text-center transition-all";
-                } else {
-                    els.instruction.innerHTML = 'Baca <span class="text-white border-b-2 border-cyan-400">TULISAN KATA</span>';
-                    els.instruction.className = "px-6 py-3 bg-[#0f172a] rounded-full text-md md:text-lg font-bold border border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)] block text-center transition-all";
-                }
-
-                els.word.innerText = COLORS[currentWordKey].label;
-                els.word.style.color = COLORS[currentColorKey].hex;
-                
-                // Animasi Pop
-                els.wordCont.classList.remove('pop-in');
-                void els.wordCont.offsetWidth;
-                els.wordCont.classList.add('pop-in');
-            }
-
-            function startTimer() {
-                clearInterval(timerInterval);
-                let timeLimit = Math.max(1200, maxTime - (score * 5)); 
-                let startTime = Date.now();
-                let endTime = startTime + timeLimit;
-
-                els.timer.className = "h-full bg-gradient-to-r from-green-400 to-yellow-400 w-full rounded-full";
-                
-                timerInterval = setInterval(() => {
-                    let left = endTime - Date.now();
-                    let pct = (left / timeLimit) * 100;
-                    
-                    if (left <= 0) {
-                        gameOver();
-                    } else {
-                        els.timer.style.width = pct + "%";
-                        if(pct < 30) els.timer.className = "h-full w-full bg-red-500 shadow-[0_0_15px_red] rounded-full";
-                    }
-                }, 16);
-            }
-
-            function handleAnswer(key) {
-                if(isGameOver) return;
-                
-                const correctKey = currentRule === 'color' ? currentColorKey : currentWordKey;
-                
-                if (key === correctKey) {
-                    score += 10;
-                    updateScoreUI();
-                    nextRound();
-                } else {
-                    gameOver();
-                }
-            }
-
-            function gameOver() {
-                isGameOver = true;
-                clearInterval(timerInterval);
-                els.finalScore.innerText = score;
-                showScreen('over');
-
-                const scores = getScores();
-                const minScore = scores.length < 10 ? 0 : scores[scores.length-1].score;
-                
-                const recSec = document.getElementById('new-record-section');
-                const stdBtn = document.getElementById('standard-buttons');
-
-                if (score > 0 && (scores.length < 10 || score > minScore)) {
-                    recSec.classList.remove('hidden');
-                    stdBtn.classList.add('hidden');
-                    document.getElementById('player-name-input').value = "";
-                } else {
-                    recSec.classList.add('hidden');
-                    stdBtn.classList.remove('hidden');
-                }
-            }
-
-            function saveRecord() {
-                const name = document.getElementById('player-name-input').value.toUpperCase().substring(0,10) || "PLAYER";
-                let scores = getScores();
-                scores.push({name, score});
-                scores.sort((a,b) => b.score - a.score);
-                scores = scores.slice(0, 10);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
-                
-                document.getElementById('new-record-section').classList.add('hidden');
-                document.getElementById('standard-buttons').classList.remove('hidden');
-                showLeaderboard();
-            }
-
-            function getScores() {
-                return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-            }
-
-            function showLeaderboard() {
-                const list = document.getElementById('leaderboard-list');
-                list.innerHTML = "";
-                const scores = getScores();
-                
-                if(scores.length === 0) {
-                    list.innerHTML = '<div class="text-center text-gray-500 p-8 italic">Belum ada skor tersimpan</div>';
-                } else {
-                    scores.forEach((s, i) => {
-                        const row = document.createElement('div');
-                        row.className = "flex justify-between p-4 border-b border-slate-700 text-sm hover:bg-white/5 transition";
-                        
-                        let rankStyle = "text-slate-400";
-                        if(i===0) rankStyle = "text-yellow-400 font-bold scale-110";
-                        if(i===1) rankStyle = "text-gray-300 font-bold";
-                        if(i===2) rankStyle = "text-orange-400 font-bold";
-
-                        row.innerHTML = `
-                            <span class="w-8 ${rankStyle}">${i+1}.</span>
-                            <span class="flex-1 font-bold text-white tracking-wide">${s.name}</span>
-                            <span class="text-cyan-400 font-mono text-base">${s.score}</span>
-                        `;
- 
+    </script>
+</body>
+</html>
