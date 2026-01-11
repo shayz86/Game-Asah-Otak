@@ -3,434 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flow Master - Challenge Edition</title>
-    <!-- Tailwind CSS -->
+    <title>Flow Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
-
-        /* --- CORE STYLES --- */
-        body {
+        /* --- 1. LAYOUT UTAMA (Sama persis dengan Color Chaos V5) --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background-color: #0f172a; /* Slate 900 */
             font-family: 'Fredoka', sans-serif;
-            background-color: #0f172a;
-            color: #e2e8f0;
-            overscroll-behavior: none;
-            touch-action: none;
+            color: white;
+            
+            /* POSISI TENGAH MUTLAK */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* PENTING: User select none agar tidak blok biru saat tahan tombol */
             user-select: none;
             -webkit-user-select: none;
-            overflow: hidden;
         }
 
-        /* --- UI UTILS --- */
-        .hidden-important { display: none !important; }
-        
-        .btn { 
-            transition: transform 0.1s, filter 0.2s; 
-            cursor: pointer; 
-            -webkit-tap-highlight-color: transparent;
+        /* Container HP */
+        #app-frame {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
-        .btn:active { transform: scale(0.95); filter: brightness(0.9); }
 
-        /* --- GAME CANVAS CONTAINER --- */
-        #game-wrapper {
-            padding: 8px;
+        /* --- 2. SISTEM LAYAR (Saklar V5) --- */
+        .game-screen {
+            display: none !important;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 10;
+        }
+
+        .game-screen.active {
+            display: flex !important;
+            z-index: 20;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 3. CANVAS KHUSUS --- */
+        canvas {
             background: #1e293b;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin: 0 auto;
+            /* Touch Action None: Agar browser tidak scroll saat menggambar */
+            touch-action: none; 
+            cursor: crosshair;
+        }
+
+        /* --- 4. TOMBOL ANTI-MACET --- */
+        .btn-action {
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.1s;
             position: relative;
+            z-index: 50; /* Pastikan tombol di atas segalanya */
+        }
+        .btn-action:active {
+            transform: scale(0.95);
+            opacity: 0.9;
         }
 
-        canvas {
-            border-radius: 12px;
-            display: block;
-            touch-action: none; /* CRITICAL FOR MOBILE */
+        /* Styling Judul */
+        .text-gradient {
+            background: linear-gradient(to right, #3b82f6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* --- ANIMATIONS --- */
-        @keyframes popIn { 
-            0% { transform: scale(0.9); opacity: 0; } 
-            100% { transform: scale(1); opacity: 1; } 
-        }
-        .modal-animate { animation: popIn 0.2s ease-out; }
-
-        @keyframes pulse-soft {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-        .btn-pulse { animation: pulse-soft 2s infinite; }
-
-        /* --- SCROLLBAR --- */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="h-screen w-screen relative">
+<body>
 
-    <!-- === SCREEN: MAIN MENU === -->
-    <div id="screen-menu" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900 px-6">
-        
-        <!-- Back Link -->
-        <a href="../index.html" class="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 font-bold btn py-2 px-4 rounded-full bg-slate-800/50">
-            <i class="fas fa-arrow-left"></i> Menu
-        </a>
+    <div id="app-frame">
 
-        <!-- Title -->
-        <div class="mb-12 text-center">
-            <h1 class="text-6xl font-black tracking-tighter drop-shadow-2xl mb-2">
-                <span class="text-blue-500">FLOW</span>
-            </h1>
-            <h1 class="text-6xl font-black tracking-tighter drop-shadow-2xl">
-                <span class="text-pink-500">MASTER</span>
-            </h1>
-            <p class="mt-4 text-slate-400 font-bold tracking-widest text-sm bg-slate-800 px-4 py-1 rounded-full inline-block">
-                50 LEVEL CHALLENGE
-            </p>
-        </div>
+        <div id="screen-menu" class="game-screen active">
+            <a href="../index.html" class="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 font-semibold no-underline bg-slate-800/50 px-3 py-1 rounded-full z-50 pointer-events-auto">
+                <i class="fas fa-arrow-left"></i> Menu
+            </a>
 
-        <!-- Buttons -->
-        <div class="w-full max-w-xs space-y-4">
-            <button id="ui-btn-start" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl shadow-blue-900/50 shadow-lg btn btn-pulse border-b-4 border-blue-800 flex items-center justify-center gap-3">
-                <i class="fas fa-play"></i> MAINKAN
-            </button>
+            <div class="mb-12 text-center">
+                <h1 class="text-6xl font-bold tracking-tighter drop-shadow-2xl mb-1">
+                    <span class="text-blue-500">FLOW</span>
+                </h1>
+                <h1 class="text-6xl font-bold tracking-tighter drop-shadow-2xl">
+                    <span class="text-pink-500">MASTER</span>
+                </h1>
+                <div class="mt-4">
+                    <span class="bg-slate-800 px-3 py-1 rounded-full text-xs font-bold border border-slate-700 text-slate-400">PUZZLE EDITION</span>
+                </div>
+            </div>
+
+            <div class="w-full max-w-xs space-y-4">
+                <button id="btn-play" class="btn-action w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-blue-800 flex items-center justify-center gap-3">
+                    <i class="fas fa-play"></i> MAINKAN
+                </button>
+                
+                <button id="btn-leaderboard" class="btn-action w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
+                    <i class="fas fa-trophy text-yellow-500"></i> TOP SKOR
+                </button>
+            </div>
             
-            <button id="ui-btn-leaderboard" class="w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg btn border-b-4 border-slate-800 flex items-center justify-center gap-3">
-                <i class="fas fa-trophy text-yellow-400"></i> REKOR
-            </button>
+            <div class="mt-8 text-slate-600 text-xs font-mono">v5.0 • HYBRID INPUT ENGINE</div>
         </div>
-        
-        <div class="absolute bottom-6 text-slate-600 text-xs font-mono">v2.0 • STABLE</div>
-    </div>
 
-    <!-- === SCREEN: GAME === -->
-    <div id="screen-game" class="hidden-important absolute inset-0 z-40 flex flex-col items-center bg-slate-900">
-        
-        <!-- Top Bar -->
-        <div class="w-full max-w-md px-4 pt-4 pb-2 flex items-center justify-between">
-            <button id="ui-btn-back-menu" class="w-10 h-10 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center btn border border-slate-700">
-                <i class="fas fa-home"></i>
-            </button>
-            <div class="flex gap-2">
-                <div class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-center">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Level</div>
-                    <div id="disp-level" class="text-white font-bold text-lg leading-none">1</div>
+
+        <div id="screen-game" class="game-screen">
+            <div class="w-full flex justify-between items-center mb-4">
+                <button id="btn-home" class="btn-action w-10 h-10 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center">
+                    <i class="fas fa-home"></i>
+                </button>
+                
+                <div class="flex gap-3 text-sm font-bold">
+                    <div class="bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                        LVL <span id="level-display" class="text-white ml-1">1</span>
+                    </div>
+                    <div class="bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                        MOVES <span id="moves-display" class="text-blue-400 ml-1">0</span>
+                    </div>
                 </div>
-                <div id="container-moves" class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-center transition-colors">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Moves</div>
-                    <div id="disp-moves" class="text-white font-bold text-lg leading-none">0</div>
-                </div>
-                <div class="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-center">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Score</div>
-                    <div id="disp-score" class="text-emerald-400 font-bold text-lg leading-none">0</div>
-                </div>
+                
+                <button id="btn-reset" class="btn-action w-10 h-10 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center">
+                    <i class="fas fa-undo"></i>
+                </button>
             </div>
-        </div>
 
-        <!-- Canvas Area -->
-        <div class="flex-1 flex items-center justify-center w-full px-4">
-            <div id="game-wrapper">
-                <canvas id="gameCanvas"></canvas>
-                <!-- Timer Badge -->
-                <div class="absolute -top-3 -right-2 bg-slate-900 border border-slate-600 px-2 py-1 rounded text-xs font-mono text-slate-300 shadow-sm pointer-events-none">
-                    <i class="fas fa-clock mr-1 text-slate-500"></i><span id="disp-timer">0s</span>
+            <div class="relative shadow-2xl rounded-2xl p-2 bg-slate-800/50 border border-slate-700">
+                <canvas id="gameCanvas" width="350" height="350"></canvas>
+                
+                <div id="level-overlay" class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center hidden z-50">
+                    <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 animate-bounce"></i>
+                    <h2 class="text-2xl font-bold text-white mb-4">Level Selesai!</h2>
+                    <button id="btn-next" class="btn-action bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-lg border-b-4 border-emerald-700">
+                        Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Bottom Controls -->
-        <div class="w-full max-w-md px-6 pb-8 pt-2 flex gap-4">
-            <button id="ui-btn-reset" class="flex-1 bg-slate-700 text-white py-3 rounded-xl font-bold border-b-4 border-slate-800 btn flex items-center justify-center gap-2">
-                <i class="fas fa-undo"></i> ULANG
-            </button>
-            <button id="ui-btn-next" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold border-b-4 border-emerald-800 btn flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
-                LANJUT <i class="fas fa-arrow-right"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- === MODALS === -->
-
-    <!-- Win Modal -->
-    <div id="modal-win" class="hidden-important fixed inset-0 z-[60] bg-slate-900/95 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="modal-animate bg-slate-800 p-8 rounded-3xl w-full max-w-sm text-center border-2 border-emerald-500 shadow-2xl">
-            <div class="w-16 h-16 mx-auto bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
-                <i class="fas fa-check text-3xl text-emerald-400"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-white mb-4">Level Selesai!</h2>
-            <div class="bg-slate-900/50 rounded-xl p-4 mb-6 text-sm">
-                <div class="flex justify-between text-slate-300 mb-2"><span>Skor Dasar</span><span class="text-white font-bold">1000</span></div>
-                <div class="flex justify-between text-slate-300"><span>Bonus Langkah</span><span id="modal-bonus" class="text-yellow-400 font-bold">+0</span></div>
-            </div>
-            <button id="modal-btn-next" class="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold shadow-lg btn">
-                Level Berikutnya
-            </button>
-        </div>
-    </div>
-
-    <!-- Game Over Modal -->
-    <div id="modal-gameover" class="hidden-important fixed inset-0 z-[60] bg-slate-900/95 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="modal-animate bg-slate-800 p-8 rounded-3xl w-full max-w-sm text-center border-2 border-red-500 shadow-2xl">
-            <div class="w-16 h-16 mx-auto bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-                <i class="fas fa-times text-3xl text-red-500"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-red-500 mb-2">GAME OVER</h2>
-            <p class="text-slate-300 mb-6">Langkah Habis!</p>
-            <button id="modal-btn-retry" class="w-full bg-slate-700 text-white py-3 rounded-xl font-bold shadow-lg btn mb-3">
-                Coba Lagi
-            </button>
-            <button id="modal-btn-menu" class="text-slate-500 text-sm font-bold p-2">KE MENU UTAMA</button>
-        </div>
-    </div>
-
-    <!-- Leaderboard Modal -->
-    <div id="modal-leaderboard" class="hidden-important fixed inset-0 z-[60] bg-slate-900/95 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="modal-animate bg-slate-800 p-6 rounded-3xl w-full max-w-sm h-[500px] flex flex-col border border-slate-700 shadow-2xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-yellow-400"><i class="fas fa-trophy mr-2"></i>Top 10</h3>
-                <button id="modal-btn-close-lb" class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center btn"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-900/50 rounded-xl p-1">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-slate-500 border-b border-slate-700 bg-slate-800/50 sticky top-0">
-                        <tr><th class="p-3">#</th><th class="p-3">Nama</th><th class="p-3 text-right">Skor</th></tr>
-                    </thead>
-                    <tbody id="list-leaderboard" class="text-slate-300"></tbody>
-                </table>
+            <div class="mt-6 text-center text-slate-500 text-xs">
+                Tarik garis untuk menghubungkan warna yang sama
             </div>
         </div>
-    </div>
 
-    <!-- Submit Score Modal -->
-    <div id="modal-submit" class="hidden-important fixed inset-0 z-[60] bg-slate-900/95 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="modal-animate bg-slate-800 p-8 rounded-3xl w-full max-w-sm text-center border-2 border-blue-500 shadow-2xl">
-            <h2 class="text-3xl font-black text-white mb-2">TAMAT!</h2>
-            <p class="text-slate-400 text-sm mb-4">Perjalanan selesai.</p>
-            <div id="disp-final-score" class="text-4xl font-bold text-blue-400 mb-6 bg-slate-900 rounded-lg py-2">0</div>
-            <input id="input-name" type="text" placeholder="NAMA ANDA" maxlength="10" class="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 text-white text-center mb-4 font-bold uppercase focus:border-blue-500 outline-none">
-            <button id="modal-btn-submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg btn">
-                SIMPAN REKOR
+
+        <div id="screen-leaderboard" class="game-screen">
+            <h2 class="text-2xl font-bold text-yellow-500 mb-6 flex items-center gap-2">
+                <i class="fas fa-trophy"></i> Top Skor
+            </h2>
+            
+            <div class="bg-slate-800 w-full rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh]">
+                <div class="grid grid-cols-3 bg-slate-900 p-4 font-bold text-xs uppercase text-slate-400">
+                    <div class="text-center">Rank</div>
+                    <div>Player</div>
+                    <div class="text-right">Level</div>
+                </div>
+                <div id="leaderboard-list" class="overflow-y-auto p-0 flex-1 hide-scroll"></div>
+            </div>
+            
+            <button id="btn-close-lb" class="btn-action mt-6 px-10 py-3 bg-slate-700 rounded-full font-bold text-white shadow-lg border-b-4 border-slate-900">
+                TUTUP
             </button>
         </div>
+
     </div>
 
-<script>
-/**
- * FLOW MASTER - STABLE ENGINE
- * Designed to prevent crashes and ensure button responsiveness.
- */
+    <script>
+        /* --- 1. CONFIGURATION --- */
+        const CONFIG = {
+            colors: {
+                1: '#ef4444', 2: '#3b82f6', 3: '#22c55e', 4: '#eab308', 
+                5: '#d946ef', 6: '#f97316', 7: '#06b6d4', 8: '#94a3b8'
+            },
+            gridLine: '#334155',
+            bg: '#1e293b'
+        };
 
-// --- DATA & CONFIG ---
-const CONFIG = {
-    colors: ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#d946ef', '#f97316', '#06b6d4', '#94a3b8', '#8b5cf6', '#ec4899', '#14b8a6', '#84cc16'],
-    gridColor: '#334155', bgColor: '#1e293b', pipeWidth: 0.45, dotRadius: 0.35
-};
+        const LEVELS = [
+            { size: 5, grid: [[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]] },
+            { size: 5, grid: [[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]] },
+            { size: 6, grid: [[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]] },
+            { size: 6, grid: [[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]] },
+            { size: 7, grid: [[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]] }
+        ];
 
-// Base Levels
-const BASE_LEVELS = [
-    { size: 5, grid: [[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]] },
-    { size: 5, grid: [[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]] },
-    { size: 6, grid: [[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]] },
-    { size: 6, grid: [[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]] },
-    { size: 7, grid: [[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]] },
-    { size: 7, grid: [[2,0,0,0,0,0,1],[2,0,0,0,3,0,0],[0,0,4,0,3,0,0],[0,0,4,0,0,5,0],[6,0,0,0,0,5,0],[6,0,0,0,0,0,0],[0,0,0,0,0,0,1]] },
-    { size: 8, grid: [[1,0,0,0,0,0,2,0],[0,0,3,3,0,0,2,0],[0,0,4,0,0,0,0,0],[0,0,4,0,5,5,0,0],[0,0,0,0,0,0,0,0],[6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0]] },
-    { size: 8, grid: [[1,2,0,0,0,0,3,4],[1,2,0,0,0,0,3,4],[0,0,0,0,0,0,0,0],[0,5,5,0,0,6,6,0],[0,7,7,0,0,8,8,0],[0,0,0,0,0,0,0,0],[0,0,9,9,0,0,0,0],[0,0,0,0,0,0,0,0]] },
-    { size: 9, grid: [[1,0,0,0,2,0,0,0,3],[0,0,0,0,2,0,0,0,3],[0,0,4,4,0,5,5,0,0],[0,0,0,0,0,0,0,0,0],[0,0,6,6,0,7,7,0,0],[0,0,0,0,0,0,0,0,0],[0,8,8,0,9,9,0,0,0],[0,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0]] }
-];
-const LEVEL_10 = { size: 9, grid: [[1,0,0,2,0,0,0,3,0],[1,0,0,2,0,4,4,3,0],[0,5,5,0,0,0,0,0,0],[0,6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0,0],[0,9,9,0,0,0,0,0,0],[0,0,0,0,10,10,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]] };
+        /* --- 2. STATE VARIABLES --- */
+        let state = {
+            levelIdx: 0,
+            grid: [],
+            paths: {},
+            currentPath: null,
+            moves: 0,
+            completed: false
+        };
+        let canvas, ctx, cellSize, gridSize;
 
-// Generators
-function rotateGrid(g){const N=g.length;let n=Array.from({length:N},()=>Array(N).fill(0));for(let r=0;r<N;r++)for(let c=0;c<N;c++)n[c][N-1-r]=g[r][c];return n;}
-function flipGrid(g){return g.map(r=>[...r].reverse());}
-function remapColors(g){
-    const s=new Set();g.forEach(r=>r.forEach(v=>{if(v>0)s.add(v)}));const a=Array.from(s);
-    const m={};[...a].sort(()=>Math.random()-0.5).forEach((id,i)=>m[id]=a[i]);
-    return g.map(r=>r.map(v=>v===0?0:m[v]));
-}
+        /* --- 3. HELPER: BUTTON BINDER (Tombol Pasti Jalan) --- */
+        function bindButton(id, callback) {
+            const btn = document.getElementById(id);
+            if(!btn) return;
 
-// Build Level List safely
-const LEVELS = [...BASE_LEVELS, LEVEL_10];
-try {
-    const SRC = [4,5,6,7,8,9];
-    for(let i=10;i<50;i++){
-        const b = LEVELS[SRC[i%SRC.length]];
-        let g = JSON.parse(JSON.stringify(b.grid));
-        for(let r=0;r<Math.floor(Math.random()*4);r++) g=rotateGrid(g);
-        if(Math.random()>0.5) g=flipGrid(g);
-        LEVELS.push({size:b.size, grid:remapColors(g)});
-    }
-} catch(e) { console.error("Level Gen Error", e); }
+            // Handler untuk Touch (HP)
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Mencegah ghost click
+                callback();
+            }, {passive: false});
 
-// --- GAME LOGIC ---
-class GameEngine {
-    constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        
-        // State
-        this.levelIndex = 0;
-        this.totalScore = 0;
-        this.gridSize = 0;
-        this.cellSize = 0;
-        this.sources = [];
-        this.paths = {};
-        this.movesLeft = 0;
-        this.isGameOver = false;
-        this.isLevelComplete = false;
-        
-        // Input State
-        this.activeColor = null;
-        this.isDragging = false;
-        
-        // Timer
-        this.startTime = 0;
-        this.timerID = null;
-
-        // Init
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-        this.bindInputs();
-    }
-
-    start() {
-        this.levelIndex = 0;
-        this.totalScore = 0;
-        this.loadLevel(0);
-        this.updateUI();
-        document.getElementById('screen-menu').classList.add('hidden-important');
-        document.getElementById('screen-game').classList.remove('hidden-important');
-    }
-
-    quit() {
-        this.stopTimer();
-        document.getElementById('screen-game').classList.add('hidden-important');
-        document.getElementById('screen-menu').classList.remove('hidden-important');
-        this.hideModals();
-    }
-
-    resize() {
-        const wrapper = document.getElementById('game-wrapper');
-        const maxSize = Math.min(window.innerWidth - 32, 400);
-        const dpr = window.devicePixelRatio || 1;
-        
-        this.canvas.style.width = maxSize + 'px';
-        this.canvas.style.height = maxSize + 'px';
-        this.canvas.width = maxSize * dpr;
-        this.canvas.height = maxSize * dpr;
-        
-        this.ctx.scale(dpr, dpr);
-        this.canvasSize = maxSize;
-        
-        if (this.gridSize > 0) {
-            this.cellSize = this.canvasSize / this.gridSize;
-            this.render();
+            // Handler untuk Click (PC/Mouse)
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                callback();
+            });
         }
-    }
 
-    loadLevel(idx) {
-        if (idx >= LEVELS.length) { this.showSubmitScore(); return; }
-        
-        this.levelIndex = idx;
-        const data = LEVELS[idx];
-        this.gridSize = data.size;
-        this.cellSize = this.canvasSize / this.gridSize;
-        
-        // Reset Logic
-        this.sources = [];
-        this.paths = {};
-        this.isLevelComplete = false;
-        this.isGameOver = false;
-        this.activeColor = null;
-        this.isDragging = false;
-        
-        const colorSet = new Set();
-        for(let y=0; y<this.gridSize; y++){
-            for(let x=0; x<this.gridSize; x++){
-                const v = data.grid[y][x];
-                if(v > 0) {
-                    this.sources.push({x,y, color:v});
-                    colorSet.add(v);
+        /* --- 4. SYSTEM INITIALIZATION --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Binding Tombol dengan Sistem Aman
+            bindButton('btn-play', startGame);
+            bindButton('btn-leaderboard', showLeaderboard);
+            bindButton('btn-close-lb', () => switchScreen('screen-menu'));
+            bindButton('btn-home', () => switchScreen('screen-menu'));
+            bindButton('btn-reset', resetLevel);
+            bindButton('btn-next', nextLevel);
+
+            // Setup Canvas
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Event Canvas (Drawing)
+            canvas.addEventListener('mousedown', handleStart);
+            canvas.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleEnd);
+            
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // PENTING: Mencegah scroll saat menggambar
+                handleStart(e.touches[0]);
+            }, {passive: false});
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault(); // PENTING: Mencegah scroll saat menggambar
+                handleMove(e.touches[0]);
+            }, {passive: false});
+            
+            window.addEventListener('touchend', handleEnd);
+            window.addEventListener('resize', resizeCanvas);
+        });
+
+        /* --- 5. SCREEN LOGIC --- */
+        function switchScreen(id) {
+            document.querySelectorAll('.game-screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'screen-game') {
+                setTimeout(resizeCanvas, 50); // Pastikan ukuran canvas benar
+            }
+        }
+
+        /* --- 6. GAME LOGIC --- */
+        function startGame() {
+            state.levelIdx = 0;
+            loadLevel(0);
+            switchScreen('screen-game');
+        }
+
+        function loadLevel(idx) {
+            if(idx >= LEVELS.length) {
+                alert("Semua level selesai!");
+                switchScreen('screen-menu');
+                return;
+            }
+            
+            const lvl = LEVELS[idx];
+            gridSize = lvl.size;
+            resizeCanvas(); 
+            
+            // Deep Copy Grid
+            state.grid = JSON.parse(JSON.stringify(lvl.grid));
+            state.paths = {};
+            state.moves = 0;
+            state.completed = false;
+            
+            // Simpan posisi awal (Endpoint)
+            for(let r=0; r<gridSize; r++) {
+                for(let c=0; c<gridSize; c++) {
+                    const val = state.grid[r][c];
+                    if(val > 0) {
+                        if(!state.paths[val]) state.paths[val] = [];
+                    }
+                }
+            }
+            
+            document.getElementById('level-display').innerText = idx + 1;
+            document.getElementById('moves-display').innerText = 0;
+            document.getElementById('level-overlay').classList.add('hidden');
+            
+            render();
+        }
+
+        function resetLevel() { loadLevel(state.levelIdx); }
+        function nextLevel() { state.levelIdx++; loadLevel(state.levelIdx); }
+
+        function resizeCanvas() {
+            if(!canvas) return;
+            const size = Math.min(window.innerWidth - 40, 380);
+            canvas.width = size;
+            canvas.height = size;
+            canvas.style.width = size + 'px';
+            canvas.style.height = size + 'px';
+            if(gridSize) cellSize = size / gridSize;
+            if(state.grid.length > 0) render();
+        }
+
+        /* --- 7. INPUT HANDLER (FIXED FOR WEIRD BEHAVIOR) --- */
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Gunakan clientX/Y dari touch atau mouse
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const c = Math.floor(x / cellSize);
+            const r = Math.floor(y / cellSize);
+            return {r, c};
+        }
+
+        function handleStart(e) {
+            if(state.completed) return;
+            const p = getPos(e);
+            if(isOutOfBounds(p)) return;
+            
+            const baseLevel = LEVELS[state.levelIdx].grid;
+            const val = baseLevel[p.r][p.c]; 
+            const currentVal = state.grid[p.r][p.c]; 
+            
+            let colorId = val || currentVal;
+            
+            if(colorId > 0) {
+                state.currentPath = colorId;
+                // Mulai path baru dari titik ini
+                state.paths[colorId] = [{r: p.r, c: p.c}]; 
+                updateGridFromPaths();
+                render();
+            }
+        }
+
+        function handleMove(e) {
+            if(!state.currentPath || state.completed) return;
+            const p = getPos(e);
+            if(isOutOfBounds(p)) return;
+            
+            const path = state.paths[state.currentPath];
+            const last = path[path.length-1];
+            
+            // Cek jika pindah kotak
+            if(last.r !== p.r || last.c !== p.c) {
+                
+                // FIX: Ijinkan lompat jika gerakan cepat (Interpolasi sederhana: abaikan adjacency check ketat)
+                // Cukup cek apakah target valid
+                const baseLevel = LEVELS[state.levelIdx].grid;
+                const targetBase = baseLevel[p.r][p.c];
+                const targetCurrent = state.grid[p.r][p.c];
+                
+                // Logika: Kotak target harus kosong (0) ATAU bagian dari warna sendiri
+                if((targetCurrent === 0) || (targetBase === state.currentPath) || (targetCurrent === state.currentPath)) {
+                    
+                    // Cek Backtracking (Mundur)
+                    const index = path.findIndex(pt => pt.r === p.r && pt.c === p.c);
+                    if(index !== -1) {
+                        // Potong path jika mundur
+                        state.paths[state.currentPath] = path.slice(0, index+1);
+                    } else {
+                        // Maju: Jangan tabrak endpoint warna LAIN
+                        if(targetBase !== 0 && targetBase !== state.currentPath) return;
+                        
+                        // Tambahkan titik
+                        path.push({r: p.r, c: p.c});
+                    }
+                    
+                    updateGridFromPaths();
+                    render();
+                    checkWin();
                 }
             }
         }
-        
-        this.movesLeft = colorSet.size + 5;
-        this.startTimer();
-        this.updateUI();
-        this.render();
-        this.hideModals();
-        
-        document.getElementById('ui-btn-next').disabled = true;
-        document.getElementById('ui-btn-next').classList.add('opacity-50', 'cursor-not-allowed');
-    }
 
-    startTimer() {
-        this.stopTimer();
-        this.startTime = Date.now();
-        document.getElementById('disp-timer').innerText = "0s";
-        this.timerID = setInterval(() => {
-            const s = Math.floor((Date.now() - this.startTime)/1000);
-            document.getElementById('disp-timer').innerText = s + 's';
-        }, 1000);
-    }
-
-    stopTimer() {
-        if(this.timerID) clearInterval(this.timerID);
-    }
-
-    updateUI() {
-        document.getElementById('disp-level').innerText = this.levelIndex + 1;
-        document.getElementById('disp-score').innerText = this.totalScore;
-        const moveEl = document.getElementById('disp-moves');
-        moveEl.innerText = this.movesLeft;
-        
-        const cont = document.getElementById('container-moves');
-        if(this.movesLeft <= 3) {
-            cont.className = "bg-red-900/50 px-3 py-1 rounded-lg border border-red-500 text-center animate-pulse";
-            moveEl.className = "text-red-400 font-bold text-lg leading-none";
-        } else {
-            cont.className = "bg-slate-800 px-3 py-1 rounded-lg border border-slate-700 text-center";
-            moveEl.className = "text-white font-bold text-lg leading-none";
-        }
-    }
-
-    // --- INPUT HANDLING ---
-    bindInputs() {
-        const h = (e) => this.handleInput(e);
-        const cvs = this.canvas;
-        
-        // Unified handlers
-        cvs.addEventListener('mousedown', (e) => { this.inputStart(this.getPos(e)); });
-        window.addEventListener('mousemove', (e) => { this.inputMove(this.getPos(e)); });
-        window.addEventListener('mouseup', () => { this.inputEnd(); });
-        
-        cvs.addEventListener('touchstart', (e) => { e.preventDefault(); this.inputStart(this.getPos(e.touches[0])); }, {passive:false});
-        window.addEventListener('touchmove', (e) => { if(this.isDragging) e.preventDefault(); this.inputMove(this.getPos(e.touches[0])); }, {passive:false});
-        window.addEventListener('touchend', () => { this.inputEnd(); });
-    }
-
-    getPos(e) {
-        if(!e) return {x:-1,y:-1};
-        const rect = this.canvas.getBoundingClientRect();
-        return {
-            x: Math.floor((e.clientX - rect.left) / this.cellSize),
-            y: Math.floor((e.clientY - rect.top) / this.cellSize)
-        };
-    }
-
-    inputStart(p) {
-        if(this.isLevelComplete || this.isGameOver || this.isOutOfBounds(p)) return;
-        
-        const src = this.sources.find(s => s.x === p.x && s.y === p.y);
-        let pathCol = null;
-        
-        if(!src) {
-            for(const [c, path] of Object.entries(this.paths)){
-                if(path.some(pt => pt.x === p.x && pt.y === p.y)){ pathCol = parseInt(c); break; }
+        function handleEnd() {
+            if(state.currentPath) {
+                state.moves++;
+                document.getElementById('moves-display').innerText = state.moves;
+                state.currentPath = null;
+                checkWin();
             }
         }
 
-        if(src) {
-            th
+        function isOutOfBounds(p) {
+            return p.r < 0 || p.r >= gridSize || p.c < 0 || p.c >= gridSize;
+        }
+
+        function updateGridFromPaths() {
+            const base = LEVELS[state.levelIdx].grid;
+            // Bersihkan grid dinamis (sisakan base endpoint)
+            for(let r=0; r<gridSize; r++) {
+                for(let c=0; c<gridSize; c++) {
+                    if(base[r][c] === 0) state.grid[r][c] = 0;
+                }
+            }
+            // Gambar ulang semua path
+            for(const [colorId, path] of Object.entries(state.paths)) {
+                path.forEach(pt => {
+                    state.grid[pt.r][pt.c] = parseInt(colorId);
+                });
+            }
+        }
+
+        /* --- 8. RENDERER --- */
+        function render() {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid Lines
+            ctx.strokeStyle = CONFIG.gridLine;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for(let i=0; i<=gridSize; i++) {
+                const pos = i * cellSize;
+                ctx.moveTo(pos, 0); ctx.lineTo(pos, canvas.height);
+                ctx.moveTo(0, pos); ctx.lineTo(canvas.width, pos);
+            }
+            ctx.stroke();
+            
+            // Paths
+            for(const [colorId, path] of Object.entries(state.paths)) {
+                if(path.length < 2) continue;
+                
+                ctx.strokeStyle = CONFIG.colors[colorId];
+                ctx.lineWidth = cellSize * 0.4;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = CONFIG.colors[colorId];
+                
+                ctx.beginPath();
+                ctx.moveTo(path[0].c * cellSize + cellSize/2, path[0].r * cellSize + cellSize/2);
+                for(let i=1; i<path.length; i++) {
+                    ctx.lineTo(path[i].c * cellSize + cellSize/2, path[i].r * cellSize + cellSize/2);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Endpoints
+            const base = LEVELS[state.levelIdx].grid;
+            for(let r=0; r<gridSize; r++) {
+                for(let c=0; c<gridSize; c++) {
+                    const val = base[r][c];
+                    if(val > 0) {
+                        const cx = c * cellSize + cellSize/2;
+                        const cy = r * cellSize + cellSize/2;
+                        
+                        ctx.fillStyle = CONFIG.colors[val];
+                        
+                        // Cek apakah endpoint ini sudah tersambung
+                        const path = state.paths[val];
+                        const isConnected = path && path.some(pt => pt.r === r && pt.c === c);
+                        
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, cellSize * (isConnected ? 0.35 : 0.25), 0, Math.PI*2);
+                        ctx.fill();
+                        
+                        if(isConnected) {
+                            ctx.fillStyle = '#fff';
+                            ctx.beginPath();
+        
