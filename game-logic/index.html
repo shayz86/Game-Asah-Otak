@@ -12,9 +12,8 @@
         #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
         
-        /* Overlay Z-Index Super Tinggi & Flex */
-        #overlay { position: absolute; inset: 0; z-index: 9999; display: flex; background-color: rgba(0,0,0,0.9); }
-        .hidden { display: none !important; } /* Force Hide Class */
+        /* HAPUS display: flex dari sini agar tidak konflik */
+        #overlay { position: absolute; inset: 0; z-index: 9999; background-color: rgba(0,0,0,0.9); }
 
         .interactive { pointer-events: auto; cursor: pointer; }
         
@@ -51,7 +50,7 @@
         </div>
     </div>
 
-    <div id="overlay" class="items-center justify-center interactive transition-opacity duration-300">
+    <div id="overlay" style="display: flex;" class="items-center justify-center interactive transition-opacity duration-300">
         <div class="instruction-card p-8 rounded-3xl max-w-sm text-center text-white w-full mx-4 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
 
@@ -87,7 +86,6 @@
 
     <script>
         // --- VARIABEL GLOBAL ---
-        // Ditaruh di luar agar bisa diakses oleh HTML onclick
         let isGameActive = false;
         let currentLevelIndex = 0;
         let scene, camera, renderer, playerMesh;
@@ -113,13 +111,17 @@
         ];
         let currentTheme = THEMES[0];
 
-        // --- FUNGSI UI UTAMA (Global) ---
+        // --- FUNGSI START GAME (SOLUSI MASALAH ANDA) ---
         function startGame() {
-            // Paksa sembunyikan overlay dengan manipulasi CSS langsung
-            document.getElementById('overlay').classList.add('hidden');
+            // Kita ubah langsung style element, ini paling kuat prioritasnya
+            const overlay = document.getElementById('overlay');
+            if (overlay) {
+                overlay.style.display = 'none'; // Memaksa hilang
+            }
+
             isGameActive = true;
             
-            // Pastikan level dimuat ulang agar bersih
+            // Reload level untuk memastikan bersih
             loadLevel(currentLevelIndex);
         }
 
@@ -127,18 +129,19 @@
             const overlay = document.getElementById('overlay');
             const titleEl = document.getElementById('overlay-title');
             const descEl = document.getElementById('overlay-desc');
-            const btnEl = document.querySelector('#overlay button'); // Cari tombol start di dalam overlay
+            const btnEl = document.querySelector('#overlay button'); 
 
             titleEl.innerText = title;
             descEl.innerText = desc;
             btnEl.innerText = btnText;
             
-            // Ubah fungsi onclick tombol start
+            // Override fungsi tombol
             btnEl.onclick = function() {
                 nextAction();
             };
 
-            overlay.classList.remove('hidden');
+            // Munculkan kembali dengan display flex
+            overlay.style.display = 'flex';
         }
 
         function resetCurrentLevel() {
@@ -153,7 +156,6 @@
         // --- GAME ENGINE ---
         
         function init() {
-            // Setup ThreeJS
             const container = document.getElementById('game-container');
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
@@ -173,14 +175,10 @@
             sun.shadow.mapSize.height = 1024;
             scene.add(sun);
 
-            // Generate Levels
             generateLevels();
-            
-            // Load Level 1 tapi pause game
             loadLevel(0);
-            isGameActive = false; // Tunggu tombol start ditekan
+            isGameActive = false; 
 
-            // Listeners
             window.addEventListener('resize', onWindowResize, false);
             document.addEventListener('keydown', onKeyDown, false);
             setupInputHandlers();
@@ -188,7 +186,6 @@
         }
 
         function generateLevels() {
-            // Static tutorial levels
             levels = [
                 { map: [[1,1,1],[1,1,1],[1,1,1]], start: {x:1, z:1} },
                 { map: [[1,1,1],[0,1,0],[0,1,0],[0,1,0]], start: {x:1, z:3} },
@@ -197,7 +194,6 @@
                 { map: [[1,1,1,0,1],[1,0,1,0,1],[1,0,1,1,1],[1,0,0,0,0],[1,1,1,1,1]], start: {x:0, z:0} }
             ];
 
-            // Procedural levels
             for (let i = 5; i < TOTAL_LEVELS; i++) {
                 const size = Math.min(9, 4 + Math.floor(i / 8)); 
                 const minPath = 8 + i + Math.floor(i * 0.4); 
@@ -239,7 +235,6 @@
             currentMap = JSON.parse(JSON.stringify(levelData.map));
             playerPos = { ...levelData.start };
             
-            // Apply Theme
             const themeIndex = Math.floor(idx / 10);
             const theme = THEMES[Math.min(themeIndex, THEMES.length - 1)];
             currentTheme = theme;
@@ -248,7 +243,6 @@
             document.getElementById('theme-name').innerText = `TEMA: ${theme.name}`;
             document.getElementById('theme-name').style.color = '#' + theme.on.toString(16);
 
-            // Build Map
             const h = currentMap.length; 
             const w = currentMap[0].length;
             const offX = (w*TILE_SIZE)/2 - (TILE_SIZE/2);
@@ -269,7 +263,6 @@
                 }
             }
 
-            // Player
             const pGeo = new THREE.SphereGeometry(TILE_SIZE*0.4, 32, 32);
             const pMat = new THREE.MeshStandardMaterial({ color: currentTheme.player, emissive: currentTheme.pEmit, emissiveIntensity: 0.7, roughness:0.1 });
             playerMesh = new THREE.Mesh(pGeo, pMat);
@@ -322,7 +315,7 @@
                     
                     showOverlay(title, desc, btn, () => {
                         currentLevelIndex = isNotLast ? currentLevelIndex + 1 : 0;
-                        startGame(); // Pakai fungsi start game untuk hide overlay
+                        startGame(); 
                     });
                 }, 400);
             }
@@ -353,7 +346,6 @@
             const nz = playerPos.z + dir.z;
 
             if(nz<0 || nz>=currentMap.length || nx<0 || nx>=currentMap[0].length || currentMap[nz][nx]===0) {
-                // Shake
                 const start = playerMesh.position.clone();
                 let i=0;
                 const shake = () => {
@@ -426,4 +418,12 @@
         }
 
         function updateCameraPosition() {
-            camera.position.set(Math.sin(cameraAngle)*cameraZoom, 
+            camera.position.set(Math.sin(cameraAngle)*cameraZoom, cameraZoom*0.8, Math.cos(cameraAngle)*cameraZoom);
+            camera.lookAt(0,0,0);
+        }
+        function onWindowResize() {
+            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        function animate() {
+            requestAnimationFrame(animat
