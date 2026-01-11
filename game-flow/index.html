@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flow Master - Challenge</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
 
@@ -14,7 +16,7 @@
             background-color: #0f172a;
             color: #e2e8f0;
             overscroll-behavior: none;
-            touch-action: none;
+            touch-action: none; /* Mencegah scroll saat main game */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -39,15 +41,6 @@
         }
         .modal-animate { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
-        .shake { animation: shake 0.5s; }
-
         /* --- Utilities --- */
         .hidden-important { display: none !important; }
         
@@ -71,24 +64,26 @@
         .btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn:active { transform: scale(0.95); }
 
+        /* Scrollbar Custom */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+
         /* Leaderboard Colors */
-        .leaderboard-row:nth-child(1) { color: #fbbf24; font-weight: bold; }
-        .leaderboard-row:nth-child(2) { color: #94a3b8; font-weight: bold; }
-        .leaderboard-row:nth-child(3) { color: #b45309; font-weight: bold; }
+        .leaderboard-row:nth-child(1) td { color: #fbbf24; font-weight: bold; } /* Emas */
+        .leaderboard-row:nth-child(2) td { color: #94a3b8; font-weight: bold; } /* Perak */
+        .leaderboard-row:nth-child(3) td { color: #b45309; font-weight: bold; } /* Perunggu */
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 overflow-hidden relative">
 
-    <!-- BACKGROUND DECORATION (Particles) -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <div class="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full blur-3xl animate-float"></div>
         <div class="absolute bottom-10 right-10 w-40 h-40 bg-pink-500 rounded-full blur-3xl animate-float" style="animation-delay: 1s"></div>
         <div class="absolute top-1/2 left-1/2 w-24 h-24 bg-yellow-500 rounded-full blur-3xl animate-float" style="animation-delay: 2s"></div>
     </div>
 
-    <!-- === MAIN MENU SECTION === -->
-    <div id="main-menu" class="z-50 flex flex-col items-center justify-center w-full max-w-md px-6 text-center">
-        <!-- Logo / Title -->
+    <div id="main-menu" class="z-50 flex flex-col items-center justify-center w-full max-w-md px-6 text-center transition-opacity duration-500">
         <div class="mb-10 animate-float">
             <h1 class="text-6xl font-bold tracking-tighter drop-shadow-lg mb-2">
                 <span class="text-blue-500">FLOW</span>
@@ -99,7 +94,6 @@
             <p class="text-slate-400 mt-4 text-lg font-medium tracking-wide">CHALLENGE EDITION</p>
         </div>
 
-        <!-- Menu Buttons -->
         <div class="w-full space-y-4">
             <button onclick="game.startGame()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold text-xl shadow-xl btn btn-glow border-b-4 border-blue-800">
                 <i class="fas fa-play mr-2"></i> MAINKAN
@@ -115,25 +109,21 @@
         </div>
     </div>
 
-    <!-- === GAMEPLAY UI SECTION (Hidden Initially) === -->
-    <div id="game-ui" class="hidden-important w-full flex flex-col items-center z-40 transition-opacity duration-500 opacity-0">
-        <!-- Header -->
+    <div id="game-ui" class="hidden-important w-full flex flex-col items-center z-40 transition-opacity duration-500 opacity-0 h-full justify-center">
         <div class="text-center mb-2 w-full px-4">
-            <div class="flex justify-between items-center max-w-[400px] mx-auto mb-2">
-                <button onclick="game.backToMenu()" class="text-slate-400 hover:text-white transition">
+            <div class="flex justify-between items-center max-w-[400px] mx-auto mb-4">
+                <button onclick="game.backToMenu()" class="text-slate-400 hover:text-white transition p-2 bg-slate-800 rounded-lg">
                     <i class="fas fa-home text-xl"></i>
                 </button>
                 <h1 class="text-2xl font-bold text-white tracking-wider">
                     <span class="text-blue-500">FLOW</span><span class="text-pink-500">MASTER</span>
                 </h1>
-                <div class="w-6"></div> <!-- Spacer for balance -->
-            </div>
+                <div class="w-8"></div> </div>
             
             <div class="flex flex-wrap justify-center items-center gap-3 mt-1 text-sm font-semibold text-slate-400">
                 <div class="flex items-center bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
                     LVL <span id="level-num" class="text-white ml-2 text-lg">1</span>
                 </div>
-                <!-- Move Counter -->
                 <div id="moves-container" class="flex items-center bg-slate-800 px-3 py-1 rounded-full border border-slate-700 transition-colors duration-300">
                     MOVES <span id="moves-display" class="text-white ml-2 text-lg">10</span>
                 </div>
@@ -143,20 +133,17 @@
             </div>
         </div>
 
-        <!-- Game Board -->
-        <div class="relative">
+        <div class="relative my-2">
             <div id="game-wrapper">
                 <canvas id="gameCanvas"></canvas>
                 
-                <!-- Timer Overlay -->
                 <div class="absolute top-4 right-4 bg-slate-900/80 px-2 py-1 rounded-md text-xs text-slate-300 pointer-events-none border border-slate-700">
                     <i class="fas fa-clock mr-1"></i><span id="timer-display">0s</span>
                 </div>
             </div>
         </div>
 
-        <!-- Footer Controls -->
-        <div class="flex gap-4 mt-6 w-full max-w-[400px] px-6">
+        <div class="flex gap-4 mt-4 w-full max-w-[400px] px-6">
             <button onclick="game.resetLevel()" class="flex-1 btn bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-2xl font-bold border-b-4 border-slate-900 flex justify-center items-center gap-2">
                 <i class="fas fa-undo"></i> ULANG
             </button>
@@ -166,9 +153,6 @@
         </div>
     </div>
 
-    <!-- === MODALS === -->
-
-    <!-- Win Modal -->
     <div id="win-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden-important bg-slate-900/90 backdrop-blur-sm p-4">
         <div class="modal-animate bg-slate-800 p-8 rounded-3xl text-center border-2 border-emerald-500 shadow-2xl max-w-sm w-full">
             <div class="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
@@ -191,7 +175,6 @@
         </div>
     </div>
 
-    <!-- Game Over Modal -->
     <div id="game-over-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden-important bg-slate-900/95 backdrop-blur-sm p-4">
         <div class="modal-animate bg-slate-800 p-8 rounded-3xl text-center border-2 border-red-500 shadow-2xl max-w-sm w-full">
             <div class="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -209,7 +192,6 @@
         </div>
     </div>
 
-    <!-- Leaderboard Modal -->
     <div id="leaderboard-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden-important bg-slate-900/95 backdrop-blur-sm p-4">
         <div class="modal-animate bg-slate-800 p-6 rounded-3xl border-2 border-yellow-600 shadow-2xl max-w-sm w-full h-[500px] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -234,7 +216,6 @@
         </div>
     </div>
 
-    <!-- Submit Score Modal -->
     <div id="submit-score-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden-important bg-slate-900/95 backdrop-blur-sm p-4">
         <div class="modal-animate bg-slate-800 p-8 rounded-3xl text-center border-2 border-blue-500 shadow-2xl max-w-sm w-full">
             <i class="fas fa-crown text-5xl text-yellow-400 mb-4 animate-bounce"></i>
@@ -252,7 +233,7 @@
 
 <script>
 /**
- * Pipa Logika - 50 Levels + Front Page
+ * Flow Master Challenge - Complete Code
  */
 
 const CONFIG = {
@@ -267,7 +248,7 @@ const CONFIG = {
     dotRadiusRatio: 0.35
 };
 
-// --- LEVEL GENERATION ---
+// --- LEVEL GENERATION LOGIC ---
 const BASE_LEVELS = [
     { size: 5, grid: [[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]] },
     { size: 5, grid: [[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]] },
@@ -283,6 +264,8 @@ const LEVEL_10 = {
     size: 9,
     grid: [[1,0,0,2,0,0,0,3,0],[1,0,0,2,0,4,4,3,0],[0,5,5,0,0,0,0,0,0],[0,6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0,0],[0,9,9,0,0,0,0,0,0],[0,0,0,0,10,10,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]
 };
+
+// Utilities for randomizing levels
 function rotateGrid(g){const N=g.length;let n=Array.from({length:N},()=>Array(N).fill(0));for(let r=0;r<N;r++)for(let c=0;c<N;c++)n[c][N-1-r]=g[r][c];return n;}
 function flipGrid(g){return g.map(r=>[...r].reverse());}
 function remapColors(g){
@@ -290,11 +273,14 @@ function remapColors(g){
     const m={};[...a].sort(()=>Math.random()-0.5).forEach((id,i)=>m[id]=a[i]);
     return g.map(r=>r.map(v=>v===0?0:m[v]));
 }
+
+// Generate 50 Levels
 const LEVELS = [...BASE_LEVELS, LEVEL_10];
-const SRC = [4,5,6,7,8,9];
+const SRC = [4,5,6,7,8,9]; // indices of bigger levels
 for(let i=10;i<50;i++){
     const b=LEVELS[SRC[i%SRC.length]];
     let g=JSON.parse(JSON.stringify(b.grid));
+    // Random transforms
     for(let r=0;r<Math.floor(Math.random()*4);r++)g=rotateGrid(g);
     if(Math.random()>0.5)g=flipGrid(g);
     LEVELS.push({size:b.size, grid:remapColors(g)});
@@ -305,10 +291,9 @@ class Game {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         
+        // Game State
         this.levelIndex = 0;
         this.totalScore = 0;
-        
-        // Game State
         this.gridSize = 0;
         this.cellSize = 0;
         this.canvasSize = 0;
@@ -325,7 +310,7 @@ class Game {
         
         this.startTime = 0;
         this.timerInterval = null;
-        this.gameStarted = false; // Flag to check if on menu or game
+        this.gameStarted = false; 
         
         this.resize();
         window.addEventListener('resize', () => this.resize());
@@ -340,7 +325,6 @@ class Game {
         document.getElementById('main-menu').classList.add('hidden-important');
         const gameUI = document.getElementById('game-ui');
         gameUI.classList.remove('hidden-important');
-        // Small delay for fade in animation
         setTimeout(() => gameUI.classList.remove('opacity-0'), 10);
         
         this.levelIndex = 0;
@@ -351,20 +335,21 @@ class Game {
 
     backToMenu() {
         this.gameStarted = false;
-        clearInterval(this.timerInterval);
+        this.stopTimer();
         
         const gameUI = document.getElementById('game-ui');
         gameUI.classList.add('opacity-0');
         
         setTimeout(() => {
             gameUI.classList.add('hidden-important');
-            document.getElementById('main-menu').classList.remove('hidden-important');
+            const menu = document.getElementById('main-menu');
+            menu.classList.remove('hidden-important');
             
             // Hide all overlays
             document.getElementById('game-over-modal').classList.add('hidden-important');
             document.getElementById('win-modal').classList.add('hidden-important');
             document.getElementById('submit-score-modal').classList.add('hidden-important');
-        }, 500);
+        }, 300);
     }
 
     // --- GAME ENGINE ---
@@ -397,6 +382,7 @@ class Game {
         this.activeColor = null;
         this.isDragging = false;
         
+        // Parse Grid
         const colorSet = new Set();
         for (let y = 0; y < this.gridSize; y++) {
             for (let x = 0; x < this.gridSize; x++) {
@@ -408,13 +394,35 @@ class Game {
             }
         }
         
-        this.maxMoves = colorSet.size + 5;
+        this.maxMoves = colorSet.size + Math.floor(this.gridSize * 1.5); 
         this.movesLeft = this.maxMoves;
 
+        // Reset UI
         this.updateMovesUI();
         document.getElementById('level-num').innerText = idx + 1;
         document.getElementById('win-modal').classList.add('hidden-important');
         document.getElementById('game-over-modal').classList.add('hidden-important');
-        document.getElementById('next-btn').disabled = true;
-        document.getElementById('next-btn').classList.add('opacity-50', 'cursor-not-allowed');
-        document.getElementById('next-btn').classList
+        
+        const nextBtn = document.getElementById('next-btn');
+        nextBtn.disabled = true;
+        nextBtn.classList.remove('btn-glow');
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        this.startTimer();
+        this.render();
+    }
+
+    resetLevel() {
+        this.loadLevel(this.levelIndex);
+    }
+
+    nextLevel() {
+        if (this.isLevelComplete) {
+            this.loadLevel(this.levelIndex + 1);
+        }
+    }
+
+    // --- TIMER & SCORING ---
+
+    startTimer() {
+  
