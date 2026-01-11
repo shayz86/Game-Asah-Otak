@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flow Master Premium</title>
+    <title>Flow Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- 1. RESET & SYSTEM (Mesin V13) --- */
+        /* CSS SAFETY */
         html, body {
             margin: 0; padding: 0;
             width: 100%; height: 100%; height: 100dvh;
-            overflow: hidden;
-            background-color: #0f172a; /* Slate 900 */
+            background-color: #0f172a;
+            color: white;
             font-family: 'Fredoka', sans-serif;
+            overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
-            /* PENTING: Touch-action default di body agar tombol jalan */
-            touch-action: manipulation; 
+            touch-action: manipulation;
         }
 
-        /* --- 2. LAYAR (Sistem Saklar V13) --- */
+        /* Loading Screen */
+        #loader {
+            position: fixed; inset: 0;
+            background: #0f172a;
+            z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column;
+            transition: opacity 0.5s;
+        }
+
+        /* Screen System */
         .screen {
             display: none !important;
             position: absolute; inset: 0;
@@ -30,213 +40,217 @@
             flex-direction: column;
             align-items: center; justify-content: center;
             z-index: 10;
-            background-color: #0f172a; /* Background menutup layer bawah */
+            background-color: #0f172a;
         }
         .screen.active {
             display: flex !important;
             z-index: 50;
-            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeIn 0.3s ease-out;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- 3. BEAUTY STYLES (Dari Kode Awal) --- */
-        /* Animasi Float untuk Logo */
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .anim-float { animation: float 3s ease-in-out infinite; }
-
-        /* Canvas Style */
+        /* Canvas & Button Styles */
         canvas {
             background: #1e293b;
             border-radius: 16px;
-            box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.6);
-            /* PENTING: Matikan touch HANYA di canvas */
-            touch-action: none; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            touch-action: none;
             cursor: crosshair;
         }
-
-        /* Tombol Keren */
         .btn-glow {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.2s;
+            position: relative; overflow: hidden;
+            transition: transform 0.1s; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
-        .btn-glow:active { transform: scale(0.95); filter: brightness(0.9); }
+        .btn-glow:active { transform: scale(0.95); opacity: 0.9; }
         
-        /* Dekorasi Background */
-        .bg-blob {
-            position: absolute; border-radius: 50%;
-            filter: blur(80px); opacity: 0.3; z-index: 0; pointer-events: none;
-        }
+        .anim-float { animation: float 3s infinite ease-in-out; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 
-        .hide-scroll::-webkit-scrollbar { display: none; }
+        /* Debug Box */
+        #debug-log {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.8); color: #ff5555;
+            font-size: 10px; padding: 5px; text-align: center;
+            z-index: 10000; pointer-events: none;
+            font-family: monospace;
+            max-height: 50px; overflow: hidden;
+        }
     </style>
 </head>
 <body>
 
-    <div class="bg-blob bg-blue-600 w-64 h-64 top-[-50px] left-[-50px] anim-float"></div>
-    <div class="bg-blob bg-pink-600 w-64 h-64 bottom-[-50px] right-[-50px] anim-float" style="animation-delay: 1.5s;"></div>
+    <div id="debug-log">Status: Loading...</div>
 
-    <div id="screen-menu" class="screen active">
-        <a href="../index.html" class="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 font-semibold transition no-underline bg-slate-800/80 px-4 py-2 rounded-full z-50 shadow-lg cursor-pointer">
-            <i class="fas fa-arrow-left"></i> Menu
+    <div id="loader">
+        <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+        <div class="text-sm text-slate-400">MEMUAT GAME...</div>
+    </div>
+
+    <div id="screen-menu" class="screen">
+        <a href="../index.html" class="absolute top-6 left-6 bg-slate-800 px-4 py-2 rounded-full text-slate-300 font-bold text-sm no-underline btn-glow z-50">
+            <i class="fas fa-arrow-left mr-2"></i> Menu
         </a>
 
-        <div class="mb-12 text-center relative z-10 anim-float">
-            <h1 class="text-7xl font-bold tracking-tighter drop-shadow-2xl mb-0 leading-none">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">FLOW</span>
+        <div class="mb-12 text-center anim-float">
+            <h1 class="text-6xl font-bold mb-0 leading-tight">
+                <span class="text-blue-500 block">FLOW</span>
+                <span class="text-pink-500 block">MASTER</span>
             </h1>
-            <h1 class="text-7xl font-bold tracking-tighter drop-shadow-2xl leading-none">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-pink-600">MASTER</span>
-            </h1>
-            <div class="mt-6">
-                <span class="bg-slate-800/80 text-blue-300 px-4 py-1 rounded-full text-xs font-bold border border-slate-700 tracking-widest shadow-lg">PREMIUM EDITION</span>
+            <div class="mt-4 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 inline-block">
+                <span class="text-xs font-bold text-slate-400">V16 STABLE</span>
             </div>
         </div>
 
-        <div class="w-full max-w-xs space-y-5 relative z-20">
-            <button onclick="window.game.start()" class="btn-glow w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl border-b-4 border-indigo-800 flex items-center justify-center gap-3 cursor-pointer">
+        <div class="w-full max-w-xs space-y-4">
+            <button id="btn-start" class="btn-glow w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl shadow-lg border-b-4 border-blue-800 flex items-center justify-center gap-3">
                 <i class="fas fa-play"></i> MAINKAN
             </button>
             
-            <button onclick="window.game.showLb()" class="btn-glow w-full bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3 cursor-pointer">
-                <i class="fas fa-trophy text-yellow-400"></i> TOP SKOR
+            <button id="btn-lb" class="btn-glow w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg border-b-4 border-slate-900 flex items-center justify-center gap-3">
+                <i class="fas fa-trophy text-yellow-500"></i> SKOR
             </button>
         </div>
-        
-        <div class="mt-10 text-slate-600 text-xs font-mono relative z-10">V14.0 • VISUAL RESTORED</div>
     </div>
 
-
     <div id="screen-game" class="screen">
-        <div class="w-full max-w-md flex justify-between items-center mb-6 px-4 z-20">
-            <button onclick="window.game.menu()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg cursor-pointer">
+        <div class="w-full max-w-md flex justify-between items-center mb-6 px-4">
+            <button id="btn-home" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-xl">
                 <i class="fas fa-home"></i>
             </button>
             
             <div class="flex gap-3">
-                <div class="bg-slate-800/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center">
-                    <span class="text-[10px] text-slate-400 font-bold tracking-wider">LEVEL</span>
+                <div class="bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 flex flex-col items-center min-w-[60px]">
+                    <span class="text-[10px] text-slate-400 font-bold">LEVEL</span>
                     <span id="ui-level" class="text-white font-bold text-lg leading-none">1</span>
                 </div>
-                <div class="bg-slate-800/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center min-w-[70px]">
-                    <span class="text-[10px] text-slate-400 font-bold tracking-wider">WAKTU</span>
+                <div class="bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 flex flex-col items-center min-w-[70px]">
+                    <span class="text-[10px] text-slate-400 font-bold">WAKTU</span>
                     <span id="ui-timer" class="text-emerald-400 font-bold text-lg leading-none font-mono">00:00</span>
                 </div>
-                <div class="bg-slate-800/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 shadow flex flex-col items-center">
-                    <span class="text-[10px] text-slate-400 font-bold tracking-wider">MOVES</span>
+                <div class="bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 flex flex-col items-center min-w-[60px]">
+                    <span class="text-[10px] text-slate-400 font-bold">MOVES</span>
                     <span id="ui-moves" class="text-blue-400 font-bold text-lg leading-none">0</span>
                 </div>
             </div>
             
-            <button onclick="window.game.reset()" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-lg shadow-lg cursor-pointer">
+            <button id="btn-reset" class="btn-glow w-12 h-12 bg-slate-800 rounded-full text-slate-400 border border-slate-700 flex items-center justify-center text-xl">
                 <i class="fas fa-undo"></i>
             </button>
         </div>
 
-        <div class="relative z-10 p-1 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-2xl">
-            <div class="bg-slate-900 rounded-xl p-1">
-                <canvas id="gameCanvas" width="350" height="350"></canvas>
-            </div>
+        <div class="relative p-2 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-2xl">
+            <canvas id="gameCanvas" width="350" height="350"></canvas>
             
-            <div id="overlay-win" class="absolute inset-0 bg-slate-900/95 backdrop-blur-md rounded-xl flex flex-col items-center justify-center hidden z-50">
-                <div class="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4 anim-float">
-                    <i class="fas fa-check text-4xl text-emerald-400"></i>
-                </div>
-                <h2 class="text-3xl font-bold text-white mb-1">SELESAI!</h2>
-                <div class="flex gap-4 mt-4 text-sm text-slate-300">
-                    <div>⏱️ <span id="win-time">00:00</span></div>
-                    <div>👣 <span id="win-moves">0</span> Moves</div>
-                </div>
-                <button onclick="window.game.next()" class="mt-6 btn-glow bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg border-b-4 border-emerald-700 flex items-center gap-2 cursor-pointer">
-                    LEVEL BERIKUTNYA <i class="fas fa-arrow-right"></i>
+            <div id="win-overlay" class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center hidden z-50">
+                <i class="fas fa-check-circle text-6xl text-emerald-500 mb-4 anim-float"></i>
+                <h2 class="text-2xl font-bold text-white mb-2">SELESAI!</h2>
+                <button id="btn-next" class="mt-4 btn-glow bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-lg border-b-4 border-emerald-700 flex items-center gap-2">
+                    LANJUT <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
         </div>
-
-        <div class="mt-8 text-center text-slate-500 text-xs font-medium px-4 z-10 opacity-70">
-            Hubungkan semua warna. Grid harus terisi penuh!
-        </div>
+        
+        <div class="mt-6 text-center text-slate-500 text-xs">Isi semua kotak & hubungkan warna!</div>
     </div>
 
-
     <div id="screen-lb" class="screen">
-        <div class="bg-slate-800 w-full max-w-md rounded-3xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh] z-20 mx-4">
-            <div class="bg-slate-900 p-5 border-b border-slate-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-yellow-500 flex items-center gap-2">
-                    <i class="fas fa-crown"></i> TOP 10 SKOR
-                </h2>
-                <button onclick="window.game.menu()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
-                    <i class="fas fa-times"></i>
-                </button>
+        <h2 class="text-2xl font-bold text-yellow-500 mb-6 flex items-center gap-2"><i class="fas fa-trophy"></i> TOP SKOR</h2>
+        <div class="bg-slate-800 w-full max-w-md rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh] mx-4">
+            <div class="grid grid-cols-3 bg-slate-900 p-4 font-bold text-xs uppercase text-slate-400">
+                <div class="text-center">#</div> <div>Player</div> <div class="text-right">Level</div>
             </div>
-            <div class="grid grid-cols-3 bg-slate-800 p-3 font-bold text-[10px] uppercase text-slate-500 tracking-wider border-b border-slate-700">
-                <div class="text-center">RANK</div>
-                <div>PLAYER</div>
-                <div class="text-right">LEVEL</div>
-            </div>
-            <div id="lb-list" class="overflow-y-auto p-0 flex-1 hide-scroll bg-slate-800/50"></div>
+            <div id="lb-list" class="overflow-y-auto p-0 flex-1"></div>
         </div>
+        <button id="btn-close-lb" class="mt-6 px-10 py-3 bg-slate-700 rounded-full font-bold text-white shadow-lg border-b-4 border-slate-900 btn-glow">TUTUP</button>
     </div>
 
     <script>
-        // --- 1. DATA LEVEL (ORIGINAL V1) ---
-        const CONFIG = {
-            colors: {
-                1: '#ef4444', 2: '#3b82f6', 3: '#22c55e', 4: '#eab308', 
-                5: '#d946ef', 6: '#f97316', 7: '#06b6d4', 8: '#94a3b8'
-            },
-            gridLine: '#334155',
-            bg: '#1e293b'
+        // --- ERROR LOGGER (Agar kita tahu kenapa macet) ---
+        window.onerror = function(msg, url, line) {
+            document.getElementById('debug-log').innerHTML = "ERR: " + msg + " (" + line + ")";
+            return false;
         };
 
-        const LEVELS = [
-            { size: 5, grid: [[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]] },
-            { size: 5, grid: [[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]] },
-            { size: 6, grid: [[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]] },
-            { size: 6, grid: [[1,0,0,0,0,1],[0,0,3,3,0,0],[0,0,4,4,0,0],[0,0,0,0,2,2],[0,5,5,0,0,0],[0,0,0,0,0,0]] },
-            { size: 7, grid: [[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]] },
-            { size: 8, grid: [[1,0,0,0,0,0,2,0],[0,0,3,3,0,0,2,0],[0,0,4,0,0,0,0,0],[0,0,4,0,5,5,0,0],[0,0,0,0,0,0,0,0],[6,6,0,7,7,0,8,8],[0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0]] }
+        // --- VARS ---
+        var COLORS = {1:'#ef4444', 2:'#3b82f6', 3:'#22c55e', 4:'#eab308', 5:'#d946ef', 6:'#f97316', 7:'#06b6d4', 8:'#94a3b8'};
+        var LEVELS = [
+            {size:5, grid:[[1,0,0,0,2],[0,0,0,0,2],[0,3,3,0,0],[4,0,0,0,0],[4,0,1,5,5]]},
+            {size:5, grid:[[4,4,0,0,1],[0,0,3,0,0],[1,0,3,0,0],[5,0,0,0,0],[5,0,0,2,2]]},
+            {size:6, grid:[[1,0,0,2,0,0],[0,0,0,2,0,0],[0,3,4,0,0,0],[0,3,4,0,5,0],[0,0,0,0,5,0],[1,0,0,0,0,0]]},
+            {size:7, grid:[[1,0,0,0,0,0,2],[0,0,3,0,0,0,2],[0,0,3,0,4,0,0],[0,5,0,0,4,0,0],[0,5,0,0,0,0,6],[0,0,0,0,0,0,6],[1,0,0,0,0,0,0]]}
         ];
 
-        // --- 2. GAME ENGINE ---
-        const Game = {
-            state: {
-                lvlIdx: 0,
-                grid: [],
-                paths: {},
-                activeColor: null,
-                completed: false,
-                moves: 0,
-                timer: null,
-                startTime: 0
-            },
-            canvas: null,
+        var app = {
+            lvl: 0,
+            grid: [],
+            paths: {},
+            color: null,
+            moves: 0,
+            done: false,
+            timer: null,
+            t0: 0,
+            cvs: null,
             ctx: null,
-            cellSize: 0,
-
-            // INIT
+            cell: 0,
+            
+            // --- INIT ---
             init: function() {
-                this.canvas = document.getElementById('gameCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.initInput();
-                window.addEventListener('resize', () => this.resize());
+                try {
+                    this.cvs = document.getElementById('gameCanvas');
+                    this.ctx = this.cvs.getContext('2d');
+                    
+                    // Bind Buttons (Menggunakan addEventListener agar lebih aman)
+                    this.bind('btn-start', function() { app.start(); });
+                    this.bind('btn-lb', function() { app.showLb(); });
+                    this.bind('btn-home', function() { app.menu(); });
+                    this.bind('btn-reset', function() { app.load(app.lvl); });
+                    this.bind('btn-next', function() { app.next(); });
+                    this.bind('btn-close-lb', function() { app.menu(); });
+
+                    // Init Input Canvas
+                    this.initInput();
+                    
+                    // Sembunyikan Loader & Masuk Menu
+                    setTimeout(function(){
+                        document.getElementById('loader').style.opacity = '0';
+                        setTimeout(function(){ 
+                            document.getElementById('loader').style.display = 'none';
+                            app.switch('screen-menu');
+                            document.getElementById('debug-log').innerHTML = "Ready. v16";
+                        }, 500);
+                    }, 1000); // Delay 1 detik untuk memastikan CSS termuat
+
+                } catch(e) {
+                    document.getElementById('debug-log').innerHTML = "Init Err: " + e.message;
+                }
             },
 
-            // NAVIGATION
+            bind: function(id, fn) {
+                var el = document.getElementById(id);
+                if(el) {
+                    // Double bind untuk menjamin respon
+                    el.onclick = fn; 
+                    el.ontouchstart = function(e) { e.preventDefault(); fn(); };
+                }
+            },
+
+            // --- NAV ---
             switch: function(id) {
-                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                var screens = document.getElementsByClassName('screen');
+                for(var i=0; i<screens.length; i++) screens[i].classList.remove('active');
                 document.getElementById(id).classList.add('active');
-                if(id === 'screen-game') setTimeout(() => this.resize(), 50);
+                if(id === 'screen-game') setTimeout(function(){ app.resize(); }, 100);
             },
 
             start: function() {
-                this.state.lvlIdx = 0;
-                this.loadLevel(0);
+                this.lvl = 0;
+                this.load(0);
                 this.switch('screen-game');
             },
 
             menu: function() {
-                this.stopTimer();
+                clearInterval(this.timer);
                 this.switch('screen-menu');
             },
 
@@ -246,190 +260,201 @@
             },
 
             next: function() {
-                this.state.lvlIdx++;
-                if(this.state.lvlIdx >= LEVELS.length) {
-                    alert("TAMAT! Anda Master Flow!");
+                this.lvl++;
+                if(this.lvl >= LEVELS.length) {
+                    alert("TAMAT!");
                     this.menu();
                 } else {
-                    this.loadLevel(this.state.lvlIdx);
+                    this.load(this.lvl);
                 }
             },
 
-            reset: function() { this.loadLevel(this.state.lvlIdx); },
+            // --- GAMEPLAY ---
+            load: function(idx) {
+                var l = LEVELS[idx];
+                this.grid = JSON.parse(JSON.stringify(l.grid));
+                this.paths = {};
+                this.color = null;
+                this.done = false;
+                this.moves = 0;
 
-            // GAMEPLAY LOGIC
-            loadLevel: function(idx) {
-                const lvl = LEVELS[idx];
-                this.state.grid = JSON.parse(JSON.stringify(lvl.grid));
-                this.state.paths = {};
-                this.state.activeColor = null;
-                this.state.completed = false;
-                this.state.moves = 0;
-
-                // Init paths
-                const size = lvl.size;
-                for(let r=0; r<size; r++) {
-                    for(let c=0; c<size; c++) {
-                        const v = this.state.grid[r][c];
-                        if(v > 0) this.state.paths[v] = [];
+                var size = l.size;
+                for(var r=0; r<size; r++) {
+                    for(var c=0; c<size; c++) {
+                        var v = this.grid[r][c];
+                        if(v > 0) this.paths[v] = [];
                     }
                 }
 
-                // UI Reset
                 document.getElementById('ui-level').innerText = idx + 1;
                 document.getElementById('ui-moves').innerText = "0";
                 document.getElementById('ui-timer').innerText = "00:00";
-                document.getElementById('overlay-win').classList.add('hidden');
-                
+                document.getElementById('win-overlay').classList.add('hidden');
+
                 this.resize();
-                this.startTimer();
+                this.timerGo();
+                this.save(idx);
             },
 
             resize: function() {
-                if(!this.canvas) return;
-                const maxWidth = Math.min(window.innerWidth - 40, 380); // Ukuran optimal
-                this.canvas.width = maxWidth;
-                this.canvas.height = maxWidth;
-                this.canvas.style.width = maxWidth + 'px';
-                this.canvas.style.height = maxWidth + 'px';
+                if(!this.cvs) return;
+                var w = Math.min(window.innerWidth - 40, 380);
+                this.cvs.width = w;
+                this.cvs.height = w;
+                this.cvs.style.width = w + 'px';
+                this.cvs.style.height = w + 'px';
                 
-                const size = LEVELS[this.state.lvlIdx]?.size || 5;
-                this.cellSize = maxWidth / size;
-                
-                if(this.state.grid.length > 0) this.draw();
+                var size = LEVELS[this.lvl].size;
+                this.cell = w / size;
+                this.draw();
             },
 
-            // TIMER & MOVES
-            startTimer: function() {
-                this.stopTimer();
-                this.state.startTime = Date.now();
-                this.state.timer = setInterval(() => {
-                    const d = Math.floor((Date.now() - this.state.startTime) / 1000);
-                    const m = Math.floor(d/60).toString().padStart(2,'0');
-                    const s = (d%60).toString().padStart(2,'0');
-                    document.getElementById('ui-timer').innerText = `${m}:${s}`;
-                }, 1000);
-            },
-            stopTimer: function() { if(this.state.timer) clearInterval(this.state.timer); },
-
-            // INPUT HANDLING
+            // --- INPUT ---
             initInput: function() {
-                const start = (e) => this.inputStart(e);
-                const move = (e) => this.inputMove(e);
-                const end = () => this.inputEnd();
-
+                var self = this;
                 // Mouse
-                this.canvas.addEventListener('mousedown', start);
-                this.canvas.addEventListener('mousemove', move);
-                window.addEventListener('mouseup', end);
-
-                // Touch (Safe Mode)
-                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e.touches[0]); }, {passive: false});
-                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e.touches[0]); }, {passive: false});
-                window.addEventListener('touchend', end);
+                this.cvs.addEventListener('mousedown', function(e){ self.down(e); });
+                this.cvs.addEventListener('mousemove', function(e){ self.move(e); });
+                window.addEventListener('mouseup', function(){ self.up(); });
+                // Touch
+                this.cvs.addEventListener('touchstart', function(e){ e.preventDefault(); self.down(e.touches[0]); }, {passive:false});
+                this.cvs.addEventListener('touchmove', function(e){ e.preventDefault(); self.move(e.touches[0]); }, {passive:false});
+                window.addEventListener('touchend', function(){ self.up(); });
             },
 
             getPos: function(e) {
-                const rect = this.canvas.getBoundingClientRect();
+                var r = this.cvs.getBoundingClientRect();
                 return {
-                    c: Math.floor((e.clientX - rect.left) / this.cellSize),
-                    r: Math.floor((e.clientY - rect.top) / this.cellSize)
+                    c: Math.floor((e.clientX - r.left) / this.cell),
+                    r: Math.floor((e.clientY - r.top) / this.cell)
                 };
             },
 
-            inputStart: function(e) {
-                if(this.state.completed) return;
-                const p = this.getPos(e);
-                const size = LEVELS[this.state.lvlIdx].size;
-                if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
+            down: function(e) {
+                if(this.done) return;
+                var p = this.getPos(e);
+                var size = LEVELS[this.lvl].size;
+                if(p.r<0 || p.r>=size || p.c<0 || p.c>=size) return;
 
-                const base = LEVELS[this.state.lvlIdx].grid;
-                const val = base[p.r][p.c] || this.state.grid[p.r][p.c];
-
+                var base = LEVELS[this.lvl].grid;
+                var val = base[p.r][p.c] || this.grid[p.r][p.c];
+                
                 if(val > 0) {
-                    this.state.activeColor = val;
-                    this.state.paths[val] = [{r: p.r, c: p.c}];
-                    this.updateGrid();
+                    this.color = val;
+                    this.paths[val] = [{r:p.r, c:p.c}];
+                    this.updateG();
                     this.draw();
                 }
             },
 
-            inputMove: function(e) {
-                if(!this.state.activeColor || this.state.completed) return;
-                const p = this.getPos(e);
-                const size = LEVELS[this.state.lvlIdx].size;
-                if(p.r < 0 || p.r >= size || p.c < 0 || p.c >= size) return;
+            move: function(e) {
+                if(!this.color || this.done) return;
+                var p = this.getPos(e);
+                var size = LEVELS[this.lvl].size;
+                if(p.r<0 || p.r>=size || p.c<0 || p.c>=size) return;
 
-                const color = this.state.activeColor;
-                const path = this.state.paths[color];
-                const last = path[path.length-1];
+                var path = this.paths[this.color];
+                var last = path[path.length-1];
 
-                if((last.r !== p.r || last.c !== p.c) && (Math.abs(last.r - p.r) + Math.abs(last.c - p.c) === 1)) {
-                    const base = LEVELS[this.state.lvlIdx].grid;
-                    const targetBase = base[p.r][p.c];
-                    const targetCurr = this.state.grid[p.r][p.c];
+                if((last.r!==p.r || last.c!==p.c) && (Math.abs(last.r-p.r)+Math.abs(last.c-p.c)===1)) {
+                    var base = LEVELS[this.lvl].grid;
+                    var tb = base[p.r][p.c];
+                    var tc = this.grid[p.r][p.c];
 
                     // Backtrack
-                    const existingIdx = path.findIndex(pt => pt.r === p.r && pt.c === p.c);
-                    if(existingIdx !== -1) {
-                        this.state.paths[color] = path.slice(0, existingIdx+1);
-                        this.updateGrid();
+                    var idx = -1;
+                    for(var i=0; i<path.length; i++) if(path[i].r===p.r && path[i].c===p.c) idx=i;
+                    
+                    if(idx !== -1) {
+                        this.paths[this.color] = path.slice(0, idx+1);
+                        this.updateG();
                         this.draw();
                         return;
                     }
 
                     // Move
-                    if((targetCurr === 0 || targetCurr === color) && (targetBase === 0 || targetBase === color)) {
-                        path.push({r: p.r, c: p.c});
-                        this.updateGrid();
+                    if((tc===0 || tc===this.color) && (tb===0 || tb===this.color)) {
+                        path.push({r:p.r, c:p.c});
+                        this.updateG();
                         this.draw();
-                        this.checkWin();
+                        this.check();
                     }
                 }
             },
 
-            inputEnd: function() {
-                if(this.state.activeColor) {
-                    this.state.moves++;
-                    document.getElementById('ui-moves').innerText = this.state.moves;
-                    this.state.activeColor = null;
-                }
+            up: function() {
+                if(this.color) { this.moves++; document.getElementById('ui-moves').innerText = this.moves; this.color = null; }
             },
 
-            updateGrid: function() {
-                const size = LEVELS[this.state.lvlIdx].size;
-                const base = LEVELS[this.state.lvlIdx].grid;
-                for(let r=0; r<size; r++) {
-                    for(let c=0; c<size; c++) {
-                        this.state.grid[r][c] = (base[r][c] > 0) ? 0 : 0;
-                    }
-                }
-                for(const [k, path] of Object.entries(this.state.paths)) {
-                    const cId = parseInt(k);
-                    path.forEach(pt => {
-                        if(base[pt.r][pt.c] === 0) this.state.grid[pt.r][pt.c] = cId;
-                    });
+            updateG: function() {
+                var size = LEVELS[this.lvl].size;
+                var base = LEVELS[this.lvl].grid;
+                for(var r=0; r<size; r++) for(var c=0; c<size; c++) if(base[r][c]===0) this.grid[r][c] = 0;
+                
+                for(var k in this.paths) {
+                    var id = parseInt(k);
+                    var p = this.paths[k];
+                    for(var i=0; i<p.length; i++) if(base[p[i].r][p[i].c]===0) this.grid[p[i].r][p[i].c] = id;
                 }
             },
 
             draw: function() {
-                const size = LEVELS[this.state.lvlIdx].size;
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
+                var size = LEVELS[this.lvl].size;
+                this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
+                
                 // Grid
-                this.ctx.strokeStyle = CONFIG.gridLine;
-                this.ctx.lineWidth = 1;
-                this.ctx.beginPath();
-                for(let i=0; i<=size; i++) {
-                    const p = i * this.cellSize;
-                    this.ctx.moveTo(p, 0); this.ctx.lineTo(p, this.canvas.height);
-                    this.ctx.moveTo(0, p); this.ctx.lineTo(this.canvas.width, p);
+                this.ctx.strokeStyle = '#334155'; this.ctx.lineWidth = 1; this.ctx.beginPath();
+                for(var i=0; i<=size; i++) {
+                    var pos = i*this.cell;
+                    this.ctx.moveTo(pos,0); this.ctx.lineTo(pos,this.cvs.height);
+                    this.ctx.moveTo(0,pos); this.ctx.lineTo(this.cvs.width,pos);
                 }
                 this.ctx.stroke();
 
-                // Paths
-                for(const [k, path] of Object.entries(this.state.paths)) {
-                    if(path.length < 2) continue;
-                    const color = CONFIG.colors[k];
-                    this.ctx.strokeStyle = color;
-                    this.ct
+                // Path
+                for(var k in this.paths) {
+                    var p = this.paths[k];
+                    if(p.length<2) continue;
+                    this.ctx.strokeStyle = COLORS[k];
+                    this.ctx.lineWidth = this.cell*0.45;
+                    this.ctx.lineCap = 'round'; this.ctx.lineJoin = 'round';
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(p[0].c*this.cell + this.cell/2, p[0].r*this.cell + this.cell/2);
+                    for(var j=1; j<p.length; j++) this.ctx.lineTo(p[j].c*this.cell + this.cell/2, p[j].r*this.cell + this.cell/2);
+                    this.ctx.stroke();
+                }
+
+                // Dots
+                var base = LEVELS[this.lvl].grid;
+                for(var r=0; r<size; r++) for(var c=0; c<size; c++) {
+                    var v = base[r][c];
+                    if(v>0) {
+                        this.ctx.fillStyle = COLORS[v];
+                        this.ctx.beginPath();
+                        this.ctx.arc(c*this.cell+this.cell/2, r*this.cell+this.cell/2, this.cell*0.3, 0, Math.PI*2);
+                        this.ctx.fill();
+                    }
+                }
+            },
+
+            check: function() {
+                var size = LEVELS[this.lvl].size;
+                var base = LEVELS[this.lvl].grid;
+                var full = true;
+                
+                for(var r=0; r<size; r++) for(var c=0; c<size; c++) if(base[r][c]===0 && this.grid[r][c]===0) full = false;
+                
+                if(full) {
+                    var allOk = true;
+                    // Simple connectivity check: paths must be >= 2 length
+                    // (Assuming visual check + full grid is enough for basic win)
+                    for(var k in this.paths) if(this.paths[k].length < 2) allOk = false;
+
+                    if(allOk) {
+                        this.done = true;
+                        clearInterval(this.timer);
+                        setTimeout(function(){
+                            document.getElementById('win-overlay').classList.remove('hidden');
+                            app.save(app.lvl+1);
+                        }, 200);
+                 
