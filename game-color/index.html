@@ -3,147 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kekacauan Warna - Brain Gym</title>
+    <title>Kekacauan Warna</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* --- GAYA ASLI (RESTORED) --- */
         body {
             font-family: 'Fredoka', sans-serif;
-            background-color: #18181b; 
+            background-color: #0B1120; /* Deep Navy Background */
+            color: white;
             touch-action: manipulation;
             user-select: none;
             overflow: hidden;
-            height: 100vh; /* Fallback */
-            height: 100dvh; /* Mobile Modern */
+            height: 100vh;
+            height: 100dvh;
             -webkit-tap-highlight-color: transparent;
         }
-        .timer-bar { transition: width 0.1s linear; }
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
+
+        /* Gradient Background Premium */
+        .bg-premium {
+            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
         }
-        .pop-in { animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        /* Animasi */
+        .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
-        /* Scrollbar cantik */
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 10px; }
+        
+        .shake { animation: shake 0.4s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        /* Custom Scrollbar */
+        .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body id="main-body" class="w-full flex items-center justify-center text-white relative bg-gradient-to-br from-gray-900 to-black">
+<body id="main-body" class="w-full flex items-center justify-center bg-premium relative">
 
-    <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 text-center bg-black/80 backdrop-blur-sm">
-        <div class="mb-6">
-            <h1 class="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-500 drop-shadow-lg">KEKACAUAN<br>WARNA</h1>
-            <p class="text-gray-300 text-sm mt-2">Brain Gym Edition</p>
+    <div id="start-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 text-center bg-[#0B1120]">
+        
+        <div class="mb-10 animate-fade-in-down">
+            <h1 class="text-5xl md:text-6xl font-bold mb-2 leading-tight">
+                <span class="text-pink-500">KEKACAUAN</span><br>
+                <span class="text-yellow-400">WARNA</span>
+            </h1>
+            <p class="text-gray-400 text-sm tracking-widest mt-2 uppercase">Brain Gym Edition</p>
         </div>
         
-        <div class="bg-gray-800/80 p-4 rounded-xl max-w-xs w-full mb-6 text-left space-y-2 text-sm border border-gray-700">
-            <p class="flex items-center gap-2"><span class="text-green-400">◼</span> Pilih WARNA Tinta</p>
-            <p class="flex items-center gap-2"><span class="text-pink-400">Abc</span> Baca TULISAN Kata</p>
+        <div class="bg-[#1e293b] p-5 rounded-2xl w-full max-w-xs mb-8 border border-gray-700 shadow-xl text-left space-y-3">
+            <div class="flex items-center gap-3">
+                <span class="text-green-400 text-xl">✓</span>
+                <p class="text-gray-300 text-sm">"Pilih WARNA" = <span class="text-white font-bold">Lihat Tinta</span></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-pink-400 text-xl">✓</span>
+                <p class="text-gray-300 text-sm">"Pilih TEKS" = <span class="text-white font-bold">Baca Kata</span></p>
+            </div>
+            <div class="pt-3 border-t border-gray-600 mt-2">
+                 <p class="text-yellow-400 text-xs font-bold flex items-center gap-2">
+                    🎲 Warna & Tema berubah tiap 50 poin!
+                 </p>
+            </div>
         </div>
 
-        <button id="btn-start-game" class="w-full max-w-xs py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full font-bold text-lg shadow-lg hover:scale-105 active:scale-95 transition-transform mb-4 border border-white/10">
+        <button id="btn-start-game" class="w-full max-w-xs py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full font-bold text-xl shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:scale-105 active:scale-95 transition-transform text-white border border-white/10">
             MULAI GAME
         </button>
 
-        <a href="../index.html" class="mb-4 px-6 py-3 bg-gray-700 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-600 transition flex items-center gap-2">
+        <a href="../index.html" class="mt-6 flex items-center gap-2 text-gray-400 hover:text-white transition text-sm font-bold bg-white/5 px-4 py-2 rounded-full border border-white/5">
             🏠 Menu Utama
         </a>
 
-        <button id="btn-show-leaderboard" class="text-gray-400 hover:text-white text-xs underline py-2">
+        <button id="btn-show-leaderboard" class="mt-4 text-gray-500 hover:text-white text-xs underline">
             🏆 Lihat Top 10 Skor
         </button>
     </div>
 
-    <div id="leaderboard-screen" class="hidden absolute inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center p-6">
-        <h2 class="text-2xl font-bold text-yellow-400 mb-6">🏆 Papan Peringkat</h2>
-        <div class="bg-gray-800 w-full max-w-md rounded-xl border border-gray-700 overflow-hidden flex flex-col h-[50vh]">
-            <div class="grid grid-cols-3 bg-gray-700 p-3 font-bold text-xs uppercase text-gray-300">
-                <div class="text-center">#</div>
-                <div>Nama</div>
-                <div class="text-right">Skor</div>
+    <div id="game-ui" class="hidden w-full max-w-md h-full flex flex-col p-6 pb-8 relative">
+        
+        <div class="flex justify-between items-center mb-6">
+            <div class="bg-[#1e293b] px-5 py-2 rounded-full border border-slate-700 shadow-lg flex items-center gap-2">
+                <span class="text-slate-400 text-xs font-bold uppercase">SKOR</span>
+                <span id="score-display" class="font-bold text-xl text-white">0</span>
             </div>
-            <div id="leaderboard-list" class="overflow-y-auto custom-scroll p-0 flex-1"></div>
+            <a href="../index.html" class="w-8 h-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/30 hover:bg-red-500 hover:text-white transition">✕</a>
         </div>
-        <button id="btn-close-leaderboard" class="mt-6 px-8 py-3 bg-gray-700 hover:bg-gray-600 rounded-full font-bold">Tutup</button>
+
+        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-8">
+            <div id="timer-bar" class="h-full bg-gradient-to-r from-green-400 to-yellow-400 w-full rounded-full"></div>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-center -mt-10">
+            <div id="instruction-container" class="mb-8">
+                <span id="instruction-text" class="px-8 py-3 bg-[#0f172a] rounded-full text-lg font-bold border border-purple-500 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)] tracking-wide">
+                    Pilih WARNA TINTA
+                </span>
+            </div>
+            
+            <div id="challenge-word-container" class="w-full text-center h-24 flex items-center justify-center">
+                <h1 id="challenge-word" class="text-6xl md:text-7xl font-bold tracking-wider drop-shadow-2xl">
+                    KUNING
+                </h1>
+            </div>
+        </div>
+
+        <div id="buttons-container" class="grid grid-cols-2 gap-4 mt-auto">
+            </div>
     </div>
 
-    <div id="game-over-screen" class="hidden absolute inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-6 text-center">
+    <div id="game-over-screen" class="hidden absolute inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center p-6 text-center">
         <h2 class="text-4xl font-bold text-red-500 mb-2">Waktu Habis!</h2>
         
-        <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-xs mb-6 border border-gray-700 shadow-2xl mt-4">
-            <div class="text-gray-400 text-sm uppercase tracking-widest mb-1">Skor Kamu</div>
-            <div id="final-score" class="text-6xl font-bold text-white">0</div>
+        <div class="bg-[#1e293b] rounded-2xl p-8 w-full max-w-xs mb-8 border border-slate-700 shadow-2xl mt-4">
+            <div class="text-slate-400 text-sm font-bold uppercase tracking-widest mb-2">Skor Akhir</div>
+            <div id="final-score" class="text-7xl font-bold text-white">0</div>
         </div>
 
-        <div id="new-record-section" class="hidden w-full max-w-xs animate-bounce-in">
+        <div id="new-record-section" class="hidden w-full max-w-xs animate-bounce-in mb-4">
             <p class="text-yellow-400 font-bold mb-2">🎉 REKOR BARU! 🎉</p>
             <input type="text" id="player-name-input" maxlength="10" placeholder="NAMA KAMU" 
-                class="w-full px-4 py-3 bg-gray-900 border border-yellow-500 rounded-lg text-center text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3 uppercase font-bold">
-            <button id="btn-save-record" class="w-full py-3 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400">SIMPAN</button>
+                class="w-full px-4 py-3 bg-slate-900 border border-yellow-500 rounded-xl text-center text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3 uppercase font-bold text-lg">
+            <button id="btn-save-record" class="w-full py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400">SIMPAN SKOR</button>
         </div>
 
         <div id="standard-buttons" class="w-full max-w-xs flex flex-col gap-3">
-            <button id="btn-retry" class="w-full py-3 bg-white text-black font-bold rounded-full shadow-lg hover:bg-gray-200 transition active:scale-95">Main Lagi</button>
-            <a href="../index.html" class="w-full py-3 border border-white/20 text-white font-bold rounded-full hover:bg-white/10 transition flex justify-center items-center gap-2">
-               🏠 Menu Utama
+            <button id="btn-retry" class="w-full py-4 bg-white text-slate-900 font-bold rounded-xl shadow-lg hover:bg-gray-200 transition active:scale-95 text-lg">MAIN LAGI</button>
+            <a href="../index.html" class="w-full py-4 border border-slate-600 text-slate-300 font-bold rounded-xl hover:bg-slate-800 transition flex justify-center items-center gap-2">
+               🏠 KEMBALI KE MENU
             </a>
-            <button id="btn-show-leaderboard-over" class="text-gray-500 hover:text-white text-sm underline mt-2">Lihat Peringkat</button>
         </div>
     </div>
 
-    <div id="game-ui" class="hidden w-full max-w-md h-full flex flex-col p-4 pb-8">
-        <div class="flex justify-between items-center mb-4">
-            <div class="bg-white/10 px-4 py-2 rounded-full border border-white/10">
-                <span class="text-gray-400 text-xs uppercase mr-2">Skor</span>
-                <span id="score-display" class="font-bold text-xl">0</span>
+    <div id="leaderboard-screen" class="hidden absolute inset-0 z-[70] bg-[#0B1120] flex flex-col items-center justify-center p-6">
+        <h2 class="text-3xl font-bold text-yellow-400 mb-8 tracking-wide">🏆 TOP 10 SKOR</h2>
+        <div class="bg-[#1e293b] w-full max-w-md rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl h-[60vh]">
+            <div class="grid grid-cols-3 bg-slate-800 p-4 font-bold text-xs uppercase text-slate-400 tracking-wider">
+                <div class="text-center">Rank</div>
+                <div>Player</div>
+                <div class="text-right">Score</div>
             </div>
-            <a href="../index.html" class="w-8 h-8 flex items-center justify-center bg-red-500/20 text-red-400 rounded-full font-bold text-xs border border-red-500/50">✖</a>
+            <div id="leaderboard-list" class="overflow-y-auto hide-scroll p-0 flex-1"></div>
         </div>
-        
-        <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden border border-white/10 mb-4">
-            <div id="timer-bar" class="h-full bg-green-500 w-full"></div>
-        </div>
-
-        <div class="flex-1 flex flex-col items-center justify-center min-h-0">
-            <div id="instruction-container" class="mb-8 transition-all">
-                <span id="instruction-text" class="px-6 py-2 bg-black/50 rounded-full font-bold border border-white/20">...</span>
-            </div>
-            
-            <div id="challenge-word-container" class="w-full text-center">
-                <h1 id="challenge-word" class="text-6xl font-black tracking-wider drop-shadow-2xl transition-all">...</h1>
-            </div>
-        </div>
-
-        <div id="buttons-container" class="grid grid-cols-2 gap-3 mt-auto h-1/3 max-h-48">
-            </div>
+        <button id="btn-close-leaderboard" class="mt-8 px-10 py-3 bg-slate-700 hover:bg-slate-600 rounded-full font-bold text-white transition border border-slate-600">TUTUP</button>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- KONFIGURASI ---
+            // --- CONFIG ---
             const COLORS = {
-                merah:  { hex: '#ef4444', label: 'MERAH',  border: 'border-red-600', text: 'text-red-500' },
-                biru:   { hex: '#3b82f6', label: 'BIRU',   border: 'border-blue-600', text: 'text-blue-500' },
-                hijau:  { hex: '#22c55e', label: 'HIJAU',  border: 'border-green-600', text: 'text-green-500' },
-                kuning: { hex: '#eab308', label: 'KUNING', border: 'border-yellow-500', text: 'text-yellow-400' },
-                ungu:   { hex: '#a855f7', label: 'UNGU',   border: 'border-purple-600', text: 'text-purple-500' },
-                oranye: { hex: '#f97316', label: 'ORANYE', border: 'border-orange-600', text: 'text-orange-500' },
-                pink:   { hex: '#ec4899', label: 'PINK',   border: 'border-pink-600', text: 'text-pink-500' },
-                cyan:   { hex: '#06b6d4', label: 'CYAN',   border: 'border-cyan-600', text: 'text-cyan-400' }
+                merah:  { hex: '#ef4444', label: 'MERAH',  border: 'border-red-500', text: 'text-red-500', bg: 'hover:bg-red-500/10' },
+                biru:   { hex: '#3b82f6', label: 'BIRU',   border: 'border-blue-500', text: 'text-blue-500', bg: 'hover:bg-blue-500/10' },
+                hijau:  { hex: '#22c55e', label: 'HIJAU',  border: 'border-green-500', text: 'text-green-500', bg: 'hover:bg-green-500/10' },
+                kuning: { hex: '#eab308', label: 'KUNING', border: 'border-yellow-400', text: 'text-yellow-400', bg: 'hover:bg-yellow-500/10' },
+                ungu:   { hex: '#a855f7', label: 'UNGU',   border: 'border-purple-500', text: 'text-purple-500', bg: 'hover:bg-purple-500/10' },
+                oranye: { hex: '#f97316', label: 'ORANYE', border: 'border-orange-500', text: 'text-orange-500', bg: 'hover:bg-orange-500/10' },
+                pink:   { hex: '#ec4899', label: 'PINK',   border: 'border-pink-500', text: 'text-pink-500', bg: 'hover:bg-pink-500/10' },
+                cyan:   { hex: '#06b6d4', label: 'CYAN',   border: 'border-cyan-400', text: 'text-cyan-400', bg: 'hover:bg-cyan-500/10' }
             };
 
-            const THEMES = [
-                "from-gray-900 to-black", "from-blue-900 to-slate-900", "from-red-900 to-orange-950",
-                "from-purple-900 to-slate-950", "from-emerald-900 to-gray-900"
-            ];
-
-            const STORAGE_KEY = 'colorChaos_v6';
+            const STORAGE_KEY = 'colorChaos_vFINAL';
             
             // --- STATE ---
             let score = 0;
@@ -155,7 +172,7 @@
             let currentColorKey = '';
             let maxTime = 3000;
 
-            // --- ELEMEN DOM ---
+            // --- DOM ---
             const els = {
                 start: document.getElementById('start-screen'),
                 game: document.getElementById('game-ui'),
@@ -165,21 +182,29 @@
                 finalScore: document.getElementById('final-score'),
                 timer: document.getElementById('timer-bar'),
                 instruction: document.getElementById('instruction-text'),
+                instContainer: document.getElementById('instruction-container'),
                 word: document.getElementById('challenge-word'),
                 wordCont: document.getElementById('challenge-word-container'),
                 buttons: document.getElementById('buttons-container'),
                 body: document.getElementById('main-body')
             };
 
-            // --- EVENT LISTENERS (Dipasang via JS agar aman) ---
-            document.getElementById('btn-start-game').onclick = startGame;
-            document.getElementById('btn-retry').onclick = startGame;
-            document.getElementById('btn-show-leaderboard').onclick = showLeaderboard;
-            document.getElementById('btn-show-leaderboard-over').onclick = showLeaderboard;
-            document.getElementById('btn-close-leaderboard').onclick = closeLeaderboard;
-            document.getElementById('btn-save-record').onclick = saveRecord;
+            // --- LISTENERS ---
+            const bindClick = (id, fn) => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('click', fn);
+                    el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, {passive: false});
+                }
+            };
 
-            // --- FUNGSI UTAMA ---
+            bindClick('btn-start-game', startGame);
+            bindClick('btn-retry', startGame);
+            bindClick('btn-show-leaderboard', showLeaderboard);
+            bindClick('btn-close-leaderboard', closeLeaderboard);
+            bindClick('btn-save-record', saveRecord);
+
+            // --- LOGIC ---
             function startGame() {
                 score = 0;
                 maxTime = 3000;
@@ -191,11 +216,11 @@
             }
 
             function randomizeContext() {
-                // Ganti background
-                const theme = THEMES[Math.floor(Math.random() * THEMES.length)];
-                els.body.className = `w-full flex items-center justify-center text-white relative bg-gradient-to-br ${theme} h-[100dvh] overflow-hidden`;
+                // Background tetap konsisten Navy/Dark seperti Foto 1 & 2
+                // Kita hanya ubah sedikit nuansa jika mau, tapi tetap gelap
+                els.body.className = `w-full flex items-center justify-center bg-[#0B1120] relative`; 
 
-                // Acak Tombol (Pilih 4 warna)
+                // Pilih 4 warna acak
                 const keys = Object.keys(COLORS).sort(() => 0.5 - Math.random()).slice(0, 4);
                 activeKeys = keys;
                 renderButtons(keys);
@@ -206,10 +231,16 @@
                 keys.forEach(key => {
                     const data = COLORS[key];
                     const btn = document.createElement('button');
-                    btn.className = `w-full h-full bg-black/40 backdrop-blur border-b-4 rounded-xl active:scale-95 transition-all flex items-center justify-center shadow-lg ${data.border}`;
-                    btn.innerHTML = `<span class="${data.text} font-bold text-xl md:text-2xl pointer-events-none">${data.label}</span>`;
                     
-                    // Event Handler Universal (Touch & Click)
+                    // Style Tombol mirip Foto 2: Gelap dengan Border Bawah Tebal Berwarna
+                    btn.className = `w-full h-20 bg-[#1e293b] ${data.border} border-b-4 rounded-xl active:scale-95 active:border-b-0 active:mt-1 transition-all flex items-center justify-center shadow-lg group relative overflow-hidden`;
+                    
+                    btn.innerHTML = `
+                        <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${data.text.replace('text', 'bg')}"></div>
+                        <span class="${data.text} font-bold text-2xl tracking-widest pointer-events-none drop-shadow-sm">${data.label}</span>
+                    `;
+                    
+                    // Universal Input Handler
                     const hit = (e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -225,14 +256,11 @@
             function nextRound() {
                 if (isGameOver) return;
 
-                // Ganti Tema tiap 50 poin
                 if(score > 0 && score % 50 === 0) randomizeContext();
 
-                // Tentukan Soal
                 currentRule = Math.random() > 0.5 ? 'color' : 'text';
                 currentWordKey = activeKeys[Math.floor(Math.random() * activeKeys.length)];
                 
-                // Tentukan Warna Tinta (20% kemungkinan sama, 80% beda)
                 if (Math.random() > 0.2) {
                     const conflicts = activeKeys.filter(k => k !== currentWordKey);
                     currentColorKey = conflicts[Math.floor(Math.random() * conflicts.length)];
@@ -245,11 +273,14 @@
             }
 
             function renderQuestion() {
-                const iText = currentRule === 'color' ? "Pilih WARNA TINTA" : "Baca TULISAN KATA";
-                const iColor = currentRule === 'color' ? "text-purple-400 border-purple-500" : "text-blue-400 border-blue-500";
-                
-                els.instruction.innerHTML = iText;
-                els.instruction.className = `px-6 py-2 bg-black/60 rounded-full text-base font-bold border-2 shadow-lg transition-all block text-center ${iColor}`;
+                // Instruksi Style Pill Neon (Foto 2)
+                if (currentRule === 'color') {
+                    els.instruction.innerHTML = 'Pilih <span class="text-white border-b-2 border-purple-500">WARNA TINTA</span>';
+                    els.instruction.className = "px-6 py-3 bg-[#0f172a] rounded-full text-md md:text-lg font-bold border border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)] block text-center transition-all";
+                } else {
+                    els.instruction.innerHTML = 'Baca <span class="text-white border-b-2 border-cyan-400">TULISAN KATA</span>';
+                    els.instruction.className = "px-6 py-3 bg-[#0f172a] rounded-full text-md md:text-lg font-bold border border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)] block text-center transition-all";
+                }
 
                 els.word.innerText = COLORS[currentWordKey].label;
                 els.word.style.color = COLORS[currentColorKey].hex;
@@ -262,11 +293,11 @@
 
             function startTimer() {
                 clearInterval(timerInterval);
-                let timeLimit = Math.max(1200, maxTime - (score * 5)); // Makin lama makin cepat
+                let timeLimit = Math.max(1200, maxTime - (score * 5)); 
                 let startTime = Date.now();
                 let endTime = startTime + timeLimit;
 
-                els.timer.className = "h-full w-full bg-green-500";
+                els.timer.className = "h-full bg-gradient-to-r from-green-400 to-yellow-400 w-full rounded-full";
                 
                 timerInterval = setInterval(() => {
                     let left = endTime - Date.now();
@@ -276,7 +307,7 @@
                         gameOver();
                     } else {
                         els.timer.style.width = pct + "%";
-                        if(pct < 30) els.timer.className = "h-full w-full bg-red-500 shadow-[0_0_10px_red]";
+                        if(pct < 30) els.timer.className = "h-full w-full bg-red-500 shadow-[0_0_15px_red] rounded-full";
                     }
                 }, 16);
             }
@@ -301,7 +332,6 @@
                 els.finalScore.innerText = score;
                 showScreen('over');
 
-                // Cek High Score
                 const scores = getScores();
                 const minScore = scores.length < 10 ? 0 : scores[scores.length-1].score;
                 
@@ -341,33 +371,20 @@
                 const scores = getScores();
                 
                 if(scores.length === 0) {
-                    list.innerHTML = '<div class="text-center text-gray-500 p-4">Belum ada data</div>';
+                    list.innerHTML = '<div class="text-center text-gray-500 p-8 italic">Belum ada skor tersimpan</div>';
                 } else {
                     scores.forEach((s, i) => {
                         const row = document.createElement('div');
-                        row.className = "flex justify-between p-3 border-b border-gray-700 text-sm";
-                        row.innerHTML = `<span class="w-8">${i+1}.</span><span class="flex-1 font-bold">${s.name}</span><span class="text-yellow-400">${s.score}</span>`;
-                        list.appendChild(row);
-                    });
-                }
-                showScreen('leaderboard');
-            }
+                        row.className = "flex justify-between p-4 border-b border-slate-700 text-sm hover:bg-white/5 transition";
+                        
+                        let rankStyle = "text-slate-400";
+                        if(i===0) rankStyle = "text-yellow-400 font-bold scale-110";
+                        if(i===1) rankStyle = "text-gray-300 font-bold";
+                        if(i===2) rankStyle = "text-orange-400 font-bold";
 
-            function closeLeaderboard() {
-                if(isGameOver) showScreen('over');
-                else showScreen('start');
-            }
-
-            function showScreen(id) {
-                ['start','game','over','leaderboard'].forEach(k => els[k].classList.add('hidden'));
-                els[id].classList.remove('hidden');
-                if(id === 'game') els[id].classList.add('flex');
-            }
-
-            function updateScoreUI() {
-                els.score.innerText = score;
-            }
-        });
-    </script>
-</body>
-</html>
+                        row.innerHTML = `
+                            <span class="w-8 ${rankStyle}">${i+1}.</span>
+                            <span class="flex-1 font-bold text-white tracking-wide">${s.name}</span>
+                            <span class="text-cyan-400 font-mono text-base">${s.score}</span>
+                        `;
+ 
