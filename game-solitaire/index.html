@@ -14,11 +14,20 @@
             --accent-color: #4caf50;
             --card-radius: 6px;
             --transition-speed: 0.3s;
+            
+            /* Warna Kartu "Muted Matte" - Tanpa Gradasi */
+            --card-bg: #efefea; 
+            --card-red: #b71c1c;
+            --card-black: #212121;
+            --card-border: rgba(0,0,0,0.1);
         }
 
-        body.theme-ocean { --bg-color: #003366; --bg-gradient: radial-gradient(circle at center, #004080 0%, #001a33 100%); --accent-color: #2196f3; }
-        body.theme-midnight { --bg-color: #1a1a2e; --bg-gradient: radial-gradient(circle at center, #16213e 0%, #0f0f1b 100%); --accent-color: #e94560; }
-        body.theme-wood { --bg-color: #3e2723; --bg-gradient: radial-gradient(circle at center, #4e342e 0%, #26140f 100%); --accent-color: #ff9800; }
+        /* --- Tema --- */
+        body.theme-green { --bg-color: #006400; --bg-gradient: radial-gradient(circle at center, #007000 0%, #004d00 100%); --accent-color: #4caf50; }
+        body.theme-ocean { --bg-color: #001a33; --bg-gradient: linear-gradient(to bottom, #001a33, #003366); --accent-color: #2196f3; }
+        body.theme-midnight { --bg-color: #05050a; --bg-gradient: linear-gradient(to bottom, #05050a, #0f0f1b); --accent-color: #e94560; }
+        body.theme-wood { --bg-color: #26140f; --bg-gradient: radial-gradient(circle at center, #4e342e 0%, #26140f 100%); --accent-color: #ff9800; }
+        body.theme-snow { --bg-color: #1a3c5a; --bg-gradient: linear-gradient(to bottom, #1a3c5a, #2c5364); --accent-color: #ffffff; }
 
         @media (min-width: 600px) {
             :root { --card-width: 75px; --card-height: 105px; --card-gap: 12px; }
@@ -32,13 +41,16 @@
             overflow: hidden; touch-action: none;
             user-select: none; -webkit-user-select: none;
             height: 100vh; width: 100vw;
+            transition: background 0.5s ease;
         }
+
+        #effect-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 1; }
 
         /* --- UI Screens --- */
         .screen {
             display: none; width: 100%; height: 100%;
             flex-direction: column; align-items: center; justify-content: center;
-            position: absolute; top: 0; left: 0;
+            position: absolute; top: 0; left: 0; z-index: 10;
             animation: fadeIn 0.4s ease-out;
         }
         .screen.active { display: flex; }
@@ -46,7 +58,7 @@
 
         .title-display {
             font-size: 3.5rem; font-weight: 800; margin-bottom: 10px;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
             background: linear-gradient(to bottom, #fff, #a5d6a7);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
@@ -65,22 +77,23 @@
             box-sizing: border-box;
         }
         .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .menu-btn.secondary { background: rgba(255,255,255,0.15); color: white; }
+        .menu-btn.secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .menu-btn.danger { background: #ff5252; color: white; }
         .menu-btn.repo { background: #24292e; color: white; }
 
-        /* --- Game UI --- */
+        /* --- Top Bar --- */
         #top-bar {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 5%; background: rgba(0, 0, 0, 0.4); height: 60px;
+            padding: 0 15px; background: rgba(0, 0, 0, 0.4); height: 60px;
             backdrop-filter: blur(10px); width: 100%; box-sizing: border-box;
-            z-index: 100;
+            z-index: 100; position: relative;
         }
-        .bar-group { display: flex; align-items: center; gap: 15px; }
-        .stat-item { background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        .bar-group { display: flex; align-items: center; gap: 10px; }
+        .stat-item { background: rgba(255,255,255,0.12); padding: 6px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
 
         .btn-icon {
             display: flex; align-items: center; justify-content: center;
-            background: white; border: none; width: 36px; height: 36px; border-radius: 8px;
+            background: white; border: none; width: 38px; height: 38px; border-radius: 8px;
             color: #333; font-weight: bold; cursor: pointer; font-size: 1.1rem;
         }
         .btn-exit { background: #ff5252; color: white; }
@@ -88,6 +101,7 @@
         #game-board { 
             position: relative; flex-grow: 1; padding: 10px; 
             max-width: 1000px; margin: 0 auto; width: 100%; box-sizing: border-box;
+            z-index: 5;
         }
 
         .slot-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
@@ -95,7 +109,7 @@
 
         .slot {
             width: var(--card-width); height: var(--card-height);
-            border: 2px solid rgba(255,255,255,0.1); border-radius: var(--card-radius);
+            border: 2px solid rgba(255,255,255,0.06); border-radius: var(--card-radius);
             background: rgba(0,0,0,0.1); position: relative;
         }
         .slot.foundation::after { content: attr(data-symbol); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.8rem; opacity: 0.15; }
@@ -103,39 +117,52 @@
         #tableau { display: flex; justify-content: space-between; gap: var(--card-gap); }
         .pile { width: var(--card-width); position: relative; min-height: 300px; }
 
-        /* --- Card Styles --- */
+        /* --- Desain Kartu SOLID (Tanpa Gradasi/Shadow Menusuk) --- */
         .card {
             width: var(--card-width); height: var(--card-height);
-            background: white; border-radius: var(--card-radius);
-            position: absolute; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            background: var(--card-bg); border-radius: var(--card-radius);
+            position: absolute; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Shadow sangat tipis */
             display: flex; flex-direction: column; justify-content: space-between;
             padding: 4px; box-sizing: border-box; font-weight: bold;
             font-size: calc(var(--card-width) * 0.28); cursor: pointer;
             z-index: 10;
+            border: 1px solid var(--card-border);
         }
+        .card.red { color: var(--card-red); }
+        .card.black { color: var(--card-black); }
+
         .card.dealing { transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .card.moving { transition: top var(--transition-speed) ease, left var(--transition-speed) ease; z-index: 1000 !important; }
-        .card.hint-highlight { animation: hintPulse 0.6s infinite alternate; box-shadow: 0 0 15px #ffeb3b; }
-        @keyframes hintPulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+        
+        .card.hint-highlight { animation: hintPulse 0.6s infinite alternate; outline: 3px solid #ffeb3b; }
+        @keyframes hintPulse { from { transform: scale(1); } to { transform: scale(1.03); } }
 
-        .card.red { color: #d32f2f; }
-        .card.black { color: #212121; }
-        .card-top, .card-bottom { display: flex; flex-direction: column; align-items: center; line-height: 0.85; }
-        .card-top span:last-child, .card-bottom span:last-child { font-size: 0.75rem; margin-top: 1px; }
+        .card-top, .card-bottom { display: flex; flex-direction: column; align-items: center; line-height: 0.8; }
+        .card-top span:last-child, .card-bottom span:last-child { font-size: 0.7rem; margin-top: 1px; }
         .card-bottom { transform: rotate(180deg); }
-        .card-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.4rem; opacity: 0.8; }
+        
+        /* Logo Tengah: Solid, Tanpa Opacity Berbayang */
+        .card-center { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 1.15rem; 
+            opacity: 1; /* Diubah menjadi solid */
+            pointer-events: none; 
+        }
 
-        /* Deck element for shuffling animation */
         #deck-origin {
             position: absolute; bottom: -150px; left: 50%; transform: translateX(-50%);
-            width: var(--card-width); height: var(--card-height); background: white;
-            border-radius: var(--card-radius); box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 50;
+            width: var(--card-width); height: var(--card-height); background: var(--card-bg);
+            border-radius: var(--card-radius); box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 50;
         }
 
         /* --- Modals --- */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 5000;
+            background: rgba(0,0,0,0.8); z-index: 5000;
             justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
         }
         .modal-content {
@@ -143,15 +170,16 @@
             max-width: 420px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        .leaderboard-table {
-            width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem;
-        }
-        .leaderboard-table th { border-bottom: 2px solid #eee; padding: 8px; color: #666; }
-        .leaderboard-table td { padding: 10px 8px; border-bottom: 1px solid #f5f5f5; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        .leaderboard-table th { border-bottom: 2px solid #eee; padding: 10px 5px; color: #666; text-align: left; }
+        .leaderboard-table td { padding: 12px 5px; border-bottom: 1px solid #f5f5f5; text-align: left; }
         .leaderboard-table tr:first-child td { font-weight: bold; color: #d4af37; }
 
-        .btn-row { display: flex; gap: 10px; margin-top: 20px; width: 100%; }
-        .btn-row .menu-btn { flex: 1; margin: 0; width: auto; font-size: 1rem; }
+        .btn-row { display: flex; gap: 15px; margin-top: 25px; width: 100%; justify-content: center; }
+        .btn-row .menu-btn { flex: 1; margin: 0; min-height: 45px; font-size: 1rem; border-radius: 12px; }
+        .btn-row .btn-cancel { background: #e0e0e0; color: #333; }
+
+        .copyright { position: absolute; bottom: 20px; font-size: 0.75rem; opacity: 0.6; color: white; pointer-events: none; }
 
         #toast {
             visibility: hidden; min-width: 200px; background: #333; color: #fff;
@@ -164,15 +192,18 @@
 </head>
 <body class="theme-green">
 
+<canvas id="effect-canvas"></canvas>
+
 <div id="home-screen" class="screen active">
     <div class="title-display">FreeCell</div>
     <div class="card-menu">
         <button class="menu-btn" onclick="startGame()">Mulai Main ♠</button>
         <button id="resume-btn" class="menu-btn secondary" style="display:none" onclick="resumeGame()">Lanjutkan ↻</button>
         <button class="menu-btn secondary" onclick="showLeaderboard()">Papan Skor 🏆</button>
-        <button class="menu-btn repo" onclick="window.open('../index.html', '_blank')">📂 Menu Utama</button>
+        <button class="menu-btn repo" onclick="../index.html">Menu Utama 📂</button>
         <button class="menu-btn secondary" onclick="showThemeModal()">Ganti Tema 🎨</button>
     </div>
+    <div class="copyright">© 2026 FreeCell Solitaire Pro. Semua Hak Dilindungi.</div>
 </div>
 
 <div id="game-screen" class="screen">
@@ -226,8 +257,8 @@
         <h3 style="margin-top:0">Keluar Permainan?</h3>
         <p>Progres Anda akan disimpan secara otomatis.</p>
         <div class="btn-row">
-            <button class="menu-btn danger" style="background:#ff5252; color:white;" onclick="exitToHome()">Ya, Keluar</button>
-            <button class="menu-btn secondary" style="background:#ff5252; color:black;" onclick="closeModal('confirm-modal')">Tidak</button>
+            <button class="menu-btn danger" onclick="exitToHome()">Ya, Keluar</button>
+            <button class="menu-btn btn-cancel" onclick="closeModal('confirm-modal')">Batal</button>
         </div>
     </div>
 </div>
@@ -236,26 +267,27 @@
     <div class="modal-content">
         <h1 style="color:#ff9800; margin:0">MENANG!</h1>
         <p>Skor Akhir: <span id="final-moves">0</span> Langkah dalam <span id="final-time">0</span></p>
-        <button class="menu-btn" style="background:#4caf50; color:white" onclick="initGame()">Main Lagi</button>
-        <button class="menu-btn secondary" style="background:#4caf50; color:white" onclick="exitToHome()">Menu Utama</button>
+        <button class="menu-btn" style="background:#4caf50; color:white" onclick="initGame()">Main Lagi ↻</button>
+        <button class="menu-btn secondary" onclick="exitToHome()">Menu Utama 🏠</button>
     </div>
 </div>
 
 <div id="theme-modal" class="modal">
     <div class="modal-content">
-        <h3>Pilih Tema</h3>
+        <h3 style="margin:0 0 15px 0">Pilih Tema</h3>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div onclick="setTheme('green')" style="background:#006400; height:50px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">Emerald</div>
-            <div onclick="setTheme('ocean')" style="background:#003366; height:50px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">Ocean</div>
-            <div onclick="setTheme('midnight')" style="background:#1a1a2e; height:50px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">Night</div>
-            <div onclick="setTheme('wood')" style="background:#3e2723; height:50px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">Wood</div>
+            <div onclick="setTheme('green')" style="background:#006400; height:45px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size: 0.85rem;">Emerald</div>
+            <div onclick="setTheme('ocean')" style="background:#003366; height:45px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size: 0.85rem;">Ocean 🫧</div>
+            <div onclick="setTheme('midnight')" style="background:#0f0f1b; height:45px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size: 0.85rem;">Midnight ✨</div>
+            <div onclick="setTheme('wood')" style="background:#3e2723; height:45px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size: 0.85rem;">Old Wood 🕯️</div>
+            <div onclick="setTheme('snow')" style="background:#1a3c5a; height:45px; border-radius:10px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size: 0.85rem;">Winter ❄️</div>
         </div>
-        <button class="menu-btn secondary" style="background:#4caf50; color:white" onclick="closeModal('theme-modal')">Batal</button>
+        <button class="menu-btn btn-cancel" style="margin-top:15px" onclick="closeModal('theme-modal')">Batal</button>
     </div>
 </div>
 
 <div id="leaderboard-modal" class="modal">
-    <div class="modal-content" style="max-width:500px">
+    <div class="modal-content" style="max-width:480px">
         <h3 style="margin-top:0">Papan Skor</h3>
         <div style="max-height:300px; overflow-y:auto">
             <table class="leaderboard-table" id="score-table">
@@ -263,475 +295,190 @@
                 <tbody></tbody>
             </table>
         </div>
-        <button class="menu-btn secondary" style="background:#4caf50; color:white" onclick="closeModal('leaderboard-modal')">Kembali</button>
+        <button class="menu-btn btn-cancel" style="margin-top:20px" onclick="closeModal('leaderboard-modal')">Kembali</button>
     </div>
 </div>
 
 <div id="toast">Pesan</div>
 
 <script>
-    // --- Audio System ---
     const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(freq, type, duration, volume = 0.1) {
         if (AudioCtx.state === 'suspended') AudioCtx.resume();
         const osc = AudioCtx.createOscillator();
         const gain = AudioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, AudioCtx.currentTime);
+        osc.type = type; osc.frequency.setValueAtTime(freq, AudioCtx.currentTime);
         gain.gain.setValueAtTime(volume, AudioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, AudioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(AudioCtx.destination);
-        osc.start();
-        osc.stop(AudioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(AudioCtx.destination);
+        osc.start(); osc.stop(AudioCtx.currentTime + duration);
     }
     const sfx = {
         shuffle: () => { for(let i=0; i<10; i++) setTimeout(() => playSound(100 + Math.random()*200, 'square', 0.05, 0.02), i*30); },
-        deal: () => playSound(400, 'sine', 0.08, 0.05),
+        deal: () => playSound(400, 'sine', 0.08, 0.04),
         place: () => playSound(150, 'sine', 0.1, 0.1),
         hint: () => playSound(600, 'sine', 0.2, 0.05),
         win: () => { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playSound(f, 'triangle', 0.4, 0.1), i*150)); }
     };
 
-    // --- State & Config ---
+    const canvas = document.getElementById('effect-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = []; let animationId = null; let currentTheme = 'green';
+
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initParticles(); }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    function initParticles() {
+        particles = []; let count = 0;
+        if (currentTheme === 'snow') count = 70; else if (currentTheme === 'ocean') count = 25;
+        else if (currentTheme === 'midnight') count = 90; else if (currentTheme === 'wood') count = 35;
+        for (let i = 0; i < count; i++) particles.push(createParticle());
+    }
+
+    function createParticle(isStar = false) {
+        const p = { x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: Math.random() * 2 + 1, speed: Math.random() * 0.5 + 0.1, opacity: Math.random() * 0.4 + 0.1, swing: Math.random() * 0.02, color: '#ffffff' };
+        if (currentTheme === 'ocean') { p.r = Math.random() * 4 + 2; p.speed = -(Math.random() * 0.8 + 0.3); p.color = 'rgba(200, 230, 255, 0.3)'; }
+        else if (currentTheme === 'midnight') { p.r = Math.random() * 1.2; p.speed = 0; p.color = `rgba(255, 255, 200, ${p.opacity})`; if (isStar) { p.isStar = true; p.x = Math.random() * canvas.width; p.y = 0; p.vx = 7; p.vy = 7; p.life = 60; } }
+        else if (currentTheme === 'wood') { p.r = Math.random() * 2.5 + 0.5; p.speed = (Math.random() - 0.5) * 0.2; p.vx = (Math.random() - 0.5) * 0.2; p.color = `rgba(255, 210, 120, 0.15)`; }
+        else if (currentTheme === 'snow') { p.color = `rgba(220, 235, 255, ${p.opacity})`; }
+        return p;
+    }
+
+    function drawEffects() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (currentTheme === 'snow') {
+            ctx.fillStyle = "rgba(230, 240, 255, 0.3)"; ctx.beginPath(); let waveCount = 4; let waveWidth = canvas.width / waveCount; ctx.moveTo(0, canvas.height);
+            for(let i = 0; i <= waveCount; i++) { let x = i * waveWidth; ctx.quadraticCurveTo(x - (waveWidth/2), canvas.height - 25, x, canvas.height - 10); }
+            ctx.lineTo(canvas.width, canvas.height); ctx.fill();
+        }
+        particles.forEach((p, i) => {
+            ctx.fillStyle = p.color; ctx.beginPath();
+            if (currentTheme === 'ocean') { ctx.strokeStyle = "rgba(255,255,255,0.15)"; ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.stroke(); p.y += p.speed; p.x += Math.sin(p.y / 50) * 0.4; if (p.y < -20) p.y = canvas.height + 20; }
+            else if (currentTheme === 'midnight') { let blink = Math.abs(Math.sin(Date.now() * 0.0008 + i)); ctx.globalAlpha = blink; ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1.0; if (Math.random() < 0.0004) particles[i] = createParticle(true); if (p.isStar) { ctx.beginPath(); ctx.lineWidth = 1.5; ctx.strokeStyle = "rgba(255,255,255," + (p.life/60) + ")"; ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx, p.y - p.vy); ctx.stroke(); p.x += p.vx; p.y += p.vy; p.life--; if (p.life <= 0) particles[i] = createParticle(); } }
+            else if (currentTheme === 'wood') { ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); p.y += p.speed; p.x += p.vx; if (p.y > canvas.height) p.y = 0; if (p.y < 0) p.y = canvas.height; }
+            else if (currentTheme === 'snow') { ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); p.y += p.speed; p.x += Math.sin(p.y * 0.015) * 0.25; if (p.y > canvas.height) p.y = -10; }
+        });
+        animationId = requestAnimationFrame(drawEffects);
+    }
+
     const SUITS = ['hearts', 'spades', 'diamonds', 'clubs'];
     const SYMBOLS = { 'hearts': '♥', 'spades': '♠', 'diamonds': '♦', 'clubs': '♣' };
     const COLORS = { 'hearts': 'red', 'spades': 'black', 'diamonds': 'red', 'clubs': 'black' };
     const VALUES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-    let state = {
-        freeCells: [null, null, null, null],
-        foundations: [[], [], [], []],
-        tableau: [[], [], [], [], [], [], [], []],
-        moveCount: 0,
-        seconds: 0,
-        history: []
-    };
+    let state = { freeCells: [null, null, null, null], foundations: [[], [], [], []], tableau: [[], [], [], [], [], [], [], []], moveCount: 0, seconds: 0, history: [] };
+    let timerInterval = null, dragInfo = null, isAnimating = false;
 
-    let timerInterval = null;
-    let dragInfo = null;
-    let isAnimating = false;
+    window.onload = () => { if (localStorage.getItem('freecell_save')) document.getElementById('resume-btn').style.display = 'block'; setTheme(localStorage.getItem('freecell_theme') || 'green'); };
 
-    window.onload = () => {
-        if (localStorage.getItem('freecell_save')) document.getElementById('resume-btn').style.display = 'block';
-        setTheme(localStorage.getItem('freecell_theme') || 'green');
-    };
-
-    function formatTime(s) {
-        const m = Math.floor(s / 60);
-        const sec = s % 60;
-        return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
-    }
-
-    function startTimer() {
-        stopTimer();
-        timerInterval = setInterval(() => {
-            state.seconds++;
-            const el = document.getElementById('timer-display');
-            if (el) el.innerText = formatTime(state.seconds);
-        }, 1000);
-    }
+    function setTheme(theme) { currentTheme = theme; document.body.className = `theme-${theme}`; localStorage.setItem('freecell_theme', theme); cancelAnimationFrame(animationId); ctx.clearRect(0, 0, canvas.width, canvas.height); if (theme !== 'green') { initParticles(); drawEffects(); } closeModal('theme-modal'); }
+    function formatTime(s) { const m = Math.floor(s/60); const sec = s%60; return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`; }
+    function startTimer() { stopTimer(); timerInterval = setInterval(() => { state.seconds++; const el = document.getElementById('timer-display'); if (el) el.innerText = formatTime(state.seconds); }, 1000); }
     function stopTimer() { clearInterval(timerInterval); }
-
-    function setTheme(theme) {
-        document.body.className = `theme-${theme}`;
-        localStorage.setItem('freecell_theme', theme);
-        closeModal('theme-modal');
-    }
-
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function showThemeModal() { document.getElementById('theme-modal').style.display = 'flex'; }
     function confirmExit() { document.getElementById('confirm-modal').style.display = 'flex'; }
     
-    function exitToHome() {
-        saveGame();
-        stopTimer();
-        closeModal('confirm-modal');
-        closeModal('win-modal');
-        document.getElementById('game-screen').classList.remove('active');
-        document.getElementById('home-screen').classList.add('active');
-        if (localStorage.getItem('freecell_save')) document.getElementById('resume-btn').style.display = 'block';
-    }
-
-    function startGame() {
-        document.getElementById('home-screen').classList.remove('active');
-        document.getElementById('game-screen').classList.add('active');
-        initGame();
-    }
-
-    function resumeGame() {
-        const saved = localStorage.getItem('freecell_save');
-        if (!saved) return;
-        state = JSON.parse(saved);
-        document.getElementById('home-screen').classList.remove('active');
-        document.getElementById('game-screen').classList.add('active');
-        renderAll();
-        startTimer();
-    }
+    function exitToHome() { saveGame(); stopTimer(); closeModal('confirm-modal'); closeModal('win-modal'); document.getElementById('game-screen').classList.remove('active'); document.getElementById('home-screen').classList.add('active'); if (localStorage.getItem('freecell_save')) document.getElementById('resume-btn').style.display = 'block'; }
+    function startGame() { document.getElementById('home-screen').classList.remove('active'); document.getElementById('game-screen').classList.add('active'); initGame(); }
+    function resumeGame() { const saved = localStorage.getItem('freecell_save'); if (!saved) return; state = JSON.parse(saved); document.getElementById('home-screen').classList.remove('active'); document.getElementById('game-screen').classList.add('active'); renderAll(); startTimer(); }
 
     async function initGame() {
-        if (isAnimating) return;
-        isAnimating = true;
-        
-        const deck = createDeck();
-        shuffle(deck);
-        
-        // Reset state
-        state.freeCells = [null, null, null, null];
-        state.foundations = [[], [], [], []];
-        state.tableau = [[], [], [], [], [], [], [], []];
-        state.moveCount = 0;
-        state.seconds = 0;
-        state.history = [];
-
-        // Clear view for animation
-        renderAll();
-        stopTimer();
-        closeModal('win-modal');
-
-        // Shuffling Visual
-        sfx.shuffle();
-        const deckOrigin = document.getElementById('deck-origin');
-        deckOrigin.style.bottom = '10px';
-        deckOrigin.style.transition = 'bottom 0.5s ease-out';
+        if (isAnimating) return; isAnimating = true; const deck = createDeck(); shuffle(deck);
+        state = { freeCells: [null, null, null, null], foundations: [[], [], [], []], tableau: [[], [], [], [], [], [], [], []], moveCount: 0, seconds: 0, history: [] };
+        renderAll(); stopTimer(); closeModal('win-modal'); sfx.shuffle();
+        const deckOrigin = document.getElementById('deck-origin'); deckOrigin.style.bottom = '10px'; deckOrigin.style.transition = 'bottom 0.5s ease-out';
         await new Promise(r => setTimeout(r, 600));
-
-        // Distribute cards with animation
-        let col = 0;
-        const totalCards = deck.length;
-        const deckTemp = [...deck];
-        
+        let col = 0; const deckTemp = [...deck];
         while(deckTemp.length > 0) {
-            const card = deckTemp.pop();
-            state.tableau[col].push(card);
-            
-            // Animation logic
-            const pileEl = document.getElementById(`pile-${col}`);
-            const cardEl = createCardUI(card);
-            cardEl.classList.add('dealing');
-            
-            // Start from deck origin
+            const card = deckTemp.pop(); state.tableau[col].push(card);
+            const pileEl = document.getElementById(`pile-${col}`); const cardEl = createCardUI(card); cardEl.classList.add('dealing');
             const originRect = deckOrigin.getBoundingClientRect();
-            cardEl.style.position = 'fixed';
-            cardEl.style.left = originRect.left + 'px';
-            cardEl.style.top = originRect.top + 'px';
-            cardEl.style.zIndex = 1000;
+            cardEl.style.position = 'fixed'; cardEl.style.left = originRect.left + 'px'; cardEl.style.top = originRect.top + 'px'; cardEl.style.zIndex = 1000;
             document.body.appendChild(cardEl);
-            
-            // Target position
-            const pileRect = pileEl.getBoundingClientRect();
-            const targetTop = pileRect.top + (state.tableau[col].length - 1) * 28;
-            
-            // Trigger animation
-            setTimeout(() => {
-                sfx.deal();
-                cardEl.style.left = pileRect.left + 'px';
-                cardEl.style.top = targetTop + 'px';
-            }, 10);
-
-            await new Promise(r => setTimeout(r, 40));
-            col = (col + 1) % 8;
+            const pileRect = pileEl.getBoundingClientRect(); const targetTop = pileRect.top + (state.tableau[col].length - 1) * 28;
+            setTimeout(() => { sfx.deal(); cardEl.style.left = pileRect.left + 'px'; cardEl.style.top = targetTop + 'px'; }, 10);
+            await new Promise(r => setTimeout(r, 40)); col = (col + 1) % 8;
         }
-
-        // Cleanup temporary cards and render final state
-        setTimeout(() => {
-            document.querySelectorAll('.card.dealing').forEach(el => el.remove());
-            deckOrigin.style.bottom = '-150px';
-            isAnimating = false;
-            renderAll();
-            startTimer();
-            saveGame();
-            autoCollect();
-        }, 600);
+        setTimeout(() => { document.querySelectorAll('.card.dealing').forEach(el => el.remove()); deckOrigin.style.bottom = '-150px'; isAnimating = false; renderAll(); startTimer(); saveGame(); autoCollect(); }, 600);
     }
 
-    function createDeck() {
-        let deck = [];
-        SUITS.forEach(suit => {
-            VALUES.forEach((val, i) => {
-                deck.push({ id: `${suit}-${i+1}`, suit, value: i + 1, label: val, color: COLORS[suit] });
-            });
-        });
-        return deck;
-    }
-
-    function shuffle(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-    }
+    function createDeck() { let deck = []; SUITS.forEach(suit => { VALUES.forEach((val, i) => { deck.push({ id: `${suit}-${i+1}`, suit, value: i + 1, label: val, color: COLORS[suit] }); }); }); return deck; }
+    function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } }
 
     function renderAll() {
-        document.getElementById('move-count').innerText = state.moveCount;
-        document.getElementById('timer-display').innerText = formatTime(state.seconds);
-        
-        state.freeCells.forEach((card, i) => {
-            const slot = document.getElementById(`freecell-${i}`);
-            slot.innerHTML = '';
-            if (card) slot.appendChild(createCardUI(card));
-        });
-
-        state.foundations.forEach((pile, i) => {
-            const slot = document.getElementById(`foundation-${i}`);
-            slot.innerHTML = '';
-            if (pile.length > 0) slot.appendChild(createCardUI(pile[pile.length-1]));
-        });
-
+        document.getElementById('move-count').innerText = state.moveCount; document.getElementById('timer-display').innerText = formatTime(state.seconds);
+        state.freeCells.forEach((card, i) => { const slot = document.getElementById(`freecell-${i}`); slot.innerHTML = ''; if (card) slot.appendChild(createCardUI(card)); });
+        state.foundations.forEach((pile, i) => { const slot = document.getElementById(`foundation-${i}`); slot.innerHTML = ''; if (pile.length > 0) slot.appendChild(createCardUI(pile[pile.length-1])); });
         state.tableau.forEach((pile, i) => {
-            const container = document.getElementById(`pile-${i}`);
-            container.innerHTML = '';
-            pile.forEach((card, cardIdx) => {
-                const cardEl = createCardUI(card);
-                cardEl.style.top = (cardIdx * 28) + 'px';
-                container.appendChild(cardEl);
-            });
+            const container = document.getElementById(`pile-${i}`); container.innerHTML = '';
+            pile.forEach((card, cardIdx) => { const cardEl = createCardUI(card); cardEl.style.top = (cardIdx * 28) + 'px'; container.appendChild(cardEl); });
         });
     }
 
     function createCardUI(card) {
-        const div = document.createElement('div');
-        div.className = `card ${card.color}`;
-        div.id = `card-${card.id}`;
-        const s = SYMBOLS[card.suit];
-        div.innerHTML = `
-            <div class="card-top"><span>${card.label}</span><span>${s}</span></div>
-            <div class="card-center">${s}</div>
-            <div class="card-bottom"><span>${card.label}</span><span>${s}</span></div>
-        `;
-        div.addEventListener('mousedown', onDragStart);
-        div.addEventListener('touchstart', onDragStart, {passive: false});
-        div.addEventListener('dblclick', () => fastMove(card));
+        const div = document.createElement('div'); div.className = `card ${card.color}`; div.id = `card-${card.id}`; const s = SYMBOLS[card.suit];
+        div.innerHTML = `<div class="card-top"><span>${card.label}</span><span>${s}</span></div><div class="card-center">${s}</div><div class="card-bottom"><span>${card.label}</span><span>${s}</span></div>`;
+        div.addEventListener('mousedown', onDragStart); div.addEventListener('touchstart', onDragStart, {passive: false}); div.addEventListener('dblclick', () => fastMove(card));
         return div;
     }
 
-    function undo() {
-        if (isAnimating || state.history.length === 0) return;
-        const prevState = state.history.pop();
-        state.freeCells = prevState.freeCells;
-        state.foundations = prevState.foundations;
-        state.tableau = prevState.tableau;
-        state.moveCount++;
-        renderAll();
-        sfx.place();
-    }
-
-    function fastMove(card) {
-        if (isAnimating) return;
-        const moves = getValidMovesForCard(card);
-        const foundationMove = moves.find(m => m.to.type === 'foundation');
-        if (foundationMove) executeMove(foundationMove);
-        else if (moves.length > 0) executeMove(moves[0]);
-    }
+    function undo() { if (isAnimating || state.history.length === 0) return; const prevState = state.history.pop(); state.freeCells = prevState.freeCells; state.foundations = prevState.foundations; state.tableau = prevState.tableau; state.moveCount++; renderAll(); sfx.place(); autoCollect(); }
+    function fastMove(card) { if (isAnimating) return; const moves = getValidMovesForCard(card); const foundationMove = moves.find(m => m.to.type === 'foundation'); if (foundationMove) executeMove(foundationMove); else if (moves.length > 0) executeMove(moves[0]); }
 
     function onDragStart(e) {
-        if (isAnimating) return;
-        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
-
-        const cardEl = e.currentTarget;
-        const loc = findCard(cardEl.id.replace('card-', ''));
-        const sequence = getSequence(loc);
-        if (!sequence) return;
-
-        const rect = cardEl.getBoundingClientRect();
-        dragInfo = {
-            cards: sequence, origin: loc, elements: sequence.map(c => document.getElementById(`card-${c.id}`)),
-            offsetX: clientX - rect.left, offsetY: clientY - rect.top
-        };
-
+        if (isAnimating) return; const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX; const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+        const cardEl = e.currentTarget; const loc = findCard(cardEl.id.replace('card-', '')); const sequence = getSequence(loc); if (!sequence) return;
+        const rect = cardEl.getBoundingClientRect(); dragInfo = { cards: sequence, origin: loc, elements: sequence.map(c => document.getElementById(`card-${c.id}`)), offsetX: clientX - rect.left, offsetY: clientY - rect.top };
         dragInfo.elements.forEach((el, i) => { el.style.zIndex = 2000 + i; el.style.pointerEvents = 'none'; });
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('touchmove', onDragMove, {passive: false});
-        document.addEventListener('mouseup', onDragEnd);
-        document.addEventListener('touchend', onDragEnd);
+        document.addEventListener('mousemove', onDragMove); document.addEventListener('touchmove', onDragMove, {passive: false}); document.addEventListener('mouseup', onDragEnd); document.addEventListener('touchend', onDragEnd);
     }
 
-    function onDragMove(e) {
-        if (!dragInfo) return;
-        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
-        dragInfo.elements.forEach((el, i) => {
-            el.style.position = 'fixed';
-            el.style.left = (clientX - dragInfo.offsetX) + 'px';
-            el.style.top = (clientY - dragInfo.offsetY + (i * 28)) + 'px';
-        });
-    }
+    function onDragMove(e) { if (!dragInfo) return; const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX; const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY; dragInfo.elements.forEach((el, i) => { el.style.position = 'fixed'; el.style.left = (clientX - dragInfo.offsetX) + 'px'; el.style.top = (clientY - dragInfo.offsetY + (i * 28)) + 'px'; }); }
 
     function onDragEnd(e) {
-        if (!dragInfo) return;
-        const clientX = e.type.startsWith('touch') ? e.changedTouches[0].clientX : e.clientX;
-        const clientY = e.type.startsWith('touch') ? e.changedTouches[0].clientY : e.clientY;
-
-        const targetEl = document.elementFromPoint(clientX, clientY);
-        const targetSlot = targetEl?.closest('.slot, .pile');
-        let moved = false;
-
-        if (targetSlot) {
-            const to = { type: targetSlot.dataset.type, index: parseInt(targetSlot.dataset.index) };
-            const move = { from: dragInfo.origin, to, cards: dragInfo.cards };
-            if (isValidMove(move)) { executeMove(move); moved = true; }
-        }
-
-        if (!moved) renderAll();
-        dragInfo.elements.forEach(el => el.style.pointerEvents = 'auto');
-        dragInfo = null;
-        document.removeEventListener('mousemove', onDragMove);
-        document.removeEventListener('touchmove', onDragMove);
-        document.removeEventListener('mouseup', onDragEnd);
-        document.removeEventListener('touchend', onDragEnd);
+        if (!dragInfo) return; const clientX = e.type.startsWith('touch') ? e.changedTouches[0].clientX : e.clientX; const clientY = e.type.startsWith('touch') ? e.changedTouches[0].clientY : e.clientY;
+        const targetEl = document.elementFromPoint(clientX, clientY); const targetSlot = targetEl?.closest('.slot, .pile'); let moved = false;
+        if (targetSlot) { const to = { type: targetSlot.dataset.type, index: parseInt(targetSlot.dataset.index) }; const move = { from: dragInfo.origin, to, cards: dragInfo.cards }; if (isValidMove(move)) { executeMove(move); moved = true; } }
+        if (!moved) renderAll(); dragInfo.elements.forEach(el => el.style.pointerEvents = 'auto'); dragInfo = null;
+        document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); document.removeEventListener('mouseup', onDragEnd); document.removeEventListener('touchend', onDragEnd);
     }
 
-    function findCard(id) {
-        for(let i=0; i<4; i++) if(state.freeCells[i]?.id === id) return {type:'freecell', index:i};
-        for(let i=0; i<8; i++) {
-            const idx = state.tableau[i].findIndex(c => c.id === id);
-            if(idx !== -1) return {type:'tableau', index:i, cardIdx: idx};
-        }
-        return null;
-    }
-
-    function getSequence(loc) {
-        if (!loc) return null;
-        if (loc.type === 'freecell') return [state.freeCells[loc.index]];
-        const pile = state.tableau[loc.index];
-        const seq = pile.slice(loc.cardIdx);
-        for(let i=0; i < seq.length - 1; i++) {
-            if (seq[i].color === seq[i+1].color || seq[i].value !== seq[i+1].value + 1) return null;
-        }
-        return seq;
-    }
+    function findCard(id) { for(let i=0; i<4; i++) if(state.freeCells[i]?.id === id) return {type:'freecell', index:i}; for(let i=0; i<8; i++) { const idx = state.tableau[i].findIndex(c => c.id === id); if(idx !== -1) return {type:'tableau', index:i, cardIdx: idx}; } return null; }
+    function getSequence(loc) { if (!loc) return null; if (loc.type === 'freecell') return [state.freeCells[loc.index]]; const pile = state.tableau[loc.index]; const seq = pile.slice(loc.cardIdx); for(let i=0; i < seq.length - 1; i++) if (seq[i].color === seq[i+1].color || seq[i].value !== seq[i+1].value + 1) return null; return seq; }
 
     function isValidMove(move) {
         const card = move.cards[0];
         if (move.to.type === 'freecell') return move.cards.length === 1 && state.freeCells[move.to.index] === null;
-        if (move.to.type === 'foundation') {
-            if (move.cards.length > 1) return false;
-            const pile = state.foundations[move.to.index];
-            return SUITS[move.to.index] === card.suit && (pile.length === 0 ? card.value === 1 : card.value === pile[pile.length-1].value + 1);
-        }
-        if (move.to.type === 'tableau') {
-            const targetPile = state.tableau[move.to.index];
-            const emptyFC = state.freeCells.filter(c => c === null).length;
-            const emptyTab = state.tableau.filter((p, i) => p.length === 0 && i !== move.to.index).length;
-            if (move.cards.length > (1 + emptyFC) * Math.pow(2, emptyTab)) return false;
-            if (targetPile.length === 0) return true;
-            const last = targetPile[targetPile.length-1];
-            return last.color !== card.color && last.value === card.value + 1;
-        }
+        if (move.to.type === 'foundation') { if (move.cards.length > 1) return false; const pile = state.foundations[move.to.index]; return SUITS[move.to.index] === card.suit && (pile.length === 0 ? card.value === 1 : card.value === pile[pile.length-1].value + 1); }
+        if (move.to.type === 'tableau') { const targetPile = state.tableau[move.to.index]; const emptyFC = state.freeCells.filter(c => c === null).length; const emptyTab = state.tableau.filter((p, i) => p.length === 0 && i !== move.to.index).length; if (move.cards.length > (1 + emptyFC) * Math.pow(2, emptyTab)) return false; if (targetPile.length === 0) return true; const last = targetPile[targetPile.length-1]; return last.color !== card.color && last.value === card.value + 1; }
         return false;
     }
 
     function executeMove(move) {
         state.history.push(JSON.parse(JSON.stringify({ freeCells: state.freeCells, foundations: state.foundations, tableau: state.tableau, moveCount: state.moveCount })));
-        if (move.from.type === 'freecell') state.freeCells[move.from.index] = null;
-        else state.tableau[move.from.index].splice(move.from.cardIdx, move.cards.length);
-
-        if (move.to.type === 'freecell') state.freeCells[move.to.index] = move.cards[0];
-        else if (move.to.type === 'foundation') state.foundations[move.to.index].push(move.cards[0]);
-        else state.tableau[move.to.index].push(...move.cards);
-
-        state.moveCount++;
-        sfx.place();
-        renderAll();
-        checkWin();
-        autoCollect();
-        saveGame();
+        if (move.from.type === 'freecell') state.freeCells[move.from.index] = null; else state.tableau[move.from.index].splice(move.from.cardIdx, move.cards.length);
+        if (move.to.type === 'freecell') state.freeCells[move.to.index] = move.cards[0]; else if (move.to.type === 'foundation') state.foundations[move.to.index].push(move.cards[0]); else state.tableau[move.to.index].push(...move.cards);
+        state.moveCount++; sfx.place(); renderAll(); checkWin(); autoCollect(); saveGame();
     }
 
     function autoCollect() {
-        const getFV = (s) => { const p = state.foundations[SUITS.indexOf(s)]; return p.length > 0 ? p[p.length-1].value : 0; };
-        const isSafe = (c) => {
-            const others = c.color === 'red' ? ['spades', 'clubs'] : ['hearts', 'diamonds'];
-            return getFV(others[0]) >= c.value - 1 && getFV(others[1]) >= c.value - 1;
-        };
-
+        const getFV = (suitName) => { const idx = SUITS.indexOf(suitName); const p = state.foundations[idx]; return p.length > 0 ? p[p.length-1].value : 0; };
+        const isSafeToCollect = (card) => { if (card.value <= 2) return true; const oppositeSuits = card.color === 'red' ? ['spades', 'clubs'] : ['hearts', 'diamonds']; const v1 = getFV(oppositeSuits[0]); const v2 = getFV(oppositeSuits[1]); return v1 >= card.value - 1 && v2 >= card.value - 1; };
         let moved = false;
-        state.tableau.forEach((p, i) => {
-            if (p.length === 0) return;
-            const c = p[p.length-1];
-            const fi = SUITS.indexOf(c.suit);
-            const fp = state.foundations[fi];
-            if (((fp.length === 0 && c.value === 1) || (fp.length > 0 && c.value === fp[fp.length-1].value + 1)) && (isSafe(c) || c.value <= 2)) {
-                executeMove({ from: {type:'tableau', index:i, cardIdx: p.length-1}, to: {type:'foundation', index:fi}, cards:[c] });
-                moved = true;
-            }
-        });
-        if (!moved) state.freeCells.forEach((c, i) => {
-            if (!c) return;
-            const fi = SUITS.indexOf(c.suit);
-            const fp = state.foundations[fi];
-            if (((fp.length === 0 && c.value === 1) || (fp.length > 0 && c.value === fp[fp.length-1].value + 1)) && (isSafe(c) || c.value <= 2)) {
-                executeMove({ from: {type:'freecell', index:i}, to: {type:'foundation', index:fi}, cards:[c] });
-                moved = true;
-            }
-        });
-        if (moved) setTimeout(autoCollect, 200);
+        for (let i = 0; i < 8; i++) { const p = state.tableau[i]; if (p.length === 0) continue; const c = p[p.length - 1]; const fi = SUITS.indexOf(c.suit); const fp = state.foundations[fi]; const canF = (fp.length === 0 && c.value === 1) || (fp.length > 0 && c.value === fp[fp.length-1].value + 1); if (canF && isSafeToCollect(c)) { executeMove({ from: { type: 'tableau', index: i, cardIdx: p.length - 1 }, to: { type: 'foundation', index: fi }, cards: [c] }); moved = true; break; } }
+        if (!moved) { for (let i = 0; i < 4; i++) { const c = state.freeCells[i]; if (!c) continue; const fi = SUITS.indexOf(c.suit); const fp = state.foundations[fi]; const canF = (fp.length === 0 && c.value === 1) || (fp.length > 0 && c.value === fp[fp.length-1].value + 1); if (canF && isSafeToCollect(c)) { executeMove({ from: { type: 'freecell', index: i }, to: { type: 'foundation', index: fi }, cards: [c] }); moved = true; break; } } }
+        if (moved) setTimeout(autoCollect, 150);
     }
 
-    function getValidMovesForCard(card) {
-        const loc = findCard(card.id);
-        const seq = getSequence(loc);
-        if (!seq) return [];
-        let moves = [];
-        for(let i=0; i<4; i++) { const m = {from:loc, to:{type:'foundation', index:i}, cards:[card]}; if(isValidMove(m)) moves.push(m); }
-        for(let i=0; i<8; i++) { if(loc.type==='tableau' && loc.index===i) continue; const m={from:loc, to:{type:'tableau', index:i}, cards:seq}; if(isValidMove(m)) moves.push(m); }
-        for(let i=0; i<4; i++) { const m={from:loc, to:{type:'freecell', index:i}, cards:[card]}; if(isValidMove(m)) moves.push(m); }
-        return moves;
-    }
-
-    function giveHint() {
-        if (isAnimating) return;
-        let all = [];
-        state.freeCells.forEach(c => { if(c) all.push(...getValidMovesForCard(c)); });
-        state.tableau.forEach(p => { p.forEach(c => all.push(...getValidMovesForCard(c))); });
-        all.sort((a,b) => (a.to.type==='foundation'?0:1) - (b.to.type==='foundation'?0:1));
-
-        if (all.length > 0) {
-            sfx.hint();
-            const el = document.getElementById(`card-${all[0].cards[0].id}`);
-            el.classList.add('hint-highlight');
-            setTimeout(() => el.classList.remove('hint-highlight'), 1500);
-        } else showToast("Tidak ada langkah!");
-    }
-
-    function checkWin() {
-        if (state.foundations.every(f => f.length === 13)) {
-            stopTimer();
-            sfx.win();
-            const fm = document.getElementById('final-moves');
-            const ft = document.getElementById('final-time');
-            if (fm) fm.innerText = state.moveCount;
-            if (ft) ft.innerText = formatTime(state.seconds);
-            document.getElementById('win-modal').style.display = 'flex';
-            saveScore(state.moveCount, state.seconds);
-            localStorage.removeItem('freecell_save');
-        }
-    }
-
+    function getValidMovesForCard(card) { const loc = findCard(card.id); const seq = getSequence(loc); if (!seq) return []; let moves = []; for(let i=0; i<4; i++) { const m = {from:loc, to:{type:'foundation', index:i}, cards:[card]}; if(isValidMove(m)) moves.push(m); } for(let i=0; i<8; i++) { if(loc.type==='tableau' && loc.index===i) continue; const m={from:loc, to:{type:'tableau', index:i}, cards:seq}; if(isValidMove(m)) moves.push(m); } for(let i=0; i<4; i++) { const m={from:loc, to:{type:'freecell', index:i}, cards:[card]}; if(isValidMove(m)) moves.push(m); } return moves; }
+    function giveHint() { if (isAnimating) return; let all = []; state.freeCells.forEach(c => { if(c) all.push(...getValidMovesForCard(c)); }); state.tableau.forEach(p => { p.forEach(c => all.push(...getValidMovesForCard(c))); }); all.sort((a,b) => (a.to.type==='foundation'?0:1) - (b.to.type==='foundation'?0:1)); if (all.length > 0) { sfx.hint(); const el = document.getElementById(`card-${all[0].cards[0].id}`); el.classList.add('hint-highlight'); setTimeout(() => el.classList.remove('hint-highlight'), 1500); } else showToast("Tidak ada langkah!"); }
+    function checkWin() { if (state.foundations.every(f => f.length === 13)) { stopTimer(); sfx.win(); const fm = document.getElementById('final-moves'); const ft = document.getElementById('final-time'); if (fm) fm.innerText = state.moveCount; if (ft) ft.innerText = formatTime(state.seconds); document.getElementById('win-modal').style.display = 'flex'; saveScore(state.moveCount, state.seconds); localStorage.removeItem('freecell_save'); } }
     function saveGame() { localStorage.setItem('freecell_save', JSON.stringify(state)); }
-    function saveScore(moves, time) {
-        let scores = JSON.parse(localStorage.getItem('freecell_scores') || '[]');
-        scores.push({ moves, time, date: new Date().toLocaleDateString() });
-        scores.sort((a,b) => a.moves - b.moves || a.time - b.time);
-        localStorage.setItem('freecell_scores', JSON.stringify(scores.slice(0, 15)));
-    }
-
-    function showLeaderboard() {
-        const scores = JSON.parse(localStorage.getItem('freecell_scores') || '[]');
-        const tbody = document.querySelector('#score-table tbody');
-        if (tbody) {
-            tbody.innerHTML = scores.length ? scores.map((s, i) => `
-                <tr><td>${i+1}</td><td>${s.moves}</td><td>${formatTime(s.time)}</td><td>${s.date}</td></tr>
-            `).join('') : '<tr><td colspan="4">Belum ada rekor</td></tr>';
-        }
-        document.getElementById('leaderboard-modal').style.display = 'flex';
-    }
-
-    function showToast(msg) {
-        const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show';
-        setTimeout(() => t.className = '', 2500);
-    }
+    function saveScore(moves, time) { let scores = JSON.parse(localStorage.getItem('freecell_scores') || '[]'); scores.push({ moves, time, date: new Date().toLocaleDateString() }); scores.sort((a,b) => a.moves - b.moves || a.time - b.time); localStorage.setItem('freecell_scores', JSON.stringify(scores.slice(0, 15))); }
+    function showLeaderboard() { const scores = JSON.parse(localStorage.getItem('freecell_scores') || '[]'); const tbody = document.querySelector('#score-table tbody'); if (tbody) { tbody.innerHTML = scores.length ? scores.map((s, i) => `<tr><td>${i+1}</td><td>${s.moves}</td><td>${formatTime(s.time)}</td><td>${s.date}</td></tr>`).join('') : '<tr><td colspan="4">Belum ada rekor</td></tr>'; } document.getElementById('leaderboard-modal').style.display = 'flex'; }
+    function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.className = 'show'; setTimeout(() => t.className = '', 2500); }
 </script>
 </body>
 </html>
+
