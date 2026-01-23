@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nonogram Petualangan Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #f0fdfa; /* Teal 50 */
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden; /* Prevent scroll bouncing */
+        }
+
+        /* SCREEN TRANSITIONS */
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* GAME BOARD STYLES */
+        .board-container {
+            display: grid;
+            gap: 1px;
+            background-color: #475569;
+            border: 4px solid #334155;
+            padding: 2px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .hint-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #475569;
+            background-color: #e2e8f0;
+        }
+
+        .hint-zero { color: #cbd5e1; font-weight: 400; }
+
+        .game-cell {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.05s;
+        }
+        
+        .game-cell:active { transform: scale(0.9); }
+        .game-cell.filled { background-color: #0d9488; } /* Teal 600 */
+        .game-cell.crossed { color: #cbd5e1; }
+        .game-cell.crossed::after { content: "✖"; font-size: 60%; }
+
+        .thick-r { border-right: 2px solid #94a3b8 !important; }
+        .thick-b { border-bottom: 2px solid #94a3b8 !important; }
+
+        /* ANIMATIONS */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-content { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    </style>
+</head>
+<body class="h-screen w-full relative">
+
+    <!-- ================= MAIN MENU ================= -->
+    <div id="screen-menu" class="screen active h-full flex-col items-center justify-center p-6 bg-gradient-to-br from-teal-50 to-cyan-100">
+        <div class="mb-8 text-center animate-float">
+            <div class="w-24 h-24 bg-teal-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg transform rotate-3 mb-4">
+                <i class="fas fa-th text-white text-5xl"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-slate-800 tracking-tight">Nonogram<br><span class="text-teal-600">Adventure</span></h1>
+            <p class="text-slate-500 mt-2 font-medium">Logika Gambar Piksel</p>
+        </div>
+
+        <div class="w-full max-w-xs space-y-4">
+            <button onclick="startGame()" class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg font-bold text-lg transition-all active:scale-95 flex items-center justify-center gap-3">
+                <i class="fas fa-play"></i> Mulai Main
+            </button>
+            
+            <button onclick="showHighScores()" class="w-full py-4 bg-white hover:bg-slate-50 text-slate-700 rounded-xl shadow-md font-bold text-lg transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-200">
+                <i class="fas fa-trophy text-yellow-500"></i> Top Skor
+            </button>
+        </div>
+        
+        <div class="mt-8 text-xs text-slate-400">v2.1 - Simpel Mode</div>
+    </div>
+
+    <!-- ================= GAME SCREEN ================= -->
+    <div id="screen-game" class="screen h-full flex-col items-center justify-center p-4">
+        
+        <!-- Game Header -->
+        <div class="w-full max-w-md flex justify-between items-end mb-4 px-2">
+            <button onclick="goToMenu()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            <div class="text-center">
+                <div class="text-xs text-slate-500 font-bold uppercase">Level <span id="level-display">1</span></div>
+                <div id="timer-display" class="text-2xl font-bold text-slate-800 font-mono">00:00</div>
+            </div>
+            <div id="size-display" class="text-xs font-semibold bg-teal-100 text-teal-700 px-2 py-1 rounded">5x5</div>
+        </div>
+
+        <!-- Game Board -->
+        <div class="relative bg-white p-3 rounded-2xl shadow-xl border border-slate-200">
+            <div id="game-board" class="board-container">
+                <!-- Grid Generated Here -->
+            </div>
+        </div>
+
+        <!-- Game Controls -->
+        <div class="w-full max-w-md mt-6 flex justify-between gap-3">
+            <button id="modeBtn" onclick="toggleMode()" class="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-slate-800 text-white rounded-xl shadow-lg active:scale-95 transition-all">
+                <i id="modeIcon" class="fas fa-square text-xl"></i>
+                <span id="modeText" class="font-semibold">Isi</span>
+            </button>
+            <button onclick="resetBoard()" class="px-4 py-3 bg-slate-200 text-slate-600 rounded-xl hover:bg-slate-300 transition-colors shadow-lg active:scale-95">
+                <i class="fas fa-undo"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= HIGH SCORE SCREEN ================= -->
+    <div id="screen-score" class="screen h-full flex-col items-center justify-center p-6 bg-white">
+        <div class="w-full max-w-md h-full flex flex-col">
+            <div class="flex items-center mb-6">
+                <button onclick="goToMenu()" class="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2 class="text-2xl font-bold text-slate-800 ml-4">Rekor Tercepat</h2>
+            </div>
+
+            <div class="space-y-4 flex-1 overflow-y-auto pb-6">
+                <!-- 5x5 Card -->
+                <div class="bg-teal-50 rounded-xl p-5 border border-teal-100 shadow-sm flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-teal-200 rounded-lg flex items-center justify-center text-teal-700 font-bold text-lg">5x5</div>
+                        <div>
+                            <div class="text-sm text-slate-500 font-medium">Grid Mudah</div>
+                            <div class="font-bold text-slate-800" id="score-5x5">Belum ada</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-medal text-teal-300 text-2xl"></i>
+                </div>
+
+                <!-- 7x7 Card -->
+                <div class="bg-blue-50 rounded-xl p-5 border border-blue-100 shadow-sm flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center text-blue-700 font-bold text-lg">7x7</div>
+                        <div>
+                            <div class="text-sm text-slate-500 font-medium">Grid Sedang</div>
+                            <div class="font-bold text-slate-800" id="score-7x7">Belum ada</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-medal text-blue-300 text-2xl"></i>
+                </div>
+
+                <!-- 10x10 Card -->
+                <div class="bg-purple-50 rounded-xl p-5 border border-purple-100 shadow-sm flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-purple-200 rounded-lg flex items-center justify-center text-purple-700 font-bold text-lg">10</div>
+                        <div>
+                            <div class="text-sm text-slate-500 font-medium">Grid Ahli</div>
+                            <div class="font-bold text-slate-800" id="score-10x10">Belum ada</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-medal text-purple-300 text-2xl"></i>
+                </div>
+
+                <div class="mt-8 p-4 bg-slate-50 rounded-lg text-center">
+                    <p class="text-xs text-slate-400 mb-2">Total Level Diselesaikan</p>
+                    <div class="text-3xl font-bold text-slate-700" id="total-solved">0</div>
+                </div>
+
+                <button onclick="resetData()" class="w-full py-3 mt-4 text-red-400 text-sm hover:text-red-600 underline">
+                    Hapus Semua Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= WIN MODAL ================= -->
+    <div id="winModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="modal-content bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl relative overflow-hidden">
+            <!-- Confetti bg decoration -->
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500"></div>
+            
+            <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-500 text-4xl shadow-sm">
+                <i class="fas fa-trophy"></i>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">Level Selesai!</h2>
+            <p class="text-slate-500 text-sm mb-4">Waktu: <span id="win-time" class="font-bold text-teal-600">00:00</span></p>
+            
+            <div id="new-record-badge" class="hidden mb-4 bg-yellow-100 text-yellow-700 text-xs font-bold py-1 px-3 rounded-full inline-block">
+                <i class="fas fa-star mr-1"></i> REKOR BARU!
+            </div>
+
+            <button onclick="nextLevel()" class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white text-lg font-bold rounded-xl shadow-lg shadow-teal-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                Lanjut <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        let currentLevel = 1;
+        let size = 5;
+        let solution = [];
+        let playerGrid = [];
+        let mode = 1; // 1: Fill, 2: Cross
+        let timerInterval;
+        let seconds = 0;
+        let gameActive = false;
+        
+        // --- DATA STORAGE ---
+        // Format Records: { '5x5': 120 (seconds), '7x7': null, '10x10': null }
+        let userStats = {
+            level: 1,
+            totalSolved: 0,
+            records: { '5x5': null, '7x7': null, '10x10': null }
+        };
+
+        // Load Data
+        function loadData() {
+            const saved = localStorage.getItem('nonogram_pro_data');
+            if (saved) {
+                userStats = JSON.parse(saved);
+                currentLevel = userStats.level;
+            }
+        }
+        
+        function saveData() {
+            userStats.level = currentLevel;
+            localStorage.setItem('nonogram_pro_data', JSON.stringify(userStats));
+        }
+
+        // --- NAVIGATION ---
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function goToMenu() {
+            stopTimer();
+            switchScreen('screen-menu');
+        }
+
+        function startGame() {
+            loadData();
+            switchScreen('screen-game');
+            initLevel();
+        }
+
+        function showHighScores() {
+            loadData();
+            updateScoreUI();
+            switchScreen('screen-score');
+        }
+
+        function updateScoreUI() {
+            document.getElementById('total-solved').innerText = userStats.totalSolved;
+            
+            const format = (s) => s ? formatTime(s) : '-';
+            document.getElementById('score-5x5').innerText = format(userStats.records['5x5']);
+            document.getElementById('score-7x7').innerText = format(userStats.records['7x7']);
+            document.getElementById('score-10x10').innerText = format(userStats.records['10x10']);
+        }
+
+        function resetData() {
+            if(confirm('Hapus semua progres dan skor?')) {
+                localStorage.removeItem('nonogram_pro_data');
+                userStats = { level: 1, totalSolved: 0, records: { '5x5': null, '7x7': null, '10x10': null } };
+                currentLevel = 1;
+                updateScoreUI();
+            }
+        }
+
+        // --- TIMER LOGIC ---
+        function startTimer() {
+            stopTimer();
+            seconds = 0;
+            document.getElementById('timer-display').innerText = "00:00";
+            timerInterval = setInterval(() => {
+                seconds++;
+                document.getElementById('timer-display').innerText = formatTime(seconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // --- GAME LOGIC ---
+
+        function determineSize() {
+            if (currentLevel <= 5) return 5;
+            if (currentLevel <= 10) return 7;
+            return 10;
+        }
+
+        function generateSolution() {
+            size = determineSize();
+            let success = false;
+            let tempGrid;
+
+            // Simple Convex Generator (Same as previous safe version)
+            for(let i=0; i<300; i++) {
+                tempGrid = [];
+                for(let r=0; r<size; r++) {
+                    let row = new Array(size).fill(0);
+                    let len = Math.floor(Math.random() * size) + 1; 
+                    if (Math.random() > 0.9) len = 0;
+                    if (len > 0) {
+                        let start = Math.floor(Math.random() * (size - len + 1));
+                        for(let k=0; k<len; k++) row[start + k] = 1;
+                    }
+                    tempGrid.push(row);
+                }
+                
+                // Validate Columns (Anti-Gap)
+                let colValid = true;
+                let totalFilled = 0;
+                for(let c=0; c<size; c++) {
+                    let col = [];
+                    for(let r=0; r<size; r++) {
+                        col.push(tempGrid[r][c]);
+                        if(tempGrid[r][c]===1) totalFilled++;
+                    }
+                    let first = col.indexOf(1);
+                    let last = col.lastIndexOf(1);
+                    if (first !== -1) {
+                        for(let k=first; k<=last; k++) if(col[k]===0) colValid = false;
+                    }
+                    if(!colValid) break;
+                }
+                
+                if (colValid && totalFilled > (size*size)*0.2) {
+                    solution = tempGrid;
+                    success = true;
+                    break;
+                }
+            }
+
+            // Fallback
+            if (!success) {
+                solution = Array(size).fill().map(() => Array(size).fill(0));
+                for(let i=1; i<size-1; i++) for(let j=1; j<size-1; j++) solution[i][j] = 1;
+            }
+        }
+
+        function getHint(arr) {
+            return arr.reduce((a,b) => a+b, 0);
+        }
+
+        function initLevel() {
+            document.getElementById('winModal').classList.add('hidden');
+            
+            document.getElementById('level-display').innerText = currentLevel;
+            size = determineSize();
+            document.getElementById('size-display').innerText = `${size}x${size}`;
+
+            generateSolution();
+            playerGrid = Array(size).fill().map(() => Array(size).fill(0));
+            renderBoard();
+            
+            gameActive = true;
+            startTimer();
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            board.style.gridTemplateColumns = `max-content repeat(${size}, 1fr)`;
+
+            // Corner
+            const corner = document.createElement('div');
+            corner.className = "bg-slate-300";
+            board.appendChild(corner);
+
+            // Col Hints
+            for(let c=0; c<size; c++) {
+                let colArr = [];
+                for(let r=0; r<size; r++) colArr.push(solution[r][c]);
+                const val = getHint(colArr);
+                const el = document.createElement('div');
+                el.className = `hint-cell py-2 flex-col ${c>0 && c%5===0 ? 'thick-l' : ''}`;
+                el.innerHTML = `<span class="${val===0?'hint-zero':''}">${val}</span>`;
+                board.appendChild(el);
+            }
+
+            // Row + Cells
+            for(let r=0; r<size; r++) {
+                const rowVal = getHint(solution[r]);
+                const hintEl = document.createElement('div');
+                hintEl.className = `hint-cell px-3 ${r>0 && r%5===0 ? 'thick-t' : ''}`;
+                hintEl.innerHTML = `<span class="${rowVal===0?'hint-zero':''}">${rowVal}</span>`;
+                board.appendChild(hintEl);
+
+                for(let c=0; c<size; c++) {
+                    const cell = document.createElement('div');
+                    let cls = "game-cell w-8 h-8 sm:w-10 sm:h-10";
+                    if(playerGrid[r][c] === 1) cls += " filled";
+                    if(playerGrid[r][c] === 2) cls += " crossed";
+                    if(c < size-1 && (c+1)%5===0) cls += " thick-r";
+                    if(r < size-1 && (r+1)%5===0) cls += " thick-b";
+
+                    cell.className = cls;
+                    cell.onmousedown = (e) => handleInput(r, c, e);
+                    cell.oncontextmenu = (e) => e.preventDefault();
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function handleInput(r, c, e) {
+            if(!gameActive) return;
+            e.preventDefault();
+            let action = mode;
+            if (e.button === 2) action = 2; 
+
+            const curr = playerGrid[r][c];
+            if (action === 1) playerGrid[r][c] = (curr === 1) ? 0 : 1;
+            else playerGrid[r][c] = (curr === 2) ? 0 : 2;
+
+            renderBoard();
+            checkWin();
+        }
+
+        function toggleMode() {
+            mode = mode === 1 ? 2 : 1;
+            const btn = document.getElementById('modeBtn');
+            const icon = document.getElementById('modeIcon');
+            const text = document.getElementById('modeText');
+
+            if (mode === 1) {
+                btn.className = "flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-slate-800 text-white rounded-xl shadow-lg active:scale-95 transition-all";
+                icon.className = "fas fa-square text-xl";
+                text.innerText = "Isi";
+                icon.classList.remove('text-red-500');
+            } else {
+                btn.className = "flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-slate-200 text-slate-600 border-2 border-slate-300 rounded-xl shadow-lg active:scale-95 transition-all";
+                icon.className = "fas fa-times text-xl text-red-500";
+                text.innerText = "Silang";
+            }
+        }
+
+        function resetBoard() {
+            playerGrid = Array(size).fill().map(() => Array(size).fill(0));
+            renderBoard();
+        }
+
+        function checkWin() {
+            let won = true;
+            for(let r=0; r<size; r++) {
+                for(let c=0; c<size; c++) {
+                    const s = solution[r][c];
+                    const p = playerGrid[r][c];
+                    if (s === 1 && p !== 1) won = false;
+                    if (s === 0 && p === 1) won = false;
+                }
+            }
+
+            if(won) {
+                gameActive = false;
+                stopTimer();
+                handleWin();
+            }
+        }
+
+        function handleWin() {
+            // Update Stats
+            userStats.totalSolved++;
+            
+            // Check Record
+            const key = `${size}x${size}`;
+            let isNewRecord = false;
+            
+            if (userStats.records[key] === null || seconds < userStats.records[key]) {
+                userStats.records[key] = seconds;
+                isNewRecord = true;
+            }
+            saveData();
+
+            // UI Updates
+            document.getElementById('win-time').innerText = formatTime(seconds);
+            const badge = document.getElementById('new-record-badge');
+            if(isNewRecord) badge.classList.remove('hidden');
+            else badge.classList.add('hidden');
+
+            setTimeout(() => {
+                document.getElementById('winModal').classList.remove('hidden');
+            }, 300);
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            saveData();
+            initLevel();
+        }
+
+        // Init
+        loadData();
+    </script>
+</body>
+</html>
+
